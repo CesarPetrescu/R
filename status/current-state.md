@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-05-04
+Last updated: 2026-05-05
 
 ## Repository
 
@@ -8,12 +8,12 @@ Last updated: 2026-05-04
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and CLI.
+- Current implementation: tested Python scaffold with `r_project` analyzer and CLI, including per-priority backlog summaries.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
 
-- `r_project.report.analyze_project(root)` reads a checkout and returns backlog counts, the next unchecked item, and active blocker status.
+- `r_project.report.analyze_project(root)` reads a checkout and returns backlog counts, per-priority backlog groups, the next unchecked item, and active blocker status.
 - `ProjectReport.to_markdown()` formats readiness data as GitHub-flavored Markdown for human status pages.
 - `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.
 - `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.

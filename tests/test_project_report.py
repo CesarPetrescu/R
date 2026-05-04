@@ -60,11 +60,42 @@ def test_analyze_project_detects_active_blockers(tmp_path):
     assert report.active_blockers == ["Push authentication is missing."]
 
 
+def test_analyze_project_groups_backlog_counts_by_priority_heading(tmp_path):
+    write(tmp_path / "README.md", "# Priority Demo\n")
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+
+## P0 — make the repo real
+- [x] Create scaffold.
+- [ ] Add tests.
+
+## P1 — implementation depth
+- [x] Add JSON output.
+- [ ] Add priority grouping.
+- [ ] Add installer docs.
+
+## P2 — project quality
+- [ ] Add release notes.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+
+    report = analyze_project(tmp_path)
+
+    assert report.priority_backlog_groups == {
+        "P0": {"completed": 1, "open": 1, "next_item": "Add tests."},
+        "P1": {"completed": 1, "open": 2, "next_item": "Add priority grouping."},
+        "P2": {"completed": 0, "open": 1, "next_item": "Add release notes."},
+    }
+
+
 def test_report_formats_markdown_for_human_status_pages(tmp_path):
     write(tmp_path / "README.md", "# Markdown Demo\n")
     write(
         tmp_path / "status" / "missing-features.md",
         """# Missing Features
+## P1
 - [x] Finish scaffold.
 - [ ] Add markdown output.
 """,
@@ -88,6 +119,12 @@ def test_report_formats_markdown_for_human_status_pages(tmp_path):
             "| Completed backlog items | 1 |",
             "| Open backlog items | 1 |",
             "| Active blockers | 1 |",
+            "",
+            "## Backlog by priority",
+            "",
+            "| Priority | Completed | Open | Next item |",
+            "| --- | ---: | ---: | --- |",
+            "| P1 | 1 | 1 | Add markdown output. |",
             "",
             "## Next backlog item",
             "",

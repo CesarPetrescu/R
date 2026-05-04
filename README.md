@@ -11,6 +11,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - project name from `README.md`
 - completed/open backlog item counts from `status/missing-features.md`
 - the next unchecked backlog item
+- per-priority backlog summaries (P0/P1/P2 completed/open counts and next item)
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
 - optional nonzero exit status when active blockers are present
@@ -26,7 +27,7 @@ PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 4, "has_active_blockers": false, "next_backlog_item": "Implement markdown output for human reports.", "open_backlog_items": 7, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 11, "has_active_blockers": false, "next_backlog_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open_backlog_items": 4, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 6, "next_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open": 1}, "P2": {"completed": 1, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -38,9 +39,17 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 6 |
-| Open backlog items | 5 |
+| Completed backlog items | 11 |
+| Open backlog items | 4 |
 | Active blockers | 0 |
+
+## Backlog by priority
+
+| Priority | Completed | Open | Next item |
+| --- | ---: | ---: | --- |
+| P0 | 4 | 0 | None |
+| P1 | 6 | 1 | Package the CLI for editable installs and document `pip install -e .` usage. |
+| P2 | 1 | 3 | Add release/versioning notes. |
 ```
 
 A documented test fixture lives at `tests/fixtures/readiness-repo/` and is used by the CLI tests as an executable example of expected report behavior.

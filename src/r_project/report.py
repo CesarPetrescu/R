@@ -6,6 +6,7 @@ from pathlib import Path
 
 _CHECKBOX_RE = re.compile(r"^\s*-\s+\[(?P<mark>[ xX])]\s+(?P<text>.+?)\s*$")
 _HEADING_RE = re.compile(r"^#\s+(?P<title>.+?)\s*$")
+_PRIORITY_HEADING_RE = re.compile(r"^##\s+(?P<priority>P\d+)\b.*$")
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,7 @@ class ProjectReport:
     next_backlog_item: str | None
     has_active_blockers: bool
     active_blockers: list[str]
+    priority_backlog_groups: dict[str, dict[str, object]]
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -31,13 +33,31 @@ class ProjectReport:
             f"| Open backlog items | {self.open_backlog_items} |",
             f"| Active blockers | {len(self.active_blockers)} |",
             "",
-            "## Next backlog item",
-            "",
-            self.next_backlog_item or "None",
-            "",
-            "## Active blockers",
-            "",
         ]
+        if self.priority_backlog_groups:
+            lines.extend(
+                [
+                    "## Backlog by priority",
+                    "",
+                    "| Priority | Completed | Open | Next item |",
+                    "| --- | ---: | ---: | --- |",
+                ]
+            )
+            for priority, group in self.priority_backlog_groups.items():
+                lines.append(
+                    f"| {priority} | {group['completed']} | {group['open']} | {group['next_item'] or 'None'} |"
+                )
+            lines.append("")
+        lines.extend(
+            [
+                "## Next backlog item",
+                "",
+                self.next_backlog_item or "None",
+                "",
+                "## Active blockers",
+                "",
+            ]
+        )
         if self.active_blockers:
             lines.extend(f"- {blocker}" for blocker in self.active_blockers)
         else:
@@ -54,14 +74,31 @@ def analyze_project(root: str | Path) -> ProjectReport:
 
     completed = 0
     open_items: list[str] = []
+    priority_groups: dict[str, dict[str, object]] = {}
+    current_priority: str | None = None
     for line in missing_features_text.splitlines():
+        priority_match = _PRIORITY_HEADING_RE.match(line)
+        if priority_match:
+            current_priority = priority_match.group("priority")
+            priority_groups.setdefault(current_priority, {"completed": 0, "open": 0, "next_item": None})
+            continue
         match = _CHECKBOX_RE.match(line)
         if not match:
             continue
+        group = None
+        if current_priority is not None:
+            group = priority_groups.setdefault(current_priority, {"completed": 0, "open": 0, "next_item": None})
         if match.group("mark").strip().lower() == "x":
             completed += 1
+            if group is not None:
+                group["completed"] = int(group["completed"]) + 1
         else:
-            open_items.append(match.group("text"))
+            item_text = match.group("text")
+            open_items.append(item_text)
+            if group is not None:
+                group["open"] = int(group["open"]) + 1
+                if group["next_item"] is None:
+                    group["next_item"] = item_text
 
     blockers = _active_blockers(stuck_text)
     return ProjectReport(
@@ -71,6 +108,7 @@ def analyze_project(root: str | Path) -> ProjectReport:
         next_backlog_item=open_items[0] if open_items else None,
         has_active_blockers=bool(blockers),
         active_blockers=blockers,
+        priority_backlog_groups=priority_groups,
     )
 
 
