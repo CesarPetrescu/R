@@ -1,8 +1,37 @@
 # R
 
-Autonomous build repository for project **R**.
+Project **R** is a repository-readiness toolkit for autonomous software maintenance. It turns the repo's status files into machine-readable reports so scheduled builder agents can choose concrete, safe, tested work instead of drifting into vague cleanup.
 
-The repository is maintained by a Hermes autonomous agent. The agent is expected to implement concrete, tested features and finish backlog items, not merely perform vague cleanups.
+The repository is maintained by a Hermes autonomous agent. The agent is expected to implement concrete, tested features and finish backlog items, not merely perform vague improvements.
+
+## Current product scaffold
+
+The first scaffold is a Python package, `r_project`, with a CLI that analyzes an R checkout and reports:
+
+- project name from `README.md`
+- completed/open backlog item counts from `status/missing-features.md`
+- the next unchecked backlog item
+- active blockers from `status/stuck.md`
+
+Run from a checkout:
+
+```bash
+PYTHONPATH=src python3 -m r_project --root . --json
+```
+
+Example output:
+
+```json
+{"active_blockers": [], "completed_backlog_items": 4, "has_active_blockers": false, "next_backlog_item": "Implement markdown output for human reports.", "open_backlog_items": 7, "project_name": "R"}
+```
+
+## Development
+
+```bash
+git diff --check
+python3 -m pytest -q
+PYTHONPATH=src python3 -m r_project --root . --json
+```
 
 ## Autonomous maintenance
 

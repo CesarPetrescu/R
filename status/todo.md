@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Choose and document a concrete product direction for R, then create the first tested, buildable scaffold.
-2. Implement the first useful end-to-end feature with tests.
-3. Add README usage examples from verified behavior.
+1. Add fixtures/examples for expected report behavior and use them in tests/docs.
+2. Implement markdown output for human-readable reports.
+3. Add CLI option to fail with a nonzero exit code when active blockers exist.
 
 ## Every-run checklist
 
