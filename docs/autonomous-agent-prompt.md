@@ -15,7 +15,7 @@ Rules:
 5. For behavior changes, use TDD: write failing tests first, run them to confirm failure, implement/create the feature, then verify pass.
 6. Use official docs/web search when needed. If local command syntax, system details, or unavailable web docs make it useful, use man pages (`man <page>`) and record findings in status/research.md.
 7. Keep status files current every run and save overflow ideas with concrete acceptance tests.
-8. Verification before commit/push: run git diff --check plus the project-specific build/lint/test commands recorded in status/current-state.md. If no toolchain exists, create one and record verification commands.
+8. Verification before commit/push: run git diff --check plus the project-specific build/lint/test commands recorded in status/current-state.md. R must include Docker verification (`docker compose run --build --rm test`) so tests execute in a clean reproducible container before any push. If no toolchain exists, create one and record verification commands.
 9. Never commit secrets, private keys, .env files, or host-specific credentials.
 10. If blocked, update status/stuck.md with evidence and stop. Do not push broken or unverified code.
 11. If verification passes and files changed, commit with a conventional commit message and push origin main. Status-only updates should still be committed if they are the only safe verified change.

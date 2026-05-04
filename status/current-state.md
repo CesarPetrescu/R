@@ -9,6 +9,7 @@ Last updated: 2026-05-05
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
 - Current implementation: tested Python scaffold with `r_project` analyzer and CLI, including per-priority backlog summaries.
+- Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
@@ -27,6 +28,7 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+docker compose run --build --rm test
 ```
 
 ## Operating rule

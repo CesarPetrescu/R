@@ -24,7 +24,7 @@
 4. Think/evaluate: impact, safety, dependencies, testability, verification cost.
 5. Choose the highest-impact work package that can be completed and verified now.
 6. If behavior changes, use TDD: add failing tests, confirm RED, implement, confirm GREEN.
-7. Run project verification. If no language/tooling exists yet, create it and add a verification command in status.
+7. Run project verification, including Docker verification when a Docker harness exists. For R specifically, `docker compose run --build --rm test` is mandatory before commit/push so tests execute in a clean reproducible container. If no language/tooling exists yet, create it and add a verification command in status.
 8. Update status/backlog, including overflow ideas with concrete acceptance tests.
 9. Commit and push verified changes.
 10. Report compactly: ideation, selected work package, backlog items completed, tests, verification, commit/push, blockers, next item.
@@ -37,7 +37,11 @@ Use the best available project verification. Initially, before code exists:
 git diff --check
 ```
 
-As soon as a language/toolchain exists, replace/extend this with real build, lint, and test commands in `status/current-state.md` and the cron prompt.
+As soon as a language/toolchain exists, replace/extend this with real build, lint, and test commands in `status/current-state.md`. For R, Docker verification is required before committing and pushing:
+
+```bash
+docker compose run --build --rm test
+```
 
 ## Stop Conditions
 

@@ -25,3 +25,4 @@ Prioritized backlog for autonomous implementation.
 - [ ] Add release/versioning notes.
 - [ ] Add license file.
 - [ ] Add type-checking or linting command once the toolchain choice is stable.
+- [x] Dockerize the test/verification harness so autonomous runs validate in a clean container.

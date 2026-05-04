@@ -1,0 +1,19 @@
+from pathlib import Path
+
+
+def test_docker_test_harness_exists_and_runs_full_verification():
+    compose_file = Path("docker-compose.yml")
+    dockerfile = Path("Dockerfile")
+
+    assert dockerfile.exists()
+    assert compose_file.exists()
+
+    dockerfile_text = dockerfile.read_text(encoding="utf-8")
+    compose_text = compose_file.read_text(encoding="utf-8")
+
+    assert "python:3.11-slim" in dockerfile_text
+    assert "pip install -e ." in dockerfile_text
+    assert "python -m pytest -q" in compose_text
+    assert "python -m r_project --root . --json" in compose_text
+    assert "python -m r_project --root . --markdown" in compose_text
+    assert "python -m r_project --root . --json --fail-on-blockers" in compose_text

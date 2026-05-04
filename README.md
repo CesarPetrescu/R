@@ -27,7 +27,7 @@ PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 11, "has_active_blockers": false, "next_backlog_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open_backlog_items": 4, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 6, "next_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open": 1}, "P2": {"completed": 1, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 12, "has_active_blockers": false, "next_backlog_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open_backlog_items": 4, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 6, "next_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open": 1}, "P2": {"completed": 2, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -39,7 +39,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 11 |
+| Completed backlog items | 12 |
 | Open backlog items | 4 |
 | Active blockers | 0 |
 
@@ -49,12 +49,14 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 6 | 1 | Package the CLI for editable installs and document `pip install -e .` usage. |
-| P2 | 1 | 3 | Add release/versioning notes. |
+| P2 | 2 | 3 | Add release/versioning notes. |
 ```
 
 A documented test fixture lives at `tests/fixtures/readiness-repo/` and is used by the CLI tests as an executable example of expected report behavior.
 
 ## Development
+
+Run the host checks directly when iterating:
 
 ```bash
 git diff --check
@@ -62,6 +64,12 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+```
+
+Before committing, run the same verification in Docker so tests execute in a clean, reproducible container:
+
+```bash
+docker compose run --build --rm test
 ```
 
 ## Autonomous maintenance

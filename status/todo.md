@@ -7,6 +7,7 @@ The autonomous agent should complete concrete implementation work every run, not
 1. Package the CLI for editable installs and document `pip install -e .` usage.
 2. Add release/versioning notes.
 3. Add license file.
+4. Add type-checking or linting command once the toolchain choice is stable.
 
 ## Every-run checklist
 
