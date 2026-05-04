@@ -24,10 +24,19 @@ PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 ```
 
+Or install the CLI in editable mode for local development:
+
+```bash
+python3 -m pip install -e .
+r-project --root . --json
+r-project --root . --markdown
+r-project --root . --json --fail-on-blockers
+```
+
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 12, "has_active_blockers": false, "next_backlog_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open_backlog_items": 4, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 6, "next_item": "Package the CLI for editable installs and document `pip install -e .` usage.", "open": 1}, "P2": {"completed": 2, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 13, "has_active_blockers": false, "next_backlog_item": "Add release/versioning notes.", "open_backlog_items": 3, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 7, "next_item": null, "open": 0}, "P2": {"completed": 2, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -39,8 +48,8 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 12 |
-| Open backlog items | 4 |
+| Completed backlog items | 13 |
+| Open backlog items | 3 |
 | Active blockers | 0 |
 
 ## Backlog by priority
@@ -48,7 +57,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 6 | 1 | Package the CLI for editable installs and document `pip install -e .` usage. |
+| P1 | 7 | 0 | None |
 | P2 | 2 | 3 | Add release/versioning notes. |
 ```
 
