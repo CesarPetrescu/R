@@ -13,8 +13,8 @@ Prioritized backlog for autonomous implementation.
 
 - [x] Implement the first useful end-to-end feature.
 - [x] Add CLI or API entry points, depending on the chosen product direction.
-- [ ] Add fixtures/examples for expected behavior.
-- [ ] Implement markdown output for human-readable reports.
+- [x] Add fixtures/examples for expected behavior.
+- [x] Implement markdown output for human-readable reports.
 - [ ] Add CLI option to fail with a nonzero exit code when active blockers exist.
 - [ ] Add backlog priority grouping so reports summarize P0/P1/P2 progress separately.
 - [ ] Package the CLI for editable installs and document `pip install -e .` usage.

@@ -20,6 +20,30 @@ class ProjectReport:
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
 
+    def to_markdown(self) -> str:
+        """Format the readiness report as GitHub-flavored Markdown."""
+        lines = [
+            f"# {self.project_name} Readiness Report",
+            "",
+            "| Metric | Value |",
+            "| --- | ---: |",
+            f"| Completed backlog items | {self.completed_backlog_items} |",
+            f"| Open backlog items | {self.open_backlog_items} |",
+            f"| Active blockers | {len(self.active_blockers)} |",
+            "",
+            "## Next backlog item",
+            "",
+            self.next_backlog_item or "None",
+            "",
+            "## Active blockers",
+            "",
+        ]
+        if self.active_blockers:
+            lines.extend(f"- {blocker}" for blocker in self.active_blockers)
+        else:
+            lines.append("None")
+        return "\n".join(lines)
+
 
 def analyze_project(root: str | Path) -> ProjectReport:
     """Analyze a project R checkout and summarize backlog readiness."""

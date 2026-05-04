@@ -60,6 +60,46 @@ def test_analyze_project_detects_active_blockers(tmp_path):
     assert report.active_blockers == ["Push authentication is missing."]
 
 
+def test_report_formats_markdown_for_human_status_pages(tmp_path):
+    write(tmp_path / "README.md", "# Markdown Demo\n")
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+- [x] Finish scaffold.
+- [ ] Add markdown output.
+""",
+    )
+    write(
+        tmp_path / "status" / "stuck.md",
+        """# Stuck
+## Active blockers
+- Awaiting deploy key.
+""",
+    )
+
+    markdown = analyze_project(tmp_path).to_markdown()
+
+    assert markdown == "\n".join(
+        [
+            "# Markdown Demo Readiness Report",
+            "",
+            "| Metric | Value |",
+            "| --- | ---: |",
+            "| Completed backlog items | 1 |",
+            "| Open backlog items | 1 |",
+            "| Active blockers | 1 |",
+            "",
+            "## Next backlog item",
+            "",
+            "Add markdown output.",
+            "",
+            "## Active blockers",
+            "",
+            "- Awaiting deploy key.",
+        ]
+    )
+
+
 def test_cli_outputs_json_report_for_repository(tmp_path):
     write(tmp_path / "README.md", "# CLI Demo\n")
     write(tmp_path / "status" / "missing-features.md", "- [x] Scaffold.\n- [ ] Ship feature.\n")
@@ -80,3 +120,22 @@ def test_cli_outputs_json_report_for_repository(tmp_path):
     assert payload["completed_backlog_items"] == 1
     assert payload["open_backlog_items"] == 1
     assert payload["next_backlog_item"] == "Ship feature."
+
+
+def test_cli_outputs_markdown_report_for_repository(tmp_path):
+    fixture_root = Path("tests/fixtures/readiness-repo")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(fixture_root), "--markdown"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout.startswith("# Fixture Repo Readiness Report\n")
+    assert "| Completed backlog items | 2 |" in result.stdout
+    assert "| Open backlog items | 2 |" in result.stdout
+    assert "Document expected fixture reports." in result.stdout

@@ -9,11 +9,14 @@ Last updated: 2026-05-04
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
 - Current implementation: tested Python scaffold with `r_project` analyzer and CLI.
+- Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
 
 - `r_project.report.analyze_project(root)` reads a checkout and returns backlog counts, the next unchecked item, and active blocker status.
-- `python3 -m r_project --root <path> --json` emits the same report as stable JSON for cron/agent consumption.
+- `ProjectReport.to_markdown()` formats readiness data as GitHub-flavored Markdown for human status pages.
+- `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.
+- `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.
 
 ## Verified commands
 
@@ -21,6 +24,7 @@ Last updated: 2026-05-04
 git diff --check
 python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
+PYTHONPATH=src python3 -m r_project --root . --markdown
 ```
 
 ## Operating rule
