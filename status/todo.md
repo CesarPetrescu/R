@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add CLI option to fail with a nonzero exit code when active blockers exist.
-2. Add backlog priority grouping so reports summarize P0/P1/P2 progress separately.
-3. Package the CLI for editable installs and document `pip install -e .` usage.
+1. Add backlog priority grouping so reports summarize P0/P1/P2 progress separately.
+2. Package the CLI for editable installs and document `pip install -e .` usage.
+3. Add release/versioning notes.
 
 ## Every-run checklist
 

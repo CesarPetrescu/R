@@ -13,6 +13,11 @@ def build_parser() -> argparse.ArgumentParser:
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     output_group.add_argument("--markdown", action="store_true", help="Emit a GitHub-flavored Markdown report.")
+    parser.add_argument(
+        "--fail-on-blockers",
+        action="store_true",
+        help="Exit with status 2 when active blockers are present after emitting the report.",
+    )
     return parser
 
 
@@ -33,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"- {blocker}")
         else:
             print("Active blockers: none")
+    if args.fail_on_blockers and report.has_active_blockers:
+        return 2
     return 0
 
 

@@ -13,12 +13,14 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - the next unchecked backlog item
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
+- optional nonzero exit status when active blockers are present
 
 Run from a checkout:
 
 ```bash
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
+PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 ```
 
 Example output:
@@ -26,6 +28,8 @@ Example output:
 ```json
 {"active_blockers": [], "completed_backlog_items": 4, "has_active_blockers": false, "next_backlog_item": "Implement markdown output for human reports.", "open_backlog_items": 7, "project_name": "R"}
 ```
+
+The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
 
 Markdown output starts with a compact report suitable for PR comments, issue updates, or status pages:
 
@@ -48,6 +52,7 @@ git diff --check
 python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
+PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 ```
 
 ## Autonomous maintenance

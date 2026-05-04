@@ -139,3 +139,25 @@ def test_cli_outputs_markdown_report_for_repository(tmp_path):
     assert "| Completed backlog items | 2 |" in result.stdout
     assert "| Open backlog items | 2 |" in result.stdout
     assert "Document expected fixture reports." in result.stdout
+
+
+def test_cli_fail_on_blockers_returns_nonzero_when_active_blockers_exist(tmp_path):
+    write(tmp_path / "README.md", "# Blocked CLI Demo\n")
+    write(tmp_path / "status" / "missing-features.md", "- [ ] Resume work.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- Deploy key lacks write access.\n")
+
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--json", "--fail-on-blockers"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    payload = json.loads(result.stdout)
+    assert payload["has_active_blockers"] is True
+    assert payload["active_blockers"] == ["Deploy key lacks write access."]
+    assert result.stderr == ""

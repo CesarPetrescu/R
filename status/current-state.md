@@ -17,6 +17,7 @@ Last updated: 2026-05-04
 - `ProjectReport.to_markdown()` formats readiness data as GitHub-flavored Markdown for human status pages.
 - `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.
 - `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.
+- `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
 
 ## Verified commands
 
@@ -25,6 +26,7 @@ git diff --check
 python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
+PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 ```
 
 ## Operating rule
