@@ -15,6 +15,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
 - optional nonzero exit status when active blockers are present
+- a small vector memory-layout helper that includes alignment padding in
+  payload offsets and total byte size calculations
 
 Run from a checkout:
 
@@ -22,6 +24,18 @@ Run from a checkout:
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+```
+
+Runtime layout helpers are also importable for tests or future low-level R
+runtime work:
+
+```python
+from r_project import vector_layout
+
+layout = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+assert layout.data_offset == 4
+assert layout.element_offsets == [4, 8]
+assert layout.total_size == 12
 ```
 
 Or install the CLI in editable mode for local development:
