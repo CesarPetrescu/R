@@ -8,7 +8,7 @@ Last updated: 2026-05-05
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries and memory layout helpers.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -20,6 +20,7 @@ Last updated: 2026-05-05
 - `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.
 - `python3 -m pip install -e .` installs an editable `r-project` console script for local development.
 - `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
+- `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned.
 
 ## Verified commands
 

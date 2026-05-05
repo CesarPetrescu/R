@@ -16,6 +16,10 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - JSON for automation or Markdown for human-readable status pages
 - optional nonzero exit status when active blockers are present
 
+The package also includes `r_project.memory.struct_layout(...)`, a tested
+helper for C-like structure layouts that aligns each field offset and rounds
+the total structure size up for safe array element placement.
+
 Run from a checkout:
 
 ```bash
