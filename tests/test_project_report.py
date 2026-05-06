@@ -198,3 +198,43 @@ def test_cli_fail_on_blockers_returns_nonzero_when_active_blockers_exist(tmp_pat
     assert payload["has_active_blockers"] is True
     assert payload["active_blockers"] == ["Deploy key lacks write access."]
     assert result.stderr == ""
+
+
+def _readme_fenced_block(language: str) -> str:
+    readme = Path("README.md").read_text(encoding="utf-8")
+    start_marker = f"```{language}\n"
+    start = readme.index(start_marker) + len(start_marker)
+    end = readme.index("\n```", start)
+    return readme[start:end]
+
+
+def test_readme_json_example_matches_current_cli_output():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--json"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert _readme_fenced_block("json") == result.stdout.strip()
+    assert result.stderr == ""
+
+
+def test_readme_markdown_example_matches_current_cli_output():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--markdown"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert _readme_fenced_block("markdown") == result.stdout.strip()
+    assert result.stderr == ""
