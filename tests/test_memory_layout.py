@@ -113,6 +113,26 @@ def test_render_layout_names_vector_offsets_and_padding():
     )
 
 
+def test_struct_layout_preserves_symbolic_field_tags_in_rendered_memory_maps():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    layout = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+
+    assert layout.fields[0].tags == ("source:token-kind",)
+    assert layout.fields[1].tags == ("source:literal-bytes", "runtime:vector")
+    assert render_layout("packet", layout) == "\n".join(
+        [
+            "packet: struct size=16 align=4 tail_padding=0",
+            "  tag @ 0 size=1 align=1 leading_padding=0 tags=source:token-kind",
+            "  payload @ 4 size=12 align=4 leading_padding=3 tags=source:literal-bytes,runtime:vector",
+        ]
+    )
+
+
 def test_vector_layout_rejects_non_power_of_two_alignment():
     with pytest.raises(ValueError, match="element_alignment must be a power of two"):
         vector_layout(header_size=0, element_size=4, element_alignment=3, length=1)
