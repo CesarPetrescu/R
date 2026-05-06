@@ -1,6 +1,7 @@
 """Repository readiness reporting and runtime helpers for project R."""
 
 from .memory import (
+    ByteSpan,
     MemoryField,
     PlacedField,
     StructLayout,
@@ -13,6 +14,7 @@ from .memory import (
 from .report import ProjectReport, analyze_project
 
 __all__ = [
+    "ByteSpan",
     "MemoryField",
     "PlacedField",
     "ProjectReport",
