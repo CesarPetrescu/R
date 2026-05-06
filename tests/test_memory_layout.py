@@ -1,7 +1,15 @@
 import pytest
 
 from r_project import vector_layout
-from r_project.memory import MemoryField, find_overlapping_byte_spans, flatten_byte_spans, layout_field, render_layout, struct_layout
+from r_project.memory import (
+    MemoryField,
+    find_overlapping_byte_spans,
+    flatten_byte_spans,
+    layout_field,
+    render_byte_span_overlaps,
+    render_layout,
+    struct_layout,
+)
 
 
 def test_vector_layout_pads_payload_start_and_total_size_to_alignment():
@@ -249,6 +257,28 @@ def test_find_overlapping_byte_spans_does_not_report_touching_ranges():
     overlaps = find_overlapping_byte_spans(flatten_byte_spans("packet", packet))
 
     assert overlaps == []
+
+
+def test_render_byte_span_overlaps_formats_stable_human_readable_diagnostics():
+    left_payload = vector_layout(header_size=0, element_size=4, element_alignment=4, length=2)
+    right_payload = vector_layout(header_size=0, element_size=4, element_alignment=4, length=1)
+    spans = flatten_byte_spans("left", left_payload, base_offset=16) + flatten_byte_spans("right", right_payload, base_offset=20)
+
+    assert render_byte_span_overlaps(spans) == "\n".join(
+        [
+            "# Byte Span Overlaps",
+            "",
+            "| Left span | Right span | Overlap | Size |",
+            "| --- | --- | ---: | ---: |",
+            "| left.element[1] (20..24) | right.element[0] (20..24) | 20..24 | 4 |",
+        ]
+    )
+
+
+def test_render_byte_span_overlaps_reports_empty_state_when_ranges_do_not_intersect():
+    spans = flatten_byte_spans("packet", vector_layout(header_size=0, element_size=4, element_alignment=4, length=2))
+
+    assert render_byte_span_overlaps(spans) == "# Byte Span Overlaps\n\nNo overlapping byte spans."
 
 
 def test_vector_layout_rejects_non_power_of_two_alignment():

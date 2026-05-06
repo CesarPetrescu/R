@@ -28,6 +28,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add symbolic byte-span summaries for rendered layouts and overlap diagnostics.
 - [x] Add recursive byte-span flattener for nested layouts so overlap checks can compare fully qualified child ranges.
 - [x] Add layout overlap detector that consumes flattened byte spans and reports intersecting runtime ranges.
+- [x] Add layout overlap reporter/renderer for human-readable overlap diagnostics.
 
 ## P2 — project quality
 
