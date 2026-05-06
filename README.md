@@ -14,6 +14,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - per-priority backlog summaries (P0/P1/P2 completed/open counts and next item)
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
+- a README example drift check that exits nonzero when documented JSON/Markdown
+  output no longer matches the current analyzer
 - optional nonzero exit status when active blockers are present
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
@@ -31,6 +33,7 @@ Run from a checkout:
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -53,13 +56,14 @@ python3 -m pip install -e .
 r-project --root . --json
 r-project --root . --markdown
 r-project --root . --json --fail-on-blockers
+r-project --root . --check-readme-examples
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 19, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 9, "next_item": null, "open": 0}, "P2": {"completed": 6, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 20, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 9, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -71,7 +75,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 19 |
+| Completed backlog items | 20 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -81,7 +85,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 9 | 0 | None |
-| P2 | 6 | 0 | None |
+| P2 | 7 | 0 | None |
 
 ## Next backlog item
 
@@ -104,6 +108,7 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 

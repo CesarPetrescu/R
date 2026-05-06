@@ -2,8 +2,8 @@
 
 ## Active blockers
 
-- None verified yet. Push may require adding `/root/.ssh/r_deploy_key.pub` as a GitHub deploy key with write access.
+- None verified.
 
 ## Resolved blockers
 
-- None yet.
+- 2026-05-06: A CI workflow branch was not pushable via `/usr/local/bin/r-bot-git-push` because the builder GitHub App lacks `workflows` permission for `.github/workflows/ci.yml`. This is not an active blocker for non-workflow maintenance branches; avoid workflow-file work until the app permission changes or a maintainer pushes that file.

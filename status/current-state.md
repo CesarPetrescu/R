@@ -8,7 +8,7 @@ Last updated: 2026-05-06
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift tests, vector memory-layout padding helpers with explicit invalid-alignment errors, C-like struct memory layout helpers with explicit invalid-alignment errors, release/versioning notes, and MIT licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift tests and on-demand drift checks, vector memory-layout padding helpers with explicit invalid-alignment errors, C-like struct memory layout helpers with explicit invalid-alignment errors, release/versioning notes, and MIT licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -19,7 +19,8 @@ Last updated: 2026-05-06
 - `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.
 - `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.
 - `python3 -m pip install -e .` installs an editable `r-project` console script for local development.
-- `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
+- `python3 -m r_project --root <path> --json --fail-on-blockers` emits the selected report and exits with status 2 when active blockers exist.
+- `python3 -m r_project --root <path> --check-readme-examples` compares README JSON/Markdown examples against current generated output and exits with status 1 plus drift diagnostics when they differ.
 - `python3 -m r_project.lint --root <path>` and installed `r-project-lint --root <path>` run a lightweight Python syntax lint over `src/` and `tests/`.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently; invalid negative values, zero element sizes/alignments, and non-power-of-two element alignments raise `ValueError`.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned; invalid field sizes/alignments and non-power-of-two field alignments raise `ValueError`.
@@ -35,6 +36,7 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```
