@@ -7,6 +7,7 @@ WORKDIR /app
 
 COPY pyproject.toml ./
 COPY README.md ./
+COPY CHANGELOG.md LICENSE ./
 COPY Dockerfile docker-compose.yml ./
 COPY src ./src
 COPY tests ./tests

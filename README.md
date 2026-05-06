@@ -54,7 +54,7 @@ r-project --root . --json --fail-on-blockers
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 13, "has_active_blockers": false, "next_backlog_item": "Add release/versioning notes.", "open_backlog_items": 3, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 7, "next_item": null, "open": 0}, "P2": {"completed": 2, "next_item": "Add release/versioning notes.", "open": 3}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 16, "has_active_blockers": false, "next_backlog_item": "Add type-checking or linting command once the toolchain choice is stable.", "open_backlog_items": 1, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 8, "next_item": null, "open": 0}, "P2": {"completed": 4, "next_item": "Add type-checking or linting command once the toolchain choice is stable.", "open": 1}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -66,8 +66,8 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 13 |
-| Open backlog items | 3 |
+| Completed backlog items | 16 |
+| Open backlog items | 1 |
 | Active blockers | 0 |
 
 ## Backlog by priority
@@ -75,8 +75,8 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 7 | 0 | None |
-| P2 | 2 | 3 | Add release/versioning notes. |
+| P1 | 8 | 0 | None |
+| P2 | 4 | 1 | Add type-checking or linting command once the toolchain choice is stable. |
 ```
 
 A documented test fixture lives at `tests/fixtures/readiness-repo/` and is used by the CLI tests as an executable example of expected report behavior.
@@ -98,6 +98,20 @@ Before committing, run the same verification in Docker so tests execute in a cle
 ```bash
 docker compose run --build --rm test
 ```
+
+## Release and versioning
+
+The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic versioning for published releases:
+
+- increment the patch version for compatible bug fixes and documentation-only release updates;
+- increment the minor version for backward-compatible CLI/report/helper additions;
+- reserve major version changes for incompatible report schema, CLI, or helper API changes.
+
+Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`.
+
+## License
+
+R is distributed under the MIT License. See [`LICENSE`](LICENSE).
 
 ## Autonomous maintenance
 

@@ -1,0 +1,8 @@
+# Changelog
+
+All notable user-visible changes to R are tracked here. Releases should follow the semantic versioning policy documented in `README.md` and use tags that match `pyproject.toml`.
+
+## Unreleased
+
+- Added release/versioning policy notes for the current `0.1.0` package.
+- Added MIT license metadata for Project R contributors.

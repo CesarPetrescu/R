@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add release/versioning notes.
-2. Add license file.
-3. Add type-checking or linting command once the toolchain choice is stable.
+1. Add type-checking or linting command once the toolchain choice is stable.
+2. Add tests that enforce README report examples stay in sync with fixture output.
+3. Expand memory-layout helpers with documented error handling for invalid field/vector inputs.
 
 ## Every-run checklist
 

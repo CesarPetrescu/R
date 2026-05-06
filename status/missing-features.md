@@ -23,7 +23,7 @@ Prioritized backlog for autonomous implementation.
 ## P2 — project quality
 
 - [x] Improve README with real usage examples.
-- [ ] Add release/versioning notes.
-- [ ] Add license file.
+- [x] Add release/versioning notes.
+- [x] Add license file.
 - [ ] Add type-checking or linting command once the toolchain choice is stable.
 - [x] Dockerize the test/verification harness so autonomous runs validate in a clean container.

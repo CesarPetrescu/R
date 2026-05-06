@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-05-05
+Last updated: 2026-05-06
 
 ## Repository
 
@@ -8,7 +8,7 @@ Last updated: 2026-05-05
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries, vector memory-layout padding helpers, and C-like struct memory layout helpers.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries, vector memory-layout padding helpers, C-like struct memory layout helpers, release/versioning notes, and MIT licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -22,6 +22,8 @@ Last updated: 2026-05-05
 - `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned.
+- `README.md` documents the current `0.1.0` semantic-versioning release policy and `CHANGELOG.md` records unreleased user-visible changes.
+- `LICENSE` declares the project MIT license for Project R contributors.
 
 ## Verified commands
 
