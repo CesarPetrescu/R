@@ -1,3 +1,5 @@
+import pytest
+
 from r_project import vector_layout
 from r_project.memory import MemoryField, struct_layout
 
@@ -39,3 +41,13 @@ def test_struct_layout_rounds_total_size_for_struct_arrays():
     assert layout.total_size == 8
     assert layout.alignment == 4
     assert layout.tail_padding == 3
+
+
+def test_vector_layout_rejects_non_power_of_two_alignment():
+    with pytest.raises(ValueError, match="element_alignment must be a power of two"):
+        vector_layout(header_size=0, element_size=4, element_alignment=3, length=1)
+
+
+def test_struct_layout_rejects_non_power_of_two_field_alignment():
+    with pytest.raises(ValueError, match="field 'packed' alignment must be a power of two"):
+        struct_layout([MemoryField(name="packed", size=2, alignment=3)])

@@ -19,6 +19,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add backlog priority grouping so reports summarize P0/P1/P2 progress separately.
 - [x] Package the CLI for editable installs and document `pip install -e .` usage.
 - [x] Add vector memory-layout padding helper for issue-driven runtime work.
+- [x] Add documented memory-layout errors for invalid vector and struct alignments.
 
 ## P2 — project quality
 

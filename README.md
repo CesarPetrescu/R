@@ -21,7 +21,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
-the total structure size up for safe array element placement.
+the total structure size up for safe array element placement. Memory layout
+helpers reject negative sizes/counts, zero-sized payload fields, and non-power-
+of-two alignments with `ValueError` so invalid runtime layouts fail explicitly.
 
 Run from a checkout:
 
@@ -57,7 +59,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 18, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 8, "next_item": null, "open": 0}, "P2": {"completed": 6, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 19, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 9, "next_item": null, "open": 0}, "P2": {"completed": 6, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -69,7 +71,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 18 |
+| Completed backlog items | 19 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -78,7 +80,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 8 | 0 | None |
+| P1 | 9 | 0 | None |
 | P2 | 6 | 0 | None |
 
 ## Next backlog item

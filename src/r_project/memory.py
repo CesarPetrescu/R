@@ -94,6 +94,7 @@ def vector_layout(*, header_size: int, element_size: int, element_alignment: int
     _require_non_negative("header_size", header_size)
     _require_positive("element_size", element_size)
     _require_positive("element_alignment", element_alignment)
+    _require_power_of_two("element_alignment", element_alignment)
     _require_non_negative("length", length)
 
     data_offset = align_up(header_size, element_alignment)
@@ -126,6 +127,7 @@ def _validate_field(field: MemoryField) -> None:
         raise ValueError(f"field {field.name!r} size must be positive")
     if field.alignment <= 0:
         raise ValueError(f"field {field.name!r} alignment must be positive")
+    _require_power_of_two(f"field {field.name!r} alignment", field.alignment)
 
 
 def _require_non_negative(name: str, value: int) -> None:
@@ -136,3 +138,8 @@ def _require_non_negative(name: str, value: int) -> None:
 def _require_positive(name: str, value: int) -> None:
     if value <= 0:
         raise ValueError(f"{name} must be positive")
+
+
+def _require_power_of_two(name: str, value: int) -> None:
+    if value & (value - 1) != 0:
+        raise ValueError(f"{name} must be a power of two")
