@@ -92,7 +92,6 @@ class VectorLayout:
 
 def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[str, ...] = ()) -> MemoryField:
     """Return a structure field for embedding an already computed layout.
-
     This lets callers compose low-level object layouts from smaller struct or
     vector layouts while preserving the nested object's size and alignment.
     Optional symbolic tags attach source-level provenance to rendered maps.
@@ -102,6 +101,41 @@ def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[
         return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment, tags=tags, layout=layout)
     if isinstance(layout, VectorLayout):
         return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment, tags=tags, layout=layout)
+    raise TypeError("layout must be a StructLayout or VectorLayout")
+
+
+def flatten_byte_spans(name: str, layout: StructLayout | VectorLayout, *, base_offset: int = 0) -> list[ByteSpan]:
+    """Return qualified half-open byte ranges for a layout and its children.
+
+    Struct fields and vector parts are named relative to ``name``. When a
+    struct field embeds another layout, the field span is included first and
+    then child spans are emitted with absolute offsets and inherited tags so
+    overlap diagnostics can compare nested runtime ranges directly.
+    """
+
+    return _flatten_byte_span_items(name, layout, base_offset=base_offset, inherited_tags=())
+
+
+def _flatten_byte_span_items(
+    name: str, layout: StructLayout | VectorLayout, *, base_offset: int, inherited_tags: tuple[str, ...]
+) -> list[ByteSpan]:
+    if isinstance(layout, StructLayout):
+        spans: list[ByteSpan] = []
+        for field in layout.fields:
+            field_name = f"{name}.{field.name}"
+            field_start = base_offset + field.offset
+            field_tags = inherited_tags + field.tags
+            spans.append(ByteSpan(name=field_name, start=field_start, end=field_start + field.size, tags=field_tags))
+            if field.layout is not None:
+                spans.extend(
+                    _flatten_byte_span_items(field_name, field.layout, base_offset=field_start, inherited_tags=field_tags)
+                )
+        return spans
+    if isinstance(layout, VectorLayout):
+        return [
+            ByteSpan(name=f"{name}.{span.name}", start=span.start, end=span.end, tags=inherited_tags)
+            for span in layout.byte_spans(base_offset=base_offset)
+        ]
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 

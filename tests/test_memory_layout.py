@@ -1,7 +1,7 @@
 import pytest
 
 from r_project import vector_layout
-from r_project.memory import MemoryField, layout_field, render_layout, struct_layout
+from r_project.memory import MemoryField, flatten_byte_spans, layout_field, render_layout, struct_layout
 
 
 def test_vector_layout_pads_payload_start_and_total_size_to_alignment():
@@ -200,6 +200,34 @@ def test_render_layout_can_include_byte_span_summaries_on_demand():
             "  payload @ 4 size=12 align=4 leading_padding=3 tags=source:literal-bytes span=4..16",
         ]
     )
+
+
+def test_flatten_byte_spans_qualifies_nested_child_ranges_for_overlap_checks():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    header = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            MemoryField(name="count", size=4, alignment=4, tags=("source:length",)),
+        ]
+    )
+    packet = struct_layout(
+        [
+            layout_field("header", header, tags=("runtime:header",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+
+    spans = flatten_byte_spans("packet", packet)
+
+    assert [(span.name, span.start, span.end, span.tags) for span in spans] == [
+        ("packet.header", 0, 8, ("runtime:header",)),
+        ("packet.header.tag", 0, 1, ("runtime:header", "source:token-kind")),
+        ("packet.header.count", 4, 8, ("runtime:header", "source:length")),
+        ("packet.payload", 8, 20, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.header", 8, 11, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[0]", 12, 16, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[1]", 16, 20, ("source:literal-bytes", "runtime:vector")),
+    ]
 
 
 def test_vector_layout_rejects_non_power_of_two_alignment():
