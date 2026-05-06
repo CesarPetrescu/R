@@ -18,6 +18,10 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
 
+The package also includes `r_project.memory.struct_layout(...)`, a tested
+helper for C-like structure layouts that aligns each field offset and rounds
+the total structure size up for safe array element placement.
+
 Run from a checkout:
 
 ```bash

@@ -8,7 +8,7 @@ Last updated: 2026-05-05
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries and vector memory-layout padding helpers.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries, vector memory-layout padding helpers, and C-like struct memory layout helpers.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -21,6 +21,7 @@ Last updated: 2026-05-05
 - `python3 -m pip install -e .` installs an editable `r-project` console script for local development.
 - `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently.
+- `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned.
 
 ## Verified commands
 

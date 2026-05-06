@@ -1,6 +1,15 @@
 """Repository readiness reporting and runtime helpers for project R."""
 
-from .memory import VectorLayout, vector_layout
+from .memory import MemoryField, PlacedField, StructLayout, VectorLayout, struct_layout, vector_layout
 from .report import ProjectReport, analyze_project
 
-__all__ = ["ProjectReport", "VectorLayout", "analyze_project", "vector_layout"]
+__all__ = [
+    "MemoryField",
+    "PlacedField",
+    "ProjectReport",
+    "StructLayout",
+    "VectorLayout",
+    "analyze_project",
+    "struct_layout",
+    "vector_layout",
+]
