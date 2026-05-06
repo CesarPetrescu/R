@@ -21,7 +21,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
 - optional symbolic field tags in struct memory-map renderers so future runtime
-  objects can retain source-level provenance
+  objects can retain source-level provenance, plus opt-in recursive child layout
+  expansion for tagged nested object traceability
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -34,6 +35,9 @@ struct or vector layouts into larger composite structures while preserving
 nested total size and alignment and carrying symbolic provenance tags into
 rendered memory maps. Use `r_project.memory.render_layout(name, layout)` to
 print stable, line-oriented debug maps for named struct and vector layouts.
+Pass `include_nested=True` to recursively expand fields created by
+`layout_field(...)` into indented child memory maps when source-level tracing
+needs the full nested object shape.
 
 Run from a checkout:
 
@@ -91,7 +95,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 24, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 13, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 25, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 14, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -103,7 +107,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 24 |
+| Completed backlog items | 25 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -112,7 +116,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 13 | 0 | None |
+| P1 | 14 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item

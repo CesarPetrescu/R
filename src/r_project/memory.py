@@ -11,6 +11,7 @@ class MemoryField:
     size: int
     alignment: int
     tags: tuple[str, ...] = ()
+    layout: StructLayout | VectorLayout | None = None
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class PlacedField:
     offset: int
     leading_padding: int
     tags: tuple[str, ...] = ()
+    layout: StructLayout | VectorLayout | None = None
 
 
 @dataclass(frozen=True)
@@ -65,36 +67,45 @@ def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[
     """
 
     if isinstance(layout, StructLayout):
-        return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment, tags=tags)
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment, tags=tags, layout=layout)
     if isinstance(layout, VectorLayout):
-        return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment, tags=tags)
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment, tags=tags, layout=layout)
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
-def render_layout(name: str, layout: StructLayout | VectorLayout) -> str:
+def render_layout(name: str, layout: StructLayout | VectorLayout, *, include_nested: bool = False) -> str:
     """Render a named memory layout as stable, line-oriented debug text."""
 
+    return "\n".join(_render_layout_lines(name, layout, include_nested=include_nested, indent=0))
+
+
+def _render_layout_lines(
+    name: str, layout: StructLayout | VectorLayout, *, include_nested: bool, indent: int
+) -> list[str]:
+    prefix = " " * indent
     if isinstance(layout, StructLayout):
-        lines = [f"{name}: struct size={layout.total_size} align={layout.alignment} tail_padding={layout.tail_padding}"]
-        lines.extend(
-            f"  {field.name} @ {field.offset} size={field.size} align={field.alignment} "
-            f"leading_padding={field.leading_padding}{_render_tags(field.tags)}"
-            for field in layout.fields
-        )
-        return "\n".join(lines)
+        lines = [f"{prefix}{name}: struct size={layout.total_size} align={layout.alignment} tail_padding={layout.tail_padding}"]
+        for field in layout.fields:
+            lines.append(
+                f"{prefix}  {field.name} @ {field.offset} size={field.size} align={field.alignment} "
+                f"leading_padding={field.leading_padding}{_render_tags(field.tags)}"
+            )
+            if include_nested and field.layout is not None:
+                lines.extend(_render_layout_lines(field.name, field.layout, include_nested=True, indent=indent + 4))
+        return lines
     if isinstance(layout, VectorLayout):
         lines = [
-            f"{name}: vector size={layout.total_size} element_size={layout.element_size} "
+            f"{prefix}{name}: vector size={layout.total_size} element_size={layout.element_size} "
             f"align={layout.element_alignment} length={layout.length}",
-            f"  header size={layout.header_size} padding_after_header={layout.padding_after_header} "
+            f"{prefix}  header size={layout.header_size} padding_after_header={layout.padding_after_header} "
             f"data_offset={layout.data_offset}",
         ]
         lines.extend(
-            f"  element[{index}] @ {offset} stride={layout.element_stride}"
+            f"{prefix}  element[{index}] @ {offset} stride={layout.element_stride}"
             for index, offset in enumerate(layout.element_offsets)
         )
-        lines.append(f"  trailing_padding={layout.trailing_padding}")
-        return "\n".join(lines)
+        lines.append(f"{prefix}  trailing_padding={layout.trailing_padding}")
+        return lines
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
@@ -126,6 +137,7 @@ def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = Non
                 offset=aligned_offset,
                 leading_padding=aligned_offset - offset,
                 tags=field.tags,
+                layout=field.layout,
             )
         )
         offset = aligned_offset + field.size
