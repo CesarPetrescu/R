@@ -174,6 +174,30 @@ def find_overlapping_byte_spans(spans: list[ByteSpan]) -> list[ByteSpanOverlap]:
     return overlaps
 
 
+def render_byte_span_overlaps(spans: list[ByteSpan]) -> str:
+    """Render stable Markdown diagnostics for overlapping byte spans."""
+
+    overlaps = find_overlapping_byte_spans(spans)
+    if not overlaps:
+        return "# Byte Span Overlaps\n\nNo overlapping byte spans."
+    lines = [
+        "# Byte Span Overlaps",
+        "",
+        "| Left span | Right span | Overlap | Size |",
+        "| --- | --- | ---: | ---: |",
+    ]
+    lines.extend(
+        f"| {_render_overlap_endpoint(overlap.left)} | {_render_overlap_endpoint(overlap.right)} | "
+        f"{overlap.start}..{overlap.end} | {overlap.size} |"
+        for overlap in overlaps
+    )
+    return "\n".join(lines)
+
+
+def _render_overlap_endpoint(span: ByteSpan) -> str:
+    return f"{span.name} ({span.start}..{span.end})"
+
+
 def render_layout(
     name: str, layout: StructLayout | VectorLayout, *, include_nested: bool = False, include_spans: bool = False
 ) -> str:

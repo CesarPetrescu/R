@@ -13,3 +13,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added optional symbolic field tags/provenance metadata to struct memory-map rendering.
 - Added recursive flattened byte spans for fully qualified nested memory range diagnostics.
 - Added `find_overlapping_byte_spans(...)` for pairwise runtime memory-range overlap diagnostics.
+- Added `render_byte_span_overlaps(...)` for stable Markdown overlap diagnostics with an explicit empty state.
