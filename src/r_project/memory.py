@@ -153,6 +153,56 @@ def _flatten_byte_span_items(
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
+def filter_byte_spans(
+    spans: list[ByteSpan],
+    *,
+    name_prefix: str | None = None,
+    name_contains: str | None = None,
+    tags_all: tuple[str, ...] = (),
+    tags_any: tuple[str, ...] = (),
+) -> list[ByteSpan]:
+    """Return spans matching optional name and tag predicates.
+
+    Predicates are combined with AND semantics. ``tags_all`` requires every
+    requested tag to be present, while ``tags_any`` requires at least one of the
+    requested tags when provided. Input ordering is preserved so callers can
+    narrow flattened byte spans before overlap checks without losing stable
+    report ordering.
+    """
+
+    return [
+        span
+        for span in spans
+        if _span_matches_filters(
+            span,
+            name_prefix=name_prefix,
+            name_contains=name_contains,
+            tags_all=tags_all,
+            tags_any=tags_any,
+        )
+    ]
+
+
+def _span_matches_filters(
+    span: ByteSpan,
+    *,
+    name_prefix: str | None,
+    name_contains: str | None,
+    tags_all: tuple[str, ...],
+    tags_any: tuple[str, ...],
+) -> bool:
+    if name_prefix is not None and not span.name.startswith(name_prefix):
+        return False
+    if name_contains is not None and name_contains not in span.name:
+        return False
+    span_tags = set(span.tags)
+    if not set(tags_all).issubset(span_tags):
+        return False
+    if tags_any and span_tags.isdisjoint(tags_any):
+        return False
+    return True
+
+
 def find_overlapping_byte_spans(spans: list[ByteSpan]) -> list[ByteSpanOverlap]:
     """Return pairwise intersections for half-open byte spans.
 

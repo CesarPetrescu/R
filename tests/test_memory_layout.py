@@ -3,6 +3,7 @@ import pytest
 from r_project import vector_layout
 from r_project.memory import (
     MemoryField,
+    filter_byte_spans,
     find_overlapping_byte_spans,
     flatten_byte_spans,
     layout_field,
@@ -235,6 +236,49 @@ def test_flatten_byte_spans_qualifies_nested_child_ranges_for_overlap_checks():
         ("packet.payload.header", 8, 11, ("source:literal-bytes", "runtime:vector")),
         ("packet.payload.element[0]", 12, 16, ("source:literal-bytes", "runtime:vector")),
         ("packet.payload.element[1]", 16, 20, ("source:literal-bytes", "runtime:vector")),
+    ]
+
+
+def test_filter_byte_spans_selects_flattened_ranges_by_name_and_tags():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    header = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            MemoryField(name="count", size=4, alignment=4, tags=("source:length",)),
+        ]
+    )
+    packet = struct_layout(
+        [
+            layout_field("header", header, tags=("runtime:header",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+    spans = flatten_byte_spans("packet", packet)
+
+    filtered = filter_byte_spans(spans, name_prefix="packet.payload.", tags_all=("runtime:vector",))
+
+    assert [(span.name, span.start, span.end, span.tags) for span in filtered] == [
+        ("packet.payload.header", 8, 11, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[0]", 12, 16, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[1]", 16, 20, ("source:literal-bytes", "runtime:vector")),
+    ]
+
+
+def test_filter_byte_spans_supports_name_contains_and_any_tag_predicates():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    packet = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+    spans = flatten_byte_spans("packet", packet)
+
+    filtered = filter_byte_spans(spans, name_contains="element", tags_any=("runtime:vector", "runtime:string"))
+
+    assert [(span.name, span.start, span.end) for span in filtered] == [
+        ("packet.payload.element[0]", 8, 12),
+        ("packet.payload.element[1]", 12, 16),
     ]
 
 
