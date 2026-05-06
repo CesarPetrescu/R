@@ -18,6 +18,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add CLI option to fail with a nonzero exit code when active blockers exist.
 - [x] Add backlog priority grouping so reports summarize P0/P1/P2 progress separately.
 - [x] Package the CLI for editable installs and document `pip install -e .` usage.
+- [x] Add vector memory-layout padding helper for issue-driven runtime work.
 
 ## P2 — project quality
 

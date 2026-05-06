@@ -8,7 +8,7 @@ Last updated: 2026-05-05
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries and memory layout helpers.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project` CLI, including per-priority backlog summaries, vector memory-layout padding helpers, and C-like struct memory layout helpers.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -20,6 +20,7 @@ Last updated: 2026-05-05
 - `python3 -m r_project --root <path> --markdown` emits the report as Markdown for PR comments, issue updates, and status pages.
 - `python3 -m pip install -e .` installs an editable `r-project` console script for local development.
 - `--fail-on-blockers` makes the CLI exit with status 2 when active blockers exist, after emitting the selected report format.
+- `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned.
 
 ## Verified commands
@@ -36,3 +37,5 @@ docker compose run --build --rm test
 ## Operating rule
 
 The autonomous agent must turn this into a real, tested project by finishing concrete backlog items each run. It should not stop at vague improvements when code can be created safely.
+
+Scheduled R runs are PR-first and reviewer-gated: changes must be made on `ai/r/*` branches, pushed with `/usr/local/bin/r-bot-git-push`, opened/updated as PRs to `main`, reviewed by the AI reviewer, and merged to `main` by r-coder only when `AI_REVIEW:CLEAR`, clean/mergeable state, and local Docker verification are all present.
