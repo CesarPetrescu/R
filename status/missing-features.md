@@ -20,6 +20,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Package the CLI for editable installs and document `pip install -e .` usage.
 - [x] Add vector memory-layout padding helper for issue-driven runtime work.
 - [x] Add documented memory-layout errors for invalid vector and struct alignments.
+- [x] Add optional memory-layout overflow-limit checks for explicit runtime size bounds.
 
 ## P2 — project quality
 
