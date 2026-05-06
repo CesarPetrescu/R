@@ -22,6 +22,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add documented memory-layout errors for invalid vector and struct alignments.
 - [x] Add optional memory-layout overflow-limit checks for explicit runtime size bounds.
 - [x] Add object-layout helpers for nesting struct/vector layouts into composite runtime objects.
+- [x] Add named object-layout renderers for debugging composite runtime memory maps.
 
 ## P2 — project quality
 
