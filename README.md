@@ -24,7 +24,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   objects can retain source-level provenance, opt-in recursive child layout
   expansion for tagged nested object traceability, optional half-open byte
   span summaries for quick runtime overlap checks, recursive flattened byte
-  spans for fully qualified nested range comparisons, a stable overlap
+  spans for fully qualified nested range comparisons, span filtering by
+  qualified names and tags for narrowed diagnostics, a stable overlap
   detector for intersecting runtime ranges, and Markdown overlap reports for
   human-readable runtime diagnostics
 
@@ -45,9 +46,11 @@ needs the full nested object shape. Pass `include_spans=True` to append
 half-open `span=start..end` ranges, call `layout.byte_spans()` to get
 structured `ByteSpan` records, use `flatten_byte_spans(name, layout)` to
 produce fully qualified parent/child spans with absolute offsets for nested
-diagnostics, pass spans to `find_overlapping_byte_spans(...)` to identify
-runtime range intersections while excluding endpoint-only touching ranges, or
-call `render_byte_span_overlaps(...)` to format those intersections as stable
+diagnostics, call `filter_byte_spans(...)` to narrow flattened spans by
+qualified names and provenance tags before overlap checks, pass spans to
+`find_overlapping_byte_spans(...)` to identify runtime range intersections
+while excluding endpoint-only touching ranges, or call
+`render_byte_span_overlaps(...)` to format those intersections as stable
 Markdown for PR comments and trace reports.
 
 Run from a checkout:
@@ -65,7 +68,7 @@ runtime work:
 
 ```python
 from r_project import vector_layout
-from r_project.memory import MemoryField, find_overlapping_byte_spans, flatten_byte_spans, layout_field, render_byte_span_overlaps, render_layout, struct_layout
+from r_project.memory import MemoryField, filter_byte_spans, find_overlapping_byte_spans, flatten_byte_spans, layout_field, render_byte_span_overlaps, render_layout, struct_layout
 
 payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 record = struct_layout(
@@ -88,6 +91,12 @@ assert [(span.name, span.start, span.end) for span in record.byte_spans()] == [
 assert [(span.name, span.start, span.end) for span in flatten_byte_spans("record", record)] == [
     ("record.tag", 0, 1),
     ("record.payload", 4, 16),
+    ("record.payload.header", 4, 7),
+    ("record.payload.element[0]", 8, 12),
+    ("record.payload.element[1]", 12, 16),
+]
+
+assert [(span.name, span.start, span.end) for span in filter_byte_spans(flatten_byte_spans("record", record), name_prefix="record.payload.", tags_all=("source:literal-bytes",))] == [
     ("record.payload.header", 4, 7),
     ("record.payload.element[0]", 8, 12),
     ("record.payload.element[1]", 12, 16),
@@ -132,7 +141,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 29, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 18, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 30, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 19, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -144,7 +153,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 29 |
+| Completed backlog items | 30 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -153,7 +162,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 18 | 0 | None |
+| P1 | 19 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
