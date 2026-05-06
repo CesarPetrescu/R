@@ -51,3 +51,16 @@ def test_vector_layout_rejects_non_power_of_two_alignment():
 def test_struct_layout_rejects_non_power_of_two_field_alignment():
     with pytest.raises(ValueError, match="field 'packed' alignment must be a power of two"):
         struct_layout([MemoryField(name="packed", size=2, alignment=3)])
+
+
+def test_vector_layout_rejects_total_size_above_explicit_limit():
+    with pytest.raises(ValueError, match="vector total_size 16 exceeds max_total_size 15"):
+        vector_layout(header_size=8, element_size=4, element_alignment=4, length=2, max_total_size=15)
+
+
+def test_struct_layout_rejects_total_size_above_explicit_limit():
+    with pytest.raises(ValueError, match="struct total_size 8 exceeds max_total_size 7"):
+        struct_layout(
+            [MemoryField(name="count", size=4, alignment=4), MemoryField(name="tag", size=1, alignment=1)],
+            max_total_size=7,
+        )

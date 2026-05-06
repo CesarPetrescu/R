@@ -5,7 +5,7 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add a fixture-backed README example generator if report examples become longer.
-2. Extend memory-layout helpers with overflow-limit checks if runtime size bounds become explicit.
+2. Add object-layout helpers for nested structs/vectors if runtime representation work needs composite layouts.
 3. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist
