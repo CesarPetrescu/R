@@ -26,6 +26,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add symbolic field tags or provenance metadata to composite runtime memory maps.
 - [x] Add tagged nested-layout renderers that recursively include child struct/vector memory maps.
 - [x] Add symbolic byte-span summaries for rendered layouts and overlap diagnostics.
+- [x] Add recursive byte-span flattener for nested layouts so overlap checks can compare fully qualified child ranges.
 
 ## P2 — project quality
 
