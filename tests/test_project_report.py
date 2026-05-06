@@ -238,3 +238,40 @@ def test_readme_markdown_example_matches_current_cli_output():
 
     assert _readme_fenced_block("markdown") == result.stdout.strip()
     assert result.stderr == ""
+
+
+def test_cli_check_readme_examples_succeeds_when_examples_match_current_output():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--check-readme-examples"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "README examples match current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_cli_check_readme_examples_reports_drift(tmp_path):
+    write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
+    write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--check-readme-examples"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "README json example is out of date.\nREADME markdown example is out of date.\n"

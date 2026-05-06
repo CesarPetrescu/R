@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .report import analyze_project
@@ -18,12 +19,26 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Exit with status 2 when active blockers are present after emitting the report.",
     )
+    parser.add_argument(
+        "--check-readme-examples",
+        action="store_true",
+        help="Exit nonzero when README JSON/Markdown examples drift from current CLI output.",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    report = analyze_project(Path(args.root))
+    root = Path(args.root)
+    report = analyze_project(root)
+    if args.check_readme_examples:
+        mismatches = _readme_example_mismatches(root, report)
+        if mismatches:
+            for language in mismatches:
+                print(f"README {language} example is out of date.", file=sys.stderr)
+            return 1
+        print("README examples match current CLI output.")
+        return 0
     if args.json:
         print(json.dumps(report.to_dict(), sort_keys=True))
     elif args.markdown:
@@ -41,6 +56,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.fail_on_blockers and report.has_active_blockers:
         return 2
     return 0
+
+
+def _readme_example_mismatches(root: Path, report) -> list[str]:
+    readme = root / "README.md"
+    text = readme.read_text(encoding="utf-8") if readme.exists() else ""
+    expected = {
+        "json": json.dumps(report.to_dict(), sort_keys=True),
+        "markdown": report.to_markdown(),
+    }
+    return [language for language, output in expected.items() if _fenced_block(text, language) != output]
+
+
+def _fenced_block(text: str, language: str) -> str | None:
+    marker = f"```{language}\n"
+    start = text.find(marker)
+    if start == -1:
+        return None
+    content_start = start + len(marker)
+    end = text.find("\n```", content_start)
+    if end == -1:
+        return None
+    return text[content_start:end]
 
 
 if __name__ == "__main__":

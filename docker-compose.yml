@@ -6,4 +6,5 @@ services:
       && python -m r_project.lint --root .
       && python -m r_project --root . --json
       && python -m r_project --root . --markdown
-      && python -m r_project --root . --json --fail-on-blockers"
+      && python -m r_project --root . --json --fail-on-blockers
+      && python -m r_project --root . --check-readme-examples"

@@ -29,3 +29,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add type-checking or linting command once the toolchain choice is stable.
 - [x] Dockerize the test/verification harness so autonomous runs validate in a clean container.
 - [x] Add tests that enforce README report examples stay in sync with current CLI output.
+- [x] Add a CLI check that reports README JSON/Markdown example drift on demand.
