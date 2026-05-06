@@ -24,6 +24,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add object-layout helpers for nesting struct/vector layouts into composite runtime objects.
 - [x] Add named object-layout renderers for debugging composite runtime memory maps.
 - [x] Add symbolic field tags or provenance metadata to composite runtime memory maps.
+- [x] Add tagged nested-layout renderers that recursively include child struct/vector memory maps.
 
 ## P2 — project quality
 

@@ -8,7 +8,7 @@ Last updated: 2026-05-06
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift tests and on-demand drift checks, vector memory-layout padding helpers with explicit invalid-alignment and overflow-limit errors, C-like struct memory layout helpers with explicit invalid-alignment and overflow-limit errors, composite layout fields for nesting struct/vector layouts into larger runtime objects, named layout renderers with optional symbolic field tags/provenance metadata for stable memory-map debugging, release/versioning notes, and MIT licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift tests and on-demand drift checks, vector memory-layout padding helpers with explicit invalid-alignment and overflow-limit errors, C-like struct memory layout helpers with explicit invalid-alignment and overflow-limit errors, composite layout fields for nesting struct/vector layouts into larger runtime objects, named layout renderers with optional symbolic field tags/provenance metadata and opt-in recursive child layout expansion for stable memory-map debugging, release/versioning notes, and MIT licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -25,7 +25,7 @@ Last updated: 2026-05-06
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently; invalid negative values, zero element sizes/alignments, non-power-of-two element alignments, and optional `max_total_size` overflows raise `ValueError`.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned; invalid field sizes/alignments, non-power-of-two field alignments, and optional `max_total_size` overflows raise `ValueError`.
 - `r_project.memory.layout_field(name, layout)` converts computed struct/vector layouts into `MemoryField` values so nested runtime objects preserve child total sizes and alignment when embedded in larger structures.
-- `r_project.memory.render_layout(name, layout)` renders named struct/vector layouts as stable, line-oriented debug memory maps with offsets, padding, sizes, alignment, and optional symbolic field tags/provenance metadata.
+- `r_project.memory.render_layout(name, layout)` renders named struct/vector layouts as stable, line-oriented debug memory maps with offsets, padding, sizes, alignment, and optional symbolic field tags/provenance metadata. Pass `include_nested=True` to recursively include embedded child struct/vector layouts for full source-level traceability.
 - Tests compare README JSON and Markdown report examples with the current CLI output so documented examples do not drift when report fields or counts change.
 - `README.md` documents the current `0.1.0` semantic-versioning release policy and `CHANGELOG.md` records unreleased user-visible changes.
 - `LICENSE` declares the project MIT license for Project R contributors.

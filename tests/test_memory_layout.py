@@ -133,6 +133,40 @@ def test_struct_layout_preserves_symbolic_field_tags_in_rendered_memory_maps():
     )
 
 
+def test_render_layout_can_expand_nested_tagged_layouts_for_traceability():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    header = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            MemoryField(name="count", size=4, alignment=4, tags=("source:length",)),
+        ]
+    )
+    packet = struct_layout(
+        [
+            layout_field("header", header, tags=("runtime:header",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+
+    assert packet.fields[0].layout is header
+    assert packet.fields[1].layout is payload
+    assert render_layout("packet", packet, include_nested=True) == "\n".join(
+        [
+            "packet: struct size=20 align=4 tail_padding=0",
+            "  header @ 0 size=8 align=4 leading_padding=0 tags=runtime:header",
+            "    header: struct size=8 align=4 tail_padding=0",
+            "      tag @ 0 size=1 align=1 leading_padding=0 tags=source:token-kind",
+            "      count @ 4 size=4 align=4 leading_padding=3 tags=source:length",
+            "  payload @ 8 size=12 align=4 leading_padding=0 tags=source:literal-bytes,runtime:vector",
+            "    payload: vector size=12 element_size=4 align=4 length=2",
+            "      header size=3 padding_after_header=1 data_offset=4",
+            "      element[0] @ 4 stride=4",
+            "      element[1] @ 8 stride=4",
+            "      trailing_padding=0",
+        ]
+    )
+
+
 def test_vector_layout_rejects_non_power_of_two_alignment():
     with pytest.raises(ValueError, match="element_alignment must be a power of two"):
         vector_layout(header_size=0, element_size=4, element_alignment=3, length=1)
