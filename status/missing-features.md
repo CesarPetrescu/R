@@ -27,6 +27,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add tagged nested-layout renderers that recursively include child struct/vector memory maps.
 - [x] Add symbolic byte-span summaries for rendered layouts and overlap diagnostics.
 - [x] Add recursive byte-span flattener for nested layouts so overlap checks can compare fully qualified child ranges.
+- [x] Add layout overlap detector that consumes flattened byte spans and reports intersecting runtime ranges.
 
 ## P2 — project quality
 

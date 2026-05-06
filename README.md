@@ -23,8 +23,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - optional symbolic field tags in struct memory-map renderers so future runtime
   objects can retain source-level provenance, opt-in recursive child layout
   expansion for tagged nested object traceability, optional half-open byte
-  span summaries for quick runtime overlap checks, and recursive flattened byte
-  spans for fully qualified nested range comparisons
+  span summaries for quick runtime overlap checks, recursive flattened byte
+  spans for fully qualified nested range comparisons, and a stable overlap
+  detector for intersecting runtime ranges
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -41,9 +42,10 @@ Pass `include_nested=True` to recursively expand fields created by
 `layout_field(...)` into indented child memory maps when source-level tracing
 needs the full nested object shape. Pass `include_spans=True` to append
 half-open `span=start..end` ranges, call `layout.byte_spans()` to get
-structured `ByteSpan` records, or use `flatten_byte_spans(name, layout)` to
+structured `ByteSpan` records, use `flatten_byte_spans(name, layout)` to
 produce fully qualified parent/child spans with absolute offsets for nested
-overlap diagnostics.
+diagnostics, or pass spans to `find_overlapping_byte_spans(...)` to identify
+runtime range intersections while excluding endpoint-only touching ranges.
 
 Run from a checkout:
 
@@ -60,7 +62,7 @@ runtime work:
 
 ```python
 from r_project import vector_layout
-from r_project.memory import MemoryField, flatten_byte_spans, layout_field, render_layout, struct_layout
+from r_project.memory import MemoryField, find_overlapping_byte_spans, flatten_byte_spans, layout_field, render_layout, struct_layout
 
 payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 record = struct_layout(
@@ -88,6 +90,12 @@ assert [(span.name, span.start, span.end) for span in flatten_byte_spans("record
     ("record.payload.element[1]", 12, 16),
 ]
 
+left = flatten_byte_spans("left", payload, base_offset=16)
+right = flatten_byte_spans("right", vector_layout(header_size=0, element_size=4, element_alignment=4, length=1), base_offset=20)
+assert [(overlap.left.name, overlap.right.name, overlap.start, overlap.end) for overlap in find_overlapping_byte_spans(left + right)] == [
+    ("left.element[1]", "right.element[0]", 20, 24),
+]
+
 layout = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 assert layout.data_offset == 4
 assert layout.element_offsets == [4, 8]
@@ -112,7 +120,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 27, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 16, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 28, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 17, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -124,7 +132,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 27 |
+| Completed backlog items | 28 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -133,7 +141,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 16 | 0 | None |
+| P1 | 17 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item

@@ -42,6 +42,20 @@ class ByteSpan:
 
 
 @dataclass(frozen=True)
+class ByteSpanOverlap:
+    """Intersection between two half-open byte spans."""
+
+    left: ByteSpan
+    right: ByteSpan
+    start: int
+    end: int
+
+    @property
+    def size(self) -> int:
+        return self.end - self.start
+
+
+@dataclass(frozen=True)
 class StructLayout:
     """C-like structure layout with internal and tail padding made explicit."""
 
@@ -137,6 +151,27 @@ def _flatten_byte_span_items(
             for span in layout.byte_spans(base_offset=base_offset)
         ]
     raise TypeError("layout must be a StructLayout or VectorLayout")
+
+
+def find_overlapping_byte_spans(spans: list[ByteSpan]) -> list[ByteSpanOverlap]:
+    """Return pairwise intersections for half-open byte spans.
+
+    Ranges that only touch at an endpoint are not overlaps. Results are stable:
+    spans are compared in ascending start/end/name order and each pair appears
+    once with the earlier span as ``left``.
+    """
+
+    ordered_spans = sorted(spans, key=lambda span: (span.start, span.end, span.name))
+    overlaps: list[ByteSpanOverlap] = []
+    for left_index, left in enumerate(ordered_spans):
+        for right in ordered_spans[left_index + 1 :]:
+            if right.start >= left.end:
+                break
+            overlap_start = max(left.start, right.start)
+            overlap_end = min(left.end, right.end)
+            if overlap_start < overlap_end:
+                overlaps.append(ByteSpanOverlap(left=left, right=right, start=overlap_start, end=overlap_end))
+    return overlaps
 
 
 def render_layout(
