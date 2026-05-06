@@ -257,12 +257,85 @@ def render_byte_span_overlaps(spans: list[ByteSpan]) -> str:
         "| Left span | Right span | Overlap | Size |",
         "| --- | --- | ---: | ---: |",
     ]
-    lines.extend(
+    lines.extend(_render_overlap_rows(overlaps))
+    return "\n".join(lines)
+
+
+def group_byte_span_overlaps(
+    spans: list[ByteSpan], *, by: str, prefix_depth: int = 1
+) -> dict[str, list[ByteSpanOverlap]]:
+    """Group byte-span overlaps by provenance tag or qualified-name prefix.
+
+    ``by="tag"`` places overlaps under tags shared by both endpoints; overlaps
+    with no shared endpoint tags appear under ``"untagged"``. ``by="name_prefix"`` groups overlaps by the pair of qualified-name prefixes
+    from each endpoint, preserving stable overlap ordering within each group.
+    """
+
+    overlaps = find_overlapping_byte_spans(spans)
+    grouped: dict[str, list[ByteSpanOverlap]] = {}
+    for overlap in overlaps:
+        for key in _overlap_group_keys(overlap, by=by, prefix_depth=prefix_depth):
+            grouped.setdefault(key, []).append(overlap)
+    return grouped
+
+
+def render_grouped_byte_span_overlaps(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
+    """Render overlap diagnostics grouped by provenance tag or name prefix."""
+
+    grouped = group_byte_span_overlaps(spans, by=by, prefix_depth=prefix_depth)
+    title = _grouped_overlap_title(by)
+    if not grouped:
+        return f"# {title}\n\nNo overlapping byte spans."
+
+    lines = [f"# {title}"]
+    for group_name, overlaps in grouped.items():
+        lines.extend(
+            [
+                "",
+                f"## {group_name}",
+                "",
+                "| Left span | Right span | Overlap | Size |",
+                "| --- | --- | ---: | ---: |",
+                *_render_overlap_rows(overlaps),
+            ]
+        )
+    return "\n".join(lines)
+
+
+def _overlap_group_keys(overlap: ByteSpanOverlap, *, by: str, prefix_depth: int) -> list[str]:
+    if by == "tag":
+        keys = sorted(set(overlap.left.tags).intersection(overlap.right.tags))
+        if not keys:
+            keys.append("untagged")
+        return keys
+    if by == "name_prefix":
+        left_prefix = _span_name_prefix(overlap.left.name, prefix_depth)
+        right_prefix = _span_name_prefix(overlap.right.name, prefix_depth)
+        if left_prefix <= right_prefix:
+            return [f"{left_prefix} ↔ {right_prefix}"]
+        return [f"{right_prefix} ↔ {left_prefix}"]
+    raise ValueError("by must be 'tag' or 'name_prefix'")
+
+
+def _span_name_prefix(name: str, prefix_depth: int) -> str:
+    _require_positive("prefix_depth", prefix_depth)
+    return ".".join(name.split(".")[:prefix_depth])
+
+
+def _grouped_overlap_title(by: str) -> str:
+    if by == "tag":
+        return "Byte Span Overlaps by Tag"
+    if by == "name_prefix":
+        return "Byte Span Overlaps by Name Prefix"
+    raise ValueError("by must be 'tag' or 'name_prefix'")
+
+
+def _render_overlap_rows(overlaps: list[ByteSpanOverlap]) -> list[str]:
+    return [
         f"| {_render_overlap_endpoint(overlap.left)} | {_render_overlap_endpoint(overlap.right)} | "
         f"{overlap.start}..{overlap.end} | {overlap.size} |"
         for overlap in overlaps
-    )
-    return "\n".join(lines)
+    ]
 
 
 def _render_overlap_endpoint(span: ByteSpan) -> str:

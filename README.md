@@ -26,8 +26,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   span summaries for quick runtime overlap checks, recursive flattened byte
   spans for fully qualified nested range comparisons, span filtering by
   qualified names and tags for narrowed diagnostics, a stable overlap
-  detector for intersecting runtime ranges, and Markdown overlap reports for
-  human-readable runtime diagnostics
+  detector for intersecting runtime ranges, Markdown overlap reports for
+  human-readable runtime diagnostics, and grouped overlap reports by shared
+  provenance tag or qualified-name prefix for larger trace reviews
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -51,9 +52,11 @@ when callers need leaf-only diagnostics, call `filter_byte_spans(...)` to
 narrow flattened spans by qualified names and provenance tags before overlap
 checks, pass spans to
 `find_overlapping_byte_spans(...)` to identify runtime range intersections
-while excluding endpoint-only touching ranges, or call
+while excluding endpoint-only touching ranges, call
 `render_byte_span_overlaps(...)` to format those intersections as stable
-Markdown for PR comments and trace reports.
+Markdown for PR comments and trace reports, or use
+`group_byte_span_overlaps(...)`/`render_grouped_byte_span_overlaps(...)` to
+summarize larger diagnostics by shared provenance tag or qualified-name prefix.
 
 Run from a checkout:
 
@@ -70,7 +73,7 @@ runtime work:
 
 ```python
 from r_project import vector_layout
-from r_project.memory import MemoryField, filter_byte_spans, find_overlapping_byte_spans, flatten_byte_spans, layout_field, leaf_byte_spans, render_byte_span_overlaps, render_layout, struct_layout
+from r_project.memory import ByteSpan, MemoryField, filter_byte_spans, find_overlapping_byte_spans, flatten_byte_spans, group_byte_span_overlaps, layout_field, leaf_byte_spans, render_byte_span_overlaps, render_grouped_byte_span_overlaps, render_layout, struct_layout
 
 payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 record = struct_layout(
@@ -119,6 +122,31 @@ assert render_byte_span_overlaps(left + right) == "\n".join(
     ]
 )
 
+tagged_spans = [
+    ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+    ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+    ByteSpan("scratch", 6, 10),
+]
+assert list(group_byte_span_overlaps(tagged_spans, by="tag")) == ["source:literal", "untagged"]
+assert render_grouped_byte_span_overlaps(tagged_spans, by="tag") == "\n".join(
+    [
+        "# Byte Span Overlaps by Tag",
+        "",
+        "## source:literal",
+        "",
+        "| Left span | Right span | Overlap | Size |",
+        "| --- | --- | ---: | ---: |",
+        "| left.value (0..8) | right.value (4..12) | 4..8 | 4 |",
+        "",
+        "## untagged",
+        "",
+        "| Left span | Right span | Overlap | Size |",
+        "| --- | --- | ---: | ---: |",
+        "| left.value (0..8) | scratch (6..10) | 6..8 | 2 |",
+        "| right.value (4..12) | scratch (6..10) | 6..10 | 4 |",
+    ]
+)
+
 layout = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 assert layout.data_offset == 4
 assert layout.element_offsets == [4, 8]
@@ -143,7 +171,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 31, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 20, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 32, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 21, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -155,7 +183,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 31 |
+| Completed backlog items | 32 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -164,7 +192,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 20 | 0 | None |
+| P1 | 21 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
