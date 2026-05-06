@@ -8,7 +8,7 @@ Last updated: 2026-05-06
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, vector memory-layout padding helpers, C-like struct memory layout helpers, release/versioning notes, and MIT licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift tests, vector memory-layout padding helpers, C-like struct memory layout helpers, release/versioning notes, and MIT licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -23,6 +23,7 @@ Last updated: 2026-05-06
 - `python3 -m r_project.lint --root <path>` and installed `r-project-lint --root <path>` run a lightweight Python syntax lint over `src/` and `tests/`.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned.
+- Tests compare README JSON and Markdown report examples with the current CLI output so documented examples do not drift when report fields or counts change.
 - `README.md` documents the current `0.1.0` semantic-versioning release policy and `CHANGELOG.md` records unreleased user-visible changes.
 - `LICENSE` declares the project MIT license for Project R contributors.
 

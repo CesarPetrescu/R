@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add tests that enforce README report examples stay in sync with fixture output.
-2. Expand memory-layout helpers with documented error handling for invalid field/vector inputs.
-3. Add a single CI workflow that runs pytest, lint, CLI smoke tests, and Docker verification on PRs.
+1. Expand memory-layout helpers with documented error handling for invalid field/vector inputs.
+2. Add a single CI workflow that runs pytest, lint, CLI smoke tests, and Docker verification on PRs.
+3. Add a fixture-backed README example generator or check command if report examples become longer.
 
 ## Every-run checklist
 
