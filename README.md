@@ -15,6 +15,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
 - optional nonzero exit status when active blockers are present
+- a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
 
@@ -28,6 +29,7 @@ Run from a checkout:
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
 Runtime layout helpers are also importable for tests or future low-level R
@@ -49,12 +51,13 @@ python3 -m pip install -e .
 r-project --root . --json
 r-project --root . --markdown
 r-project --root . --json --fail-on-blockers
+r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 16, "has_active_blockers": false, "next_backlog_item": "Add type-checking or linting command once the toolchain choice is stable.", "open_backlog_items": 1, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 8, "next_item": null, "open": 0}, "P2": {"completed": 4, "next_item": "Add type-checking or linting command once the toolchain choice is stable.", "open": 1}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 17, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 8, "next_item": null, "open": 0}, "P2": {"completed": 5, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -66,8 +69,8 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 16 |
-| Open backlog items | 1 |
+| Completed backlog items | 17 |
+| Open backlog items | 0 |
 | Active blockers | 0 |
 
 ## Backlog by priority
@@ -76,7 +79,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 8 | 0 | None |
-| P2 | 4 | 1 | Add type-checking or linting command once the toolchain choice is stable. |
+| P2 | 5 | 0 | None |
 ```
 
 A documented test fixture lives at `tests/fixtures/readiness-repo/` and is used by the CLI tests as an executable example of expected report behavior.
@@ -91,6 +94,7 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
+PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
 Before committing, run the same verification in Docker so tests execute in a clean, reproducible container:

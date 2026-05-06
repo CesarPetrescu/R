@@ -3,6 +3,7 @@ services:
     build: .
     command: >
       sh -c "python -m pytest -q
+      && python -m r_project.lint --root .
       && python -m r_project --root . --json
       && python -m r_project --root . --markdown
       && python -m r_project --root . --json --fail-on-blockers"

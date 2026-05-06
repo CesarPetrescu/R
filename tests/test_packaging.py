@@ -5,7 +5,10 @@ import tomllib
 def test_pyproject_exposes_r_project_console_script():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
-    assert pyproject["project"]["scripts"] == {"r-project": "r_project.__main__:main"}
+    assert pyproject["project"]["scripts"] == {
+        "r-project": "r_project.__main__:main",
+        "r-project-lint": "r_project.lint:main",
+    }
 
 
 def test_readme_documents_editable_install_and_console_script_usage():

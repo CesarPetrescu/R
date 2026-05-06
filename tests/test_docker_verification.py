@@ -14,6 +14,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python:3.11-slim" in dockerfile_text
     assert "pip install -e ." in dockerfile_text
     assert "python -m pytest -q" in compose_text
+    assert "python -m r_project.lint --root ." in compose_text
     assert "python -m r_project --root . --json" in compose_text
     assert "python -m r_project --root . --markdown" in compose_text
     assert "python -m r_project --root . --json --fail-on-blockers" in compose_text

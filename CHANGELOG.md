@@ -6,3 +6,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 
 - Added release/versioning policy notes for the current `0.1.0` package.
 - Added MIT license metadata for Project R contributors.
+- Added `r-project-lint` and `python -m r_project.lint` syntax-check commands for source/test files.

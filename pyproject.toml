@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 
 [project.scripts]
 r-project = "r_project.__main__:main"
+r-project-lint = "r_project.lint:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
