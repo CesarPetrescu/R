@@ -1,7 +1,7 @@
 import pytest
 
 from r_project import vector_layout
-from r_project.memory import MemoryField, struct_layout
+from r_project.memory import MemoryField, layout_field, struct_layout
 
 
 def test_vector_layout_pads_payload_start_and_total_size_to_alignment():
@@ -41,6 +41,44 @@ def test_struct_layout_rounds_total_size_for_struct_arrays():
     assert layout.total_size == 8
     assert layout.alignment == 4
     assert layout.tail_padding == 3
+
+
+def test_struct_layout_can_nest_struct_layouts_as_fields():
+    header = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1),
+            MemoryField(name="count", size=4, alignment=4),
+        ]
+    )
+
+    layout = struct_layout(
+        [
+            MemoryField(name="prefix", size=1, alignment=1),
+            layout_field("header", header),
+        ]
+    )
+
+    assert layout.fields[1].size == 8
+    assert layout.fields[1].alignment == 4
+    assert layout.fields[1].offset == 4
+    assert layout.fields[1].leading_padding == 3
+    assert layout.total_size == 12
+
+
+def test_struct_layout_can_nest_vector_layouts_as_fields():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+
+    layout = struct_layout(
+        [
+            MemoryField(name="prefix", size=1, alignment=1),
+            layout_field("payload", payload),
+        ]
+    )
+
+    assert layout.fields[1].size == 12
+    assert layout.fields[1].alignment == 4
+    assert layout.fields[1].offset == 4
+    assert layout.total_size == 16
 
 
 def test_vector_layout_rejects_non_power_of_two_alignment():
