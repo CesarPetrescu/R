@@ -10,6 +10,7 @@ class MemoryField:
     name: str
     size: int
     alignment: int
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class PlacedField:
     alignment: int
     offset: int
     leading_padding: int
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -54,17 +56,18 @@ class VectorLayout:
         return self.total_size - payload_end
 
 
-def layout_field(name: str, layout: StructLayout | VectorLayout) -> MemoryField:
+def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[str, ...] = ()) -> MemoryField:
     """Return a structure field for embedding an already computed layout.
 
     This lets callers compose low-level object layouts from smaller struct or
     vector layouts while preserving the nested object's size and alignment.
+    Optional symbolic tags attach source-level provenance to rendered maps.
     """
 
     if isinstance(layout, StructLayout):
-        return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment)
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment, tags=tags)
     if isinstance(layout, VectorLayout):
-        return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment)
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment, tags=tags)
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
@@ -75,7 +78,7 @@ def render_layout(name: str, layout: StructLayout | VectorLayout) -> str:
         lines = [f"{name}: struct size={layout.total_size} align={layout.alignment} tail_padding={layout.tail_padding}"]
         lines.extend(
             f"  {field.name} @ {field.offset} size={field.size} align={field.alignment} "
-            f"leading_padding={field.leading_padding}"
+            f"leading_padding={field.leading_padding}{_render_tags(field.tags)}"
             for field in layout.fields
         )
         return "\n".join(lines)
@@ -93,6 +96,12 @@ def render_layout(name: str, layout: StructLayout | VectorLayout) -> str:
         lines.append(f"  trailing_padding={layout.trailing_padding}")
         return "\n".join(lines)
     raise TypeError("layout must be a StructLayout or VectorLayout")
+
+
+def _render_tags(tags: tuple[str, ...]) -> str:
+    if not tags:
+        return ""
+    return f" tags={','.join(tags)}"
 
 
 def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = None) -> StructLayout:
@@ -116,6 +125,7 @@ def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = Non
                 alignment=field.alignment,
                 offset=aligned_offset,
                 leading_padding=aligned_offset - offset,
+                tags=field.tags,
             )
         )
         offset = aligned_offset + field.size
