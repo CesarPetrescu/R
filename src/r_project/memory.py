@@ -68,6 +68,33 @@ def layout_field(name: str, layout: StructLayout | VectorLayout) -> MemoryField:
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
+def render_layout(name: str, layout: StructLayout | VectorLayout) -> str:
+    """Render a named memory layout as stable, line-oriented debug text."""
+
+    if isinstance(layout, StructLayout):
+        lines = [f"{name}: struct size={layout.total_size} align={layout.alignment} tail_padding={layout.tail_padding}"]
+        lines.extend(
+            f"  {field.name} @ {field.offset} size={field.size} align={field.alignment} "
+            f"leading_padding={field.leading_padding}"
+            for field in layout.fields
+        )
+        return "\n".join(lines)
+    if isinstance(layout, VectorLayout):
+        lines = [
+            f"{name}: vector size={layout.total_size} element_size={layout.element_size} "
+            f"align={layout.element_alignment} length={layout.length}",
+            f"  header size={layout.header_size} padding_after_header={layout.padding_after_header} "
+            f"data_offset={layout.data_offset}",
+        ]
+        lines.extend(
+            f"  element[{index}] @ {offset} stride={layout.element_stride}"
+            for index, offset in enumerate(layout.element_offsets)
+        )
+        lines.append(f"  trailing_padding={layout.trailing_padding}")
+        return "\n".join(lines)
+    raise TypeError("layout must be a StructLayout or VectorLayout")
+
+
 def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = None) -> StructLayout:
     """Lay out structure fields with field alignment and struct tail padding.
 

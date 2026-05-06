@@ -9,3 +9,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added `r-project-lint` and `python -m r_project.lint` syntax-check commands for source/test files.
 - Documented and enforced memory-layout validation for non-power-of-two alignments.
 - Added `layout_field(...)` for embedding computed struct/vector layouts into larger composite runtime structures.
+- Added `render_layout(...)` for stable named memory-map debugging of struct and vector layouts.
