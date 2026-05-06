@@ -28,6 +28,20 @@ class PlacedField:
 
 
 @dataclass(frozen=True)
+class ByteSpan:
+    """Half-open byte range for quick memory-map overlap checks."""
+
+    name: str
+    start: int
+    end: int
+    tags: tuple[str, ...] = ()
+
+    @property
+    def size(self) -> int:
+        return self.end - self.start
+
+
+@dataclass(frozen=True)
 class StructLayout:
     """C-like structure layout with internal and tail padding made explicit."""
 
@@ -35,6 +49,14 @@ class StructLayout:
     total_size: int
     alignment: int
     tail_padding: int
+
+    def byte_spans(self, *, base_offset: int = 0) -> list[ByteSpan]:
+        """Return half-open byte ranges for fields in this struct layout."""
+
+        return [
+            ByteSpan(name=field.name, start=base_offset + field.offset, end=base_offset + field.offset + field.size, tags=field.tags)
+            for field in self.fields
+        ]
 
 
 @dataclass(frozen=True)
@@ -57,6 +79,16 @@ class VectorLayout:
         payload_end = self.data_offset + (self.element_stride * self.length)
         return self.total_size - payload_end
 
+    def byte_spans(self, *, base_offset: int = 0) -> list[ByteSpan]:
+        """Return half-open byte ranges for the vector header and elements."""
+
+        spans = [ByteSpan(name="header", start=base_offset, end=base_offset + self.header_size)]
+        spans.extend(
+            ByteSpan(name=f"element[{index}]", start=base_offset + offset, end=base_offset + offset + self.element_size)
+            for index, offset in enumerate(self.element_offsets)
+        )
+        return spans
+
 
 def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[str, ...] = ()) -> MemoryField:
     """Return a structure field for embedding an already computed layout.
@@ -73,14 +105,16 @@ def layout_field(name: str, layout: StructLayout | VectorLayout, *, tags: tuple[
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
-def render_layout(name: str, layout: StructLayout | VectorLayout, *, include_nested: bool = False) -> str:
+def render_layout(
+    name: str, layout: StructLayout | VectorLayout, *, include_nested: bool = False, include_spans: bool = False
+) -> str:
     """Render a named memory layout as stable, line-oriented debug text."""
 
-    return "\n".join(_render_layout_lines(name, layout, include_nested=include_nested, indent=0))
+    return "\n".join(_render_layout_lines(name, layout, include_nested=include_nested, include_spans=include_spans, indent=0))
 
 
 def _render_layout_lines(
-    name: str, layout: StructLayout | VectorLayout, *, include_nested: bool, indent: int
+    name: str, layout: StructLayout | VectorLayout, *, include_nested: bool, include_spans: bool, indent: int
 ) -> list[str]:
     prefix = " " * indent
     if isinstance(layout, StructLayout):
@@ -88,10 +122,12 @@ def _render_layout_lines(
         for field in layout.fields:
             lines.append(
                 f"{prefix}  {field.name} @ {field.offset} size={field.size} align={field.alignment} "
-                f"leading_padding={field.leading_padding}{_render_tags(field.tags)}"
+                f"leading_padding={field.leading_padding}{_render_tags(field.tags)}{_render_span(field.offset, field.size, include_spans)}"
             )
             if include_nested and field.layout is not None:
-                lines.extend(_render_layout_lines(field.name, field.layout, include_nested=True, indent=indent + 4))
+                lines.extend(
+                    _render_layout_lines(field.name, field.layout, include_nested=True, include_spans=include_spans, indent=indent + 4)
+                )
         return lines
     if isinstance(layout, VectorLayout):
         lines = [
@@ -101,7 +137,7 @@ def _render_layout_lines(
             f"data_offset={layout.data_offset}",
         ]
         lines.extend(
-            f"{prefix}  element[{index}] @ {offset} stride={layout.element_stride}"
+            f"{prefix}  element[{index}] @ {offset} stride={layout.element_stride}{_render_span(offset, layout.element_size, include_spans)}"
             for index, offset in enumerate(layout.element_offsets)
         )
         lines.append(f"{prefix}  trailing_padding={layout.trailing_padding}")
@@ -113,6 +149,12 @@ def _render_tags(tags: tuple[str, ...]) -> str:
     if not tags:
         return ""
     return f" tags={','.join(tags)}"
+
+
+def _render_span(offset: int, size: int, include_spans: bool) -> str:
+    if not include_spans:
+        return ""
+    return f" span={offset}..{offset + size}"
 
 
 def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = None) -> StructLayout:

@@ -21,8 +21,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
 - optional symbolic field tags in struct memory-map renderers so future runtime
-  objects can retain source-level provenance, plus opt-in recursive child layout
-  expansion for tagged nested object traceability
+  objects can retain source-level provenance, opt-in recursive child layout
+  expansion for tagged nested object traceability, and optional half-open byte
+  span summaries for quick runtime overlap checks
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -37,7 +38,9 @@ rendered memory maps. Use `r_project.memory.render_layout(name, layout)` to
 print stable, line-oriented debug maps for named struct and vector layouts.
 Pass `include_nested=True` to recursively expand fields created by
 `layout_field(...)` into indented child memory maps when source-level tracing
-needs the full nested object shape.
+needs the full nested object shape. Pass `include_spans=True` to append
+half-open `span=start..end` ranges, or call `layout.byte_spans()` to get
+structured `ByteSpan` records for overlap diagnostics.
 
 Run from a checkout:
 
@@ -66,10 +69,14 @@ record = struct_layout(
 assert record.fields[1].offset == 4
 assert record.total_size == 16
 
-print(render_layout("record", record))
+print(render_layout("record", record, include_spans=True))
 # record: struct size=16 align=4 tail_padding=0
-#   tag @ 0 size=1 align=1 leading_padding=0
-#   payload @ 4 size=12 align=4 leading_padding=3 tags=source:literal-bytes
+#   tag @ 0 size=1 align=1 leading_padding=0 span=0..1
+#   payload @ 4 size=12 align=4 leading_padding=3 tags=source:literal-bytes span=4..16
+assert [(span.name, span.start, span.end) for span in record.byte_spans()] == [
+    ("tag", 0, 1),
+    ("payload", 4, 16),
+]
 
 layout = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 assert layout.data_offset == 4
@@ -95,7 +102,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 25, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 14, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 26, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 15, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -107,7 +114,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 25 |
+| Completed backlog items | 26 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -116,7 +123,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 14 | 0 | None |
+| P1 | 15 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
