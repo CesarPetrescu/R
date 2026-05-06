@@ -2,13 +2,16 @@ import pytest
 
 from r_project import vector_layout
 from r_project.memory import (
+    ByteSpan,
     MemoryField,
     filter_byte_spans,
     find_overlapping_byte_spans,
     flatten_byte_spans,
+    group_byte_span_overlaps,
     leaf_byte_spans,
     layout_field,
     render_byte_span_overlaps,
+    render_grouped_byte_span_overlaps,
     render_layout,
     struct_layout,
 )
@@ -363,6 +366,57 @@ def test_render_byte_span_overlaps_reports_empty_state_when_ranges_do_not_inters
     spans = flatten_byte_spans("packet", vector_layout(header_size=0, element_size=4, element_alignment=4, length=2))
 
     assert render_byte_span_overlaps(spans) == "# Byte Span Overlaps\n\nNo overlapping byte spans."
+
+
+def test_group_byte_span_overlaps_can_group_intersections_by_provenance_tag():
+    spans = [
+        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+        ByteSpan("scratch", 6, 10),
+    ]
+
+    grouped = group_byte_span_overlaps(spans, by="tag")
+
+    assert list(grouped) == ["source:literal", "untagged"]
+    assert [(overlap.left.name, overlap.right.name, overlap.start, overlap.end) for overlap in grouped["source:literal"]] == [
+        ("left.value", "right.value", 4, 8),
+    ]
+    assert [(overlap.left.name, overlap.right.name) for overlap in grouped["untagged"]] == [
+        ("left.value", "scratch"),
+        ("right.value", "scratch"),
+    ]
+
+
+def test_render_grouped_byte_span_overlaps_can_group_intersections_by_name_prefix():
+    spans = [
+        ByteSpan("left.header.tag", 0, 4),
+        ByteSpan("right.header.tag", 2, 6),
+        ByteSpan("right.payload.element[0]", 3, 7),
+    ]
+
+    assert render_grouped_byte_span_overlaps(spans, by="name_prefix", prefix_depth=2) == "\n".join(
+        [
+            "# Byte Span Overlaps by Name Prefix",
+            "",
+            "## left.header ↔ right.header",
+            "",
+            "| Left span | Right span | Overlap | Size |",
+            "| --- | --- | ---: | ---: |",
+            "| left.header.tag (0..4) | right.header.tag (2..6) | 2..4 | 2 |",
+            "",
+            "## left.header ↔ right.payload",
+            "",
+            "| Left span | Right span | Overlap | Size |",
+            "| --- | --- | ---: | ---: |",
+            "| left.header.tag (0..4) | right.payload.element[0] (3..7) | 3..4 | 1 |",
+            "",
+            "## right.header ↔ right.payload",
+            "",
+            "| Left span | Right span | Overlap | Size |",
+            "| --- | --- | ---: | ---: |",
+            "| right.header.tag (2..6) | right.payload.element[0] (3..7) | 3..6 | 3 |",
+        ]
+    )
 
 
 def test_vector_layout_rejects_non_power_of_two_alignment():

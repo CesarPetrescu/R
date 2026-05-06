@@ -31,6 +31,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add layout overlap reporter/renderer for human-readable overlap diagnostics.
 - [x] Add span-filtering helpers for flattened byte spans so runtime diagnostics can narrow overlap reports by qualified names and provenance tags.
 - [x] Add leaf-only byte-span helpers so diagnostics can suppress parent container ranges before overlap reports.
+- [x] Add grouped byte-span overlap reports by shared provenance tag or qualified-name prefix for larger runtime diagnostics.
 
 ## P2 — project quality
 
