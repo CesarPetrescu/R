@@ -153,6 +153,27 @@ def _flatten_byte_span_items(
     raise TypeError("layout must be a StructLayout or VectorLayout")
 
 
+def leaf_byte_spans(spans: list[ByteSpan]) -> list[ByteSpan]:
+    """Return only spans that do not contain any other provided span.
+
+    Flattened layout diagnostics include parent container ranges before child
+    ranges. Leaf-only reports often need to suppress those containers so
+    overlap checks compare concrete runtime fields rather than both a parent
+    object and its children. Ordering is preserved from the input sequence.
+    """
+
+    return [span for span in spans if not _span_contains_other_span(span, spans)]
+
+
+def _span_contains_other_span(span: ByteSpan, spans: list[ByteSpan]) -> bool:
+    for candidate in spans:
+        if candidate == span:
+            continue
+        if span.start <= candidate.start and candidate.end <= span.end and (span.start, span.end) != (candidate.start, candidate.end):
+            return True
+    return False
+
+
 def filter_byte_spans(
     spans: list[ByteSpan],
     *,

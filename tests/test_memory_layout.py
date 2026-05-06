@@ -6,6 +6,7 @@ from r_project.memory import (
     filter_byte_spans,
     find_overlapping_byte_spans,
     flatten_byte_spans,
+    leaf_byte_spans,
     layout_field,
     render_byte_span_overlaps,
     render_layout,
@@ -277,6 +278,45 @@ def test_filter_byte_spans_supports_name_contains_and_any_tag_predicates():
     filtered = filter_byte_spans(spans, name_contains="element", tags_any=("runtime:vector", "runtime:string"))
 
     assert [(span.name, span.start, span.end) for span in filtered] == [
+        ("packet.payload.element[0]", 8, 12),
+        ("packet.payload.element[1]", 12, 16),
+    ]
+
+
+def test_leaf_byte_spans_suppresses_parent_container_ranges():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    packet = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+    spans = flatten_byte_spans("packet", packet)
+
+    leaves = leaf_byte_spans(spans)
+
+    assert [(span.name, span.start, span.end, span.tags) for span in leaves] == [
+        ("packet.tag", 0, 1, ("source:token-kind",)),
+        ("packet.payload.header", 4, 7, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[0]", 8, 12, ("source:literal-bytes", "runtime:vector")),
+        ("packet.payload.element[1]", 12, 16, ("source:literal-bytes", "runtime:vector")),
+    ]
+
+
+def test_leaf_byte_spans_can_be_combined_with_filters_for_leaf_only_overlap_reports():
+    payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+    packet = struct_layout(
+        [
+            MemoryField(name="tag", size=1, alignment=1, tags=("source:token-kind",)),
+            layout_field("payload", payload, tags=("source:literal-bytes", "runtime:vector")),
+        ]
+    )
+    spans = flatten_byte_spans("packet", packet)
+
+    leaves = leaf_byte_spans(filter_byte_spans(spans, tags_all=("runtime:vector",)))
+
+    assert [(span.name, span.start, span.end) for span in leaves] == [
+        ("packet.payload.header", 4, 7),
         ("packet.payload.element[0]", 8, 12),
         ("packet.payload.element[1]", 12, 16),
     ]
