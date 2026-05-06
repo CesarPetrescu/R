@@ -26,7 +26,10 @@ helper for C-like structure layouts that aligns each field offset and rounds
 the total structure size up for safe array element placement. Memory layout
 helpers reject negative sizes/counts, zero-sized payload fields, non-power-
 of-two alignments, and explicit `max_total_size` overflows with `ValueError`
-so invalid runtime layouts fail explicitly.
+so invalid runtime layouts fail explicitly. Use
+`r_project.memory.layout_field(name, layout)` to embed computed struct or
+vector layouts into larger composite structures while preserving nested total
+size and alignment.
 
 Run from a checkout:
 
@@ -43,6 +46,17 @@ runtime work:
 
 ```python
 from r_project import vector_layout
+from r_project.memory import MemoryField, layout_field, struct_layout
+
+payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
+record = struct_layout(
+    [
+        MemoryField(name="tag", size=1, alignment=1),
+        layout_field("payload", payload),
+    ]
+)
+assert record.fields[1].offset == 4
+assert record.total_size == 16
 
 layout = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 assert layout.data_offset == 4
@@ -68,7 +82,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 21, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 10, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 22, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 11, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -80,7 +94,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 21 |
+| Completed backlog items | 22 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -89,7 +103,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 10 | 0 | None |
+| P1 | 11 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item

@@ -54,6 +54,20 @@ class VectorLayout:
         return self.total_size - payload_end
 
 
+def layout_field(name: str, layout: StructLayout | VectorLayout) -> MemoryField:
+    """Return a structure field for embedding an already computed layout.
+
+    This lets callers compose low-level object layouts from smaller struct or
+    vector layouts while preserving the nested object's size and alignment.
+    """
+
+    if isinstance(layout, StructLayout):
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.alignment)
+    if isinstance(layout, VectorLayout):
+        return MemoryField(name=name, size=layout.total_size, alignment=layout.element_alignment)
+    raise TypeError("layout must be a StructLayout or VectorLayout")
+
+
 def struct_layout(fields: list[MemoryField], *, max_total_size: int | None = None) -> StructLayout:
     """Lay out structure fields with field alignment and struct tail padding.
 
