@@ -296,6 +296,68 @@ def test_cli_generates_readme_example_blocks_from_current_report(tmp_path):
     assert result.stderr == ""
 
 
+def test_cli_writes_readme_example_blocks_in_place(tmp_path):
+    write(
+        tmp_path / "README.md",
+        """# Writer Demo
+
+Intro stays.
+
+```json
+{}
+```
+
+Between stays.
+
+```markdown
+old report
+```
+
+Tail stays.
+""",
+    )
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+## P1
+- [x] Build report.
+- [ ] Add written examples.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--write-readme-examples"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    json_output = json.dumps(analyze_project(tmp_path).to_dict(), sort_keys=True)
+    markdown_output = analyze_project(tmp_path).to_markdown()
+    assert result.stdout == "Updated README JSON and Markdown example fences.\n"
+    assert result.stderr == ""
+    assert (tmp_path / "README.md").read_text(encoding="utf-8") == f"""# Writer Demo
+
+Intro stays.
+
+```json
+{json_output}
+```
+
+Between stays.
+
+```markdown
+{markdown_output}
+```
+
+Tail stays.
+"""
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations.md").read_text(encoding="utf-8")

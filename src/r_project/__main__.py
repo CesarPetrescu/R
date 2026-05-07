@@ -38,6 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Emit README-ready JSON and Markdown example fences from the current report.",
     )
     parser.add_argument(
+        "--write-readme-examples",
+        action="store_true",
+        help="Patch README JSON and Markdown example fences in place with current report output.",
+    )
+    parser.add_argument(
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
@@ -165,6 +170,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.generate_readme_examples:
         print(_readme_example_blocks(report))
         return 0
+    if args.write_readme_examples:
+        _write_readme_example_blocks(root, report)
+        print("Updated README JSON and Markdown example fences.")
+        return 0
     if args.check_readme_examples:
         mismatches = _readme_example_mismatches(root, report)
         if mismatches:
@@ -218,6 +227,18 @@ def _readme_example_blocks(report) -> str:
     )
 
 
+def _write_readme_example_blocks(root: Path, report) -> None:
+    readme = root / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    replacements = {
+        "json": json.dumps(report.to_dict(), sort_keys=True),
+        "markdown": report.to_markdown(),
+    }
+    for language, output in replacements.items():
+        text = _replace_fenced_block(text, language, output)
+    readme.write_text(text, encoding="utf-8")
+
+
 def _fenced_block(text: str, language: str) -> str | None:
     marker = f"```{language}\n"
     start = text.find(marker)
@@ -228,6 +249,18 @@ def _fenced_block(text: str, language: str) -> str | None:
     if end == -1:
         return None
     return text[content_start:end]
+
+
+def _replace_fenced_block(text: str, language: str, output: str) -> str:
+    marker = f"```{language}\n"
+    start = text.find(marker)
+    if start == -1:
+        raise ValueError(f"README is missing a {language} fenced block")
+    content_start = start + len(marker)
+    end = text.find("\n```", content_start)
+    if end == -1:
+        raise ValueError(f"README has an unterminated {language} fenced block")
+    return f"{text[:content_start]}{output}{text[end:]}"
 
 
 def memory_threshold_demo_markdown(
