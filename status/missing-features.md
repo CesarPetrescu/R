@@ -61,3 +61,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a CHANGELOG/version drift guard so release automation can verify documented user-visible version notes before tagging.
 - [x] Add compact README JSON Schema docs/examples for memory-overlap demo dashboard consumers.
 - [x] Add a release tag checklist command so release automation can verify tag names, Docker evidence, and clean git state before publishing.
+- [x] Add release-tag checklist JSON output so external release automation can consume machine-readable dry-run summaries.

@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add schema-specific README drift checks if the compact JSON Schema docs start changing frequently.
-3. Add a release-tag dry-run summary mode with JSON output if external release automation needs machine-readable checklist results.
+3. Add release-tag checklist fixture drift tests if external release automation starts depending on a frozen JSON fixture.
 
 ## Every-run checklist
 

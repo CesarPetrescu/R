@@ -872,6 +872,44 @@ def test_cli_check_release_tag_succeeds_for_matching_tag_clean_tree_and_docker_e
     assert result.stderr == ""
 
 
+def test_cli_check_release_tag_json_summarizes_matching_tag_clean_tree_and_docker_evidence():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--json",
+            "--check-release-tag",
+            "v0.1.0",
+            "--docker-verified",
+            "--skip-git-clean-check",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == {
+        "checks": {
+            "docker_verified": True,
+            "git_clean": "skipped",
+            "tag_matches_version": True,
+        },
+        "expected_tag": "v0.1.0",
+        "ready": True,
+        "tag": "v0.1.0",
+        "version": "0.1.0",
+    }
+    assert result.stderr == ""
+
+
 def test_cli_check_release_tag_reports_mismatched_tag_name():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

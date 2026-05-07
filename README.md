@@ -111,6 +111,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
+PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -260,13 +261,14 @@ r-project --memory-overlap-demo-schema
 r-project --root . --check-memory-overlap-demo-schema
 r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
+r-project --root . --json --check-release-tag v0.1.0 --docker-verified
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 51, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 14, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 52, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 15, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -278,7 +280,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 51 |
+| Completed backlog items | 52 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -288,7 +290,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 14 | 0 | None |
+| P2 | 15 | 0 | None |
 
 ## Next backlog item
 
@@ -356,6 +358,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
+PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -373,7 +376,7 @@ The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic
 - increment the minor version for backward-compatible CLI/report/helper additions;
 - reserve major version changes for incompatible report schema, CLI, or helper API changes.
 
-Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`.
+Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing.
 
 ## License
 
