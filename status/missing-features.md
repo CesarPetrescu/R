@@ -37,6 +37,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add grouped byte-span overlap threshold helpers so dashboards can flag overlap-count or intersecting-byte budget violations.
 - [x] Add Markdown threshold violation renderers so PR comments can show which grouped byte-span totals exceed dashboard budgets.
 - [x] Add fixture-backed CLI/demo output for memory-layout threshold violation examples.
+- [x] Add structured JSON output for the memory-threshold demo so runtime diagnostics have machine-readable CLI fixtures.
 
 ## P2 — project quality
 

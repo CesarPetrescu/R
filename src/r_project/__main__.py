@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from .memory import ByteSpan, render_grouped_byte_span_overlap_threshold_violations
+from .memory import ByteSpan, find_grouped_byte_span_overlap_total_violations, render_grouped_byte_span_overlap_threshold_violations
 from .report import analyze_project
 
 
@@ -36,7 +36,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.memory_threshold_demo:
-        print(memory_threshold_demo_markdown())
+        if args.json:
+            print(json.dumps(memory_threshold_demo_json(), sort_keys=True))
+        else:
+            print(memory_threshold_demo_markdown())
         return 0
     root = Path(args.root)
     report = analyze_project(root)
@@ -92,17 +95,59 @@ def _fenced_block(text: str, language: str) -> str | None:
 def memory_threshold_demo_markdown() -> str:
     """Return the stable fixture-backed memory threshold violation demo."""
 
-    spans = [
-        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
-        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
-        ByteSpan("scratch", 6, 10),
-    ]
     return render_grouped_byte_span_overlap_threshold_violations(
-        spans,
+        _memory_threshold_demo_spans(),
         by="tag",
         max_overlap_count=1,
         max_total_overlap_size=4,
     )
+
+
+def memory_threshold_demo_json() -> dict:
+    """Return stable machine-readable memory threshold violation demo data."""
+
+    by = "tag"
+    max_overlap_count = 1
+    max_total_overlap_size = 4
+    violations = find_grouped_byte_span_overlap_total_violations(
+        _memory_threshold_demo_spans(),
+        by=by,
+        max_overlap_count=max_overlap_count,
+        max_total_overlap_size=max_total_overlap_size,
+    )
+    return {
+        "by": by,
+        "max_overlap_count": max_overlap_count,
+        "max_total_overlap_size": max_total_overlap_size,
+        "violations": [
+            {
+                "group": violation.group_name,
+                "overlap_count": violation.overlap_count,
+                "total_overlap_size": violation.total_overlap_size,
+                "max_overlap_count": violation.max_overlap_count,
+                "max_total_overlap_size": violation.max_total_overlap_size,
+                "exceeded": _threshold_exceeded_labels(violation),
+            }
+            for violation in violations.values()
+        ],
+    }
+
+
+def _threshold_exceeded_labels(violation) -> list[str]:
+    labels = []
+    if violation.exceeds_overlap_count:
+        labels.append("overlap_count")
+    if violation.exceeds_total_overlap_size:
+        labels.append("total_overlap_size")
+    return labels
+
+
+def _memory_threshold_demo_spans() -> list[ByteSpan]:
+    return [
+        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+        ByteSpan("scratch", 6, 10),
+    ]
 
 
 if __name__ == "__main__":

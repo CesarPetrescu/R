@@ -8,4 +8,5 @@ services:
       && python -m r_project --root . --markdown
       && python -m r_project --root . --json --fail-on-blockers
       && python -m r_project --root . --check-readme-examples
-      && python -m r_project --memory-threshold-demo"
+      && python -m r_project --memory-threshold-demo
+      && python -m r_project --memory-threshold-demo --json"
