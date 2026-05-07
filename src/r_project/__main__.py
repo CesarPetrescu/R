@@ -33,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when README JSON/Markdown examples drift from current CLI output.",
     )
     parser.add_argument(
+        "--check-memory-overlap-demo-schema",
+        action="store_true",
+        help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
+    )
+    parser.add_argument(
         "--memory-threshold-demo",
         action="store_true",
         help="Emit a fixture-backed memory overlap threshold violation Markdown demo.",
@@ -89,6 +94,16 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.memory_overlap_demo_schema:
         print(json.dumps(memory_overlap_demo_schema(), sort_keys=True))
+        return 0
+    if args.check_memory_overlap_demo_schema:
+        root = Path(args.root)
+        expected = json.dumps(memory_overlap_demo_schema(), sort_keys=True) + "\n"
+        fixture = root / "tests" / "fixtures" / "memory-overlap-demo-schema.json"
+        actual = fixture.read_text(encoding="utf-8") if fixture.exists() else ""
+        if actual != expected:
+            print("Memory overlap demo schema fixture is out of date.", file=sys.stderr)
+            return 1
+        print("Memory overlap demo schema fixture matches current CLI output.")
         return 0
     if args.memory_threshold_demo:
         if args.json:

@@ -594,6 +594,41 @@ def test_cli_outputs_fixture_backed_memory_overlap_demo_json_schema():
     assert result.stderr == ""
 
 
+def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--check-memory-overlap-demo-schema"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Memory overlap demo schema fixture matches current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_cli_check_memory_overlap_demo_schema_reports_fixture_drift(tmp_path):
+    write(tmp_path / "tests" / "fixtures" / "memory-overlap-demo-schema.json", "{}\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--check-memory-overlap-demo-schema"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Memory overlap demo schema fixture is out of date.\n"
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")
