@@ -1,0 +1,1 @@
+{"by": "tag", "max_overlap_count": 1, "max_total_overlap_size": 4, "violations": [{"exceeded": ["overlap_count", "total_overlap_size"], "group": "untagged", "max_overlap_count": 1, "max_total_overlap_size": 4, "overlap_count": 2, "total_overlap_size": 6}]}
