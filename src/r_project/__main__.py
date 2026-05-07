@@ -5,7 +5,13 @@ import json
 import sys
 from pathlib import Path
 
-from .memory import ByteSpan, find_grouped_byte_span_overlap_total_violations, render_grouped_byte_span_overlap_threshold_violations
+from .memory import (
+    ByteSpan,
+    find_grouped_byte_span_overlap_total_violations,
+    group_byte_span_overlap_totals,
+    render_grouped_byte_span_overlap_threshold_violations,
+    render_grouped_byte_span_overlap_totals,
+)
 from .report import analyze_project
 
 
@@ -30,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Emit a fixture-backed memory overlap threshold violation Markdown demo.",
     )
+    parser.add_argument(
+        "--memory-overlap-totals-demo",
+        action="store_true",
+        help="Emit a fixture-backed grouped memory overlap totals demo.",
+    )
     return parser
 
 
@@ -40,6 +51,12 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(memory_threshold_demo_json(), sort_keys=True))
         else:
             print(memory_threshold_demo_markdown())
+        return 0
+    if args.memory_overlap_totals_demo:
+        if args.json:
+            print(json.dumps(memory_overlap_totals_demo_json(), sort_keys=True))
+        else:
+            print(memory_overlap_totals_demo_markdown())
         return 0
     root = Path(args.root)
     report = analyze_project(root)
@@ -140,6 +157,30 @@ def _threshold_exceeded_labels(violation) -> list[str]:
     if violation.exceeds_total_overlap_size:
         labels.append("total_overlap_size")
     return labels
+
+
+def memory_overlap_totals_demo_markdown() -> str:
+    """Return the stable fixture-backed memory overlap totals demo."""
+
+    return render_grouped_byte_span_overlap_totals(_memory_threshold_demo_spans(), by="tag")
+
+
+def memory_overlap_totals_demo_json() -> dict:
+    """Return stable machine-readable memory overlap totals demo data."""
+
+    by = "tag"
+    totals = group_byte_span_overlap_totals(_memory_threshold_demo_spans(), by=by)
+    return {
+        "by": by,
+        "totals": [
+            {
+                "group": group_name,
+                "overlap_count": total.overlap_count,
+                "total_overlap_size": total.total_overlap_size,
+            }
+            for group_name, total in totals.items()
+        ],
+    }
 
 
 def _memory_threshold_demo_spans() -> list[ByteSpan]:

@@ -291,6 +291,40 @@ def test_cli_outputs_fixture_backed_memory_threshold_demo_json():
     assert result.stderr == ""
 
 
+def test_cli_outputs_fixture_backed_memory_overlap_totals_demo():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    expected = Path("tests/fixtures/memory-overlap-totals.md").read_text(encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--memory-overlap-totals-demo"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == expected
+    assert result.stderr == ""
+
+
+def test_cli_outputs_fixture_backed_memory_overlap_totals_demo_json():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    expected = Path("tests/fixtures/memory-overlap-totals.json").read_text(encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--memory-overlap-totals-demo", "--json"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == expected
+    assert result.stderr == ""
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")
