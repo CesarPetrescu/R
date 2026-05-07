@@ -43,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Emit a fixture-backed grouped memory overlap totals demo.",
     )
     parser.add_argument(
+        "--memory-overlap-demo-schema",
+        action="store_true",
+        help="Emit JSON Schema definitions for memory overlap demo JSON outputs.",
+    )
+    parser.add_argument(
         "--memory-overlap-group-by",
         choices=("tag", "name_prefix"),
         default="tag",
@@ -82,6 +87,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.memory_overlap_demo_schema:
+        print(json.dumps(memory_overlap_demo_schema(), sort_keys=True))
+        return 0
     if args.memory_threshold_demo:
         if args.json:
             print(
@@ -323,6 +331,75 @@ def _memory_threshold_demo_spans() -> list[ByteSpan]:
         ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
         ByteSpan("scratch", 6, 10),
     ]
+
+
+def memory_overlap_demo_schema() -> dict:
+    """Return JSON Schema definitions for memory overlap demo JSON payloads."""
+
+    non_negative_integer = {"type": "integer", "minimum": 0}
+    positive_integer = {"type": "integer", "minimum": 1}
+    group_by = {"enum": ["tag", "name_prefix"]}
+    total_row = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "group": {"type": "string"},
+            "overlap_count": non_negative_integer,
+            "total_overlap_size": non_negative_integer,
+        },
+        "required": ["group", "overlap_count", "total_overlap_size"],
+    }
+    violation_row = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            **total_row["properties"],
+            "max_overlap_count": non_negative_integer,
+            "max_total_overlap_size": non_negative_integer,
+            "exceeded": {"type": "array", "items": {"enum": ["overlap_count", "total_overlap_size"]}},
+        },
+        "required": [
+            "group",
+            "overlap_count",
+            "total_overlap_size",
+            "max_overlap_count",
+            "max_total_overlap_size",
+            "exceeded",
+        ],
+    }
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "R Memory Overlap Demo JSON Schemas",
+        "description": (
+            "Schemas for R memory overlap demo JSON outputs. Use $defs.memoryOverlapTotalsDemo for "
+            "--memory-overlap-totals-demo --json and $defs.memoryThresholdDemo for --memory-threshold-demo --json."
+        ),
+        "type": "object",
+        "$defs": {
+            "memoryOverlapTotalsDemo": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "by": group_by,
+                    "prefix_depth": positive_integer,
+                    "totals": {"type": "array", "items": total_row},
+                },
+                "required": ["by", "totals"],
+            },
+            "memoryThresholdDemo": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "by": group_by,
+                    "prefix_depth": positive_integer,
+                    "max_overlap_count": non_negative_integer,
+                    "max_total_overlap_size": non_negative_integer,
+                    "violations": {"type": "array", "items": violation_row},
+                },
+                "required": ["by", "max_overlap_count", "max_total_overlap_size", "violations"],
+            },
+        },
+    }
 
 
 if __name__ == "__main__":

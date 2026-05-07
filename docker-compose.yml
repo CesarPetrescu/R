@@ -19,4 +19,5 @@ services:
       && python -m r_project --memory-overlap-totals-demo --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
       && python -m r_project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
       && python -m r_project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
-      && python -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0"
+      && python -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
+      && python -m r_project --memory-overlap-demo-schema"
