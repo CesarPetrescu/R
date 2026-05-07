@@ -16,3 +16,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added `render_byte_span_overlaps(...)` for stable Markdown overlap diagnostics with an explicit empty state.
 - Added `leaf_byte_spans(...)` for suppressing parent container ranges in leaf-only overlap diagnostics.
 - Added grouped byte-span overlap helpers and Markdown renderers for shared provenance tags and qualified-name prefix pairs.
+- Added Markdown threshold violation tables for grouped byte-span overlap dashboard budgets.

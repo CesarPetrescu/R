@@ -355,6 +355,54 @@ def _validate_optional_threshold(name: str, value: int | None) -> None:
         _require_non_negative(name, value)
 
 
+def render_grouped_byte_span_overlap_threshold_violations(
+    spans: list[ByteSpan], *, by: str, prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+) -> str:
+    """Render grouped overlap totals that exceed dashboard budgets as Markdown."""
+
+    violations = find_grouped_byte_span_overlap_total_violations(
+        spans,
+        by=by,
+        prefix_depth=prefix_depth,
+        max_overlap_count=max_overlap_count,
+        max_total_overlap_size=max_total_overlap_size,
+    )
+    title = _grouped_overlap_threshold_violation_title(by)
+    if not violations:
+        return f"# {title}\n\nNo grouped overlap threshold violations."
+
+    lines = [
+        f"# {title}",
+        "",
+        "| Group | Overlaps | Max overlaps | Total overlap bytes | Max overlap bytes | Violations |",
+        "| --- | ---: | ---: | ---: | ---: | --- |",
+    ]
+    lines.extend(_render_threshold_violation_row(violation) for violation in violations.values())
+    return "\n".join(lines)
+
+
+def _render_threshold_violation_row(violation: ByteSpanOverlapGroupThresholdViolation) -> str:
+    return (
+        f"| {violation.group_name} | {violation.overlap_count} | {_render_optional_limit(violation.max_overlap_count)} | "
+        f"{violation.total_overlap_size} | {_render_optional_limit(violation.max_total_overlap_size)} | "
+        f"{_render_threshold_violation_labels(violation)} |"
+    )
+
+
+def _render_optional_limit(value: int | None) -> str:
+    if value is None:
+        return "None"
+    return str(value)
+
+
+def _render_threshold_violation_labels(violation: ByteSpanOverlapGroupThresholdViolation) -> str:
+    labels = []
+    if violation.exceeds_overlap_count:
+        labels.append("overlap count")
+    if violation.exceeds_total_overlap_size:
+        labels.append("total overlap bytes")
+    return ", ".join(labels)
+
 def render_grouped_byte_span_overlap_totals(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
     """Render compact grouped overlap totals as a stable Markdown table."""
 
@@ -423,6 +471,14 @@ def _grouped_overlap_title(by: str) -> str:
         return "Byte Span Overlaps by Tag"
     if by == "name_prefix":
         return "Byte Span Overlaps by Name Prefix"
+    raise ValueError("by must be 'tag' or 'name_prefix'")
+
+
+def _grouped_overlap_threshold_violation_title(by: str) -> str:
+    if by == "tag":
+        return "Byte Span Overlap Threshold Violations by Tag"
+    if by == "name_prefix":
+        return "Byte Span Overlap Threshold Violations by Name Prefix"
     raise ValueError("by must be 'tag' or 'name_prefix'")
 
 

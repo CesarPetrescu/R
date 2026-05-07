@@ -14,6 +14,7 @@ from r_project.memory import (
     leaf_byte_spans,
     layout_field,
     render_byte_span_overlaps,
+    render_grouped_byte_span_overlap_threshold_violations,
     render_grouped_byte_span_overlap_totals,
     render_grouped_byte_span_overlaps,
     render_layout,
@@ -448,6 +449,43 @@ def test_grouped_byte_span_overlap_thresholds_ignore_groups_within_budget():
     )
 
     assert violations == {}
+
+
+def test_render_grouped_byte_span_overlap_threshold_violations_formats_budget_failures():
+    spans = [
+        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+        ByteSpan("scratch", 6, 10),
+    ]
+
+    assert render_grouped_byte_span_overlap_threshold_violations(
+        spans,
+        by="tag",
+        max_overlap_count=1,
+        max_total_overlap_size=4,
+    ) == "\n".join(
+        [
+            "# Byte Span Overlap Threshold Violations by Tag",
+            "",
+            "| Group | Overlaps | Max overlaps | Total overlap bytes | Max overlap bytes | Violations |",
+            "| --- | ---: | ---: | ---: | ---: | --- |",
+            "| untagged | 2 | 1 | 6 | 4 | overlap count, total overlap bytes |",
+        ]
+    )
+
+
+def test_render_grouped_byte_span_overlap_threshold_violations_reports_empty_state_when_budgets_pass():
+    spans = [
+        ByteSpan("left.value", 0, 8, tags=("source:literal",)),
+        ByteSpan("right.value", 4, 12, tags=("source:literal",)),
+    ]
+
+    assert render_grouped_byte_span_overlap_threshold_violations(
+        spans,
+        by="tag",
+        max_overlap_count=1,
+        max_total_overlap_size=4,
+    ) == "# Byte Span Overlap Threshold Violations by Tag\n\nNo grouped overlap threshold violations."
 
 
 def test_render_grouped_byte_span_overlap_totals_formats_compact_dashboard_table():
