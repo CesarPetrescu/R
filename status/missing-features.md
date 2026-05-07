@@ -54,3 +54,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Dockerize the test/verification harness so autonomous runs validate in a clean container.
 - [x] Add tests that enforce README report examples stay in sync with current CLI output.
 - [x] Add a CLI check that reports README JSON/Markdown example drift on demand.
+- [x] Add a CLI check that reports memory-overlap demo JSON Schema fixture drift on demand.
