@@ -32,6 +32,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add span-filtering helpers for flattened byte spans so runtime diagnostics can narrow overlap reports by qualified names and provenance tags.
 - [x] Add leaf-only byte-span helpers so diagnostics can suppress parent container ranges before overlap reports.
 - [x] Add grouped byte-span overlap reports by shared provenance tag or qualified-name prefix for larger runtime diagnostics.
+- [x] Add grouped byte-span overlap totals so compact dashboards can consume counts and intersecting-byte totals without full reports.
 
 ## P2 — project quality
 

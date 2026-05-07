@@ -3,6 +3,7 @@
 from .memory import (
     ByteSpan,
     ByteSpanOverlap,
+    ByteSpanOverlapGroupTotal,
     MemoryField,
     PlacedField,
     StructLayout,
@@ -10,6 +11,7 @@ from .memory import (
     filter_byte_spans,
     find_overlapping_byte_spans,
     flatten_byte_spans,
+    group_byte_span_overlap_totals,
     group_byte_span_overlaps,
     leaf_byte_spans,
     layout_field,
@@ -24,6 +26,7 @@ from .report import ProjectReport, analyze_project
 __all__ = [
     "ByteSpan",
     "ByteSpanOverlap",
+    "ByteSpanOverlapGroupTotal",
     "MemoryField",
     "PlacedField",
     "ProjectReport",
@@ -33,6 +36,7 @@ __all__ = [
     "filter_byte_spans",
     "find_overlapping_byte_spans",
     "flatten_byte_spans",
+    "group_byte_span_overlap_totals",
     "group_byte_span_overlaps",
     "leaf_byte_spans",
     "layout_field",

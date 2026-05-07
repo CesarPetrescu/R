@@ -7,6 +7,7 @@ from r_project.memory import (
     filter_byte_spans,
     find_overlapping_byte_spans,
     flatten_byte_spans,
+    group_byte_span_overlap_totals,
     group_byte_span_overlaps,
     leaf_byte_spans,
     layout_field,
@@ -385,6 +386,22 @@ def test_group_byte_span_overlaps_can_group_intersections_by_provenance_tag():
         ("left.value", "scratch"),
         ("right.value", "scratch"),
     ]
+
+
+def test_group_byte_span_overlap_totals_summarize_large_reports_for_dashboards():
+    spans = [
+        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+        ByteSpan("scratch", 6, 10),
+    ]
+
+    totals = group_byte_span_overlap_totals(spans, by="tag")
+
+    assert list(totals) == ["source:literal", "untagged"]
+    assert totals["source:literal"].overlap_count == 1
+    assert totals["source:literal"].total_overlap_size == 4
+    assert totals["untagged"].overlap_count == 2
+    assert totals["untagged"].total_overlap_size == 6
 
 
 def test_render_grouped_byte_span_overlaps_can_group_intersections_by_name_prefix():

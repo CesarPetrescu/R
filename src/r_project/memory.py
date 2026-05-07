@@ -56,6 +56,14 @@ class ByteSpanOverlap:
 
 
 @dataclass(frozen=True)
+class ByteSpanOverlapGroupTotal:
+    """Compact totals for one grouped byte-span overlap report section."""
+
+    overlap_count: int
+    total_overlap_size: int
+
+
+@dataclass(frozen=True)
 class StructLayout:
     """C-like structure layout with internal and tail padding made explicit."""
 
@@ -277,6 +285,21 @@ def group_byte_span_overlaps(
         for key in _overlap_group_keys(overlap, by=by, prefix_depth=prefix_depth):
             grouped.setdefault(key, []).append(overlap)
     return grouped
+
+
+def group_byte_span_overlap_totals(
+    spans: list[ByteSpan], *, by: str, prefix_depth: int = 1
+) -> dict[str, ByteSpanOverlapGroupTotal]:
+    """Return compact overlap counts and byte totals for each overlap group."""
+
+    grouped = group_byte_span_overlaps(spans, by=by, prefix_depth=prefix_depth)
+    return {
+        group_name: ByteSpanOverlapGroupTotal(
+            overlap_count=len(overlaps),
+            total_overlap_size=sum(overlap.size for overlap in overlaps),
+        )
+        for group_name, overlaps in grouped.items()
+    }
 
 
 def render_grouped_byte_span_overlaps(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
