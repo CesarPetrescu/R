@@ -75,6 +75,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when the release tag checklist JSON fixture drifts from current CLI output.",
     )
     parser.add_argument(
+        "--write-release-tag-fixture",
+        action="store_true",
+        help="Patch the release tag checklist JSON fixture in place with current generated output.",
+    )
+    parser.add_argument(
+        "--dry-run-release-tag-fixture",
+        action="store_true",
+        help="With --write-release-tag-fixture, print the updated fixture content without modifying it.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -163,6 +173,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_changelog_version(Path(args.root))
     if args.check_release_tag_fixture:
         return _check_release_tag_fixture(Path(args.root))
+    if args.write_release_tag_fixture:
+        return _write_release_tag_fixture(Path(args.root), dry_run=args.dry_run_release_tag_fixture)
     if args.check_release_tag:
         return _check_release_tag(
             Path(args.root),
@@ -399,6 +411,18 @@ def _check_release_tag_fixture(root: Path) -> int:
         print("Release tag checklist fixture is out of date.", file=sys.stderr)
         return 1
     print("Release tag checklist fixture matches current CLI output.")
+    return 0
+
+
+def _write_release_tag_fixture(root: Path, *, dry_run: bool) -> int:
+    output = _release_tag_checklist_fixture_output(root)
+    if dry_run:
+        print(output, end="")
+        return 0
+    fixture = root / "tests" / "fixtures" / "release-tag-checklist.json"
+    fixture.parent.mkdir(parents=True, exist_ok=True)
+    fixture.write_text(output, encoding="utf-8")
+    print("Updated release tag checklist fixture.")
     return 0
 
 

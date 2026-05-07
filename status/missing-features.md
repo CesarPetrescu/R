@@ -64,3 +64,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add release-tag checklist JSON output so external release automation can consume machine-readable dry-run summaries.
 - [x] Add schema-specific README drift checks for compact memory-overlap JSON Schema docs.
 - [x] Add release-tag checklist fixture drift tests for external release automation that depends on frozen JSON summaries.
+- [x] Add a release checklist fixture writer so release automation can refresh frozen JSON summaries without manual copying.
