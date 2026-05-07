@@ -60,6 +60,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when README compact memory-overlap JSON Schema examples drift from current CLI output.",
     )
     parser.add_argument(
+        "--write-readme-schema-examples",
+        action="store_true",
+        help="Patch the README compact memory-overlap JSON Schema example fence in place with current CLI output.",
+    )
+    parser.add_argument(
+        "--dry-run-readme-schema-examples",
+        action="store_true",
+        help="With --write-readme-schema-examples, print updated README content without modifying README.md.",
+    )
+    parser.add_argument(
         "--check-changelog-version",
         action="store_true",
         help="Exit nonzero when README/CHANGELOG do not mention the pyproject package version.",
@@ -168,6 +178,15 @@ def main(argv: list[str] | None = None) -> int:
             print("README memory-overlap schema example is out of date.", file=sys.stderr)
             return 1
         print("README memory-overlap schema example matches current CLI output.")
+        return 0
+    if args.write_readme_schema_examples:
+        root = Path(args.root)
+        updated = _updated_readme_schema_example_block(root)
+        if args.dry_run_readme_schema_examples:
+            print(updated, end="")
+        else:
+            (root / "README.md").write_text(updated, encoding="utf-8")
+            print("Updated README memory-overlap schema example fence.")
         return 0
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
@@ -489,7 +508,19 @@ def _replace_fenced_block(text: str, language: str, output: str) -> str:
 def _readme_schema_example_mismatch(root: Path) -> bool:
     readme = root / "README.md"
     text = readme.read_text(encoding="utf-8") if readme.exists() else ""
-    return _memory_overlap_schema_fenced_block(text) != json.dumps(_compact_memory_overlap_demo_schema())
+    return _memory_overlap_schema_fenced_block(text) != _compact_memory_overlap_demo_schema_output()
+
+
+def _updated_readme_schema_example_block(root: Path) -> str:
+    readme = root / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    heading = "## Memory overlap demo JSON Schemas"
+    heading_start = text.find(heading)
+    if heading_start == -1:
+        raise ValueError("README is missing the memory-overlap schema section")
+    return text[:heading_start] + _replace_fenced_block(
+        text[heading_start:], "json", _compact_memory_overlap_demo_schema_output()
+    )
 
 
 def _memory_overlap_schema_fenced_block(text: str) -> str | None:
@@ -498,6 +529,10 @@ def _memory_overlap_schema_fenced_block(text: str) -> str | None:
     if heading_start == -1:
         return None
     return _fenced_block(text[heading_start:], "json")
+
+
+def _compact_memory_overlap_demo_schema_output() -> str:
+    return json.dumps(_compact_memory_overlap_demo_schema())
 
 
 def _compact_memory_overlap_demo_schema() -> dict:

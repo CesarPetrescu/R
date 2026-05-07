@@ -809,6 +809,110 @@ def test_cli_check_readme_schema_examples_reports_compact_schema_doc_drift(tmp_p
     assert result.stderr == "README memory-overlap schema example is out of date.\n"
 
 
+def test_cli_writes_readme_schema_example_in_place(tmp_path):
+    write(
+        tmp_path / "README.md",
+        """# Schema Writer Demo
+
+Intro stays.
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+
+Tail stays.
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--write-readme-schema-examples"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    expected_schema = json.dumps(
+        {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {
+                "memoryOverlapTotalsDemo": {
+                    "required": ["by", "totals"],
+                    "totals_item": {"required": ["group", "overlap_count", "total_overlap_size"]},
+                },
+                "memoryThresholdDemo": {
+                    "required": ["by", "max_overlap_count", "max_total_overlap_size", "violations"],
+                    "violations_item": {
+                        "required": [
+                            "group",
+                            "overlap_count",
+                            "total_overlap_size",
+                            "max_overlap_count",
+                            "max_total_overlap_size",
+                            "exceeded",
+                        ]
+                    },
+                },
+            },
+        }
+    )
+    assert result.returncode == 0
+    assert result.stdout == "Updated README memory-overlap schema example fence.\n"
+    assert result.stderr == ""
+    assert (tmp_path / "README.md").read_text(encoding="utf-8") == f"""# Schema Writer Demo
+
+Intro stays.
+
+## Memory overlap demo JSON Schemas
+
+```json
+{expected_schema}
+```
+
+Tail stays.
+"""
+
+
+def test_cli_dry_runs_readme_schema_example_writer_without_modifying_readme(tmp_path):
+    original_readme = """# Schema Dry Run Demo
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+"""
+    write(tmp_path / "README.md", original_readme)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--dry-run-readme-schema-examples",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert '"memoryOverlapTotalsDemo"' in result.stdout
+    assert '"memoryThresholdDemo"' in result.stdout
+    assert result.stderr == ""
+    assert (tmp_path / "README.md").read_text(encoding="utf-8") == original_readme
+
+
 def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 
