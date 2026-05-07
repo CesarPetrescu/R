@@ -64,6 +64,25 @@ class ByteSpanOverlapGroupTotal:
 
 
 @dataclass(frozen=True)
+class ByteSpanOverlapGroupThresholdViolation:
+    """Grouped overlap total that exceeds one or more dashboard budgets."""
+
+    group_name: str
+    overlap_count: int
+    total_overlap_size: int
+    max_overlap_count: int | None = None
+    max_total_overlap_size: int | None = None
+
+    @property
+    def exceeds_overlap_count(self) -> bool:
+        return self.max_overlap_count is not None and self.overlap_count > self.max_overlap_count
+
+    @property
+    def exceeds_total_overlap_size(self) -> bool:
+        return self.max_total_overlap_size is not None and self.total_overlap_size > self.max_total_overlap_size
+
+
+@dataclass(frozen=True)
 class StructLayout:
     """C-like structure layout with internal and tail padding made explicit."""
 
@@ -300,6 +319,40 @@ def group_byte_span_overlap_totals(
         )
         for group_name, overlaps in grouped.items()
     }
+
+
+def find_grouped_byte_span_overlap_total_violations(
+    spans: list[ByteSpan], *, by: str, prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+) -> dict[str, ByteSpanOverlapGroupThresholdViolation]:
+    """Return grouped overlap totals that exceed optional dashboard budgets."""
+
+    _validate_optional_threshold("max_overlap_count", max_overlap_count)
+    _validate_optional_threshold("max_total_overlap_size", max_total_overlap_size)
+    totals = group_byte_span_overlap_totals(spans, by=by, prefix_depth=prefix_depth)
+    violations: dict[str, ByteSpanOverlapGroupThresholdViolation] = {}
+    for group_name, total in totals.items():
+        if _total_exceeds_thresholds(total, max_overlap_count=max_overlap_count, max_total_overlap_size=max_total_overlap_size):
+            violations[group_name] = ByteSpanOverlapGroupThresholdViolation(
+                group_name=group_name,
+                overlap_count=total.overlap_count,
+                total_overlap_size=total.total_overlap_size,
+                max_overlap_count=max_overlap_count,
+                max_total_overlap_size=max_total_overlap_size,
+            )
+    return violations
+
+
+def _total_exceeds_thresholds(
+    total: ByteSpanOverlapGroupTotal, *, max_overlap_count: int | None, max_total_overlap_size: int | None
+) -> bool:
+    return (max_overlap_count is not None and total.overlap_count > max_overlap_count) or (
+        max_total_overlap_size is not None and total.total_overlap_size > max_total_overlap_size
+    )
+
+
+def _validate_optional_threshold(name: str, value: int | None) -> None:
+    if value is not None:
+        _require_non_negative(name, value)
 
 
 def render_grouped_byte_span_overlap_totals(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
