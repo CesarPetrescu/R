@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tomllib
 from pathlib import Path
 
 from .memory import (
@@ -51,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
+    )
+    parser.add_argument(
+        "--check-changelog-version",
+        action="store_true",
+        help="Exit nonzero when README/CHANGELOG do not mention the pyproject package version.",
     )
     parser.add_argument(
         "--memory-threshold-demo",
@@ -120,6 +126,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print("Memory overlap demo schema fixture matches current CLI output.")
         return 0
+    if args.check_changelog_version:
+        return _check_changelog_version(Path(args.root))
     if args.memory_threshold_demo:
         if args.json:
             print(
@@ -214,6 +222,28 @@ def _non_negative_int(value: str) -> int:
     if parsed < 0:
         raise argparse.ArgumentTypeError("must be non-negative")
     return parsed
+
+
+def _check_changelog_version(root: Path) -> int:
+    version = _pyproject_version(root)
+    required = f"`{version}`"
+    missing = []
+    for filename in ("README.md", "CHANGELOG.md"):
+        path = root / filename
+        text = path.read_text(encoding="utf-8") if path.exists() else ""
+        if required not in text:
+            missing.append(filename)
+    if missing:
+        for filename in missing:
+            print(f"{filename} does not mention pyproject version {version}.", file=sys.stderr)
+        return 1
+    print(f"CHANGELOG and README mention pyproject version {version}.")
+    return 0
+
+
+def _pyproject_version(root: Path) -> str:
+    pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    return pyproject["project"]["version"]
 
 
 def _readme_example_mismatches(root: Path, report) -> list[str]:
