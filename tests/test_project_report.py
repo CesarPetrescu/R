@@ -1009,6 +1009,88 @@ version = "0.1.0"
     assert result.stderr == "Release tag checklist fixture is out of date.\n"
 
 
+def test_cli_write_release_tag_fixture_updates_stale_fixture(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    fixture = tmp_path / "tests" / "fixtures" / "release-tag-checklist.json"
+    write(fixture, "{}\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--write-release-tag-fixture"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Updated release tag checklist fixture.\n"
+    assert result.stderr == ""
+    assert json.loads(fixture.read_text(encoding="utf-8")) == {
+        "checks": {
+            "docker_verified": True,
+            "git_clean": "skipped",
+            "tag_matches_version": True,
+        },
+        "expected_tag": "v0.1.0",
+        "ready": True,
+        "tag": "v0.1.0",
+        "version": "0.1.0",
+    }
+
+
+def test_cli_write_release_tag_fixture_dry_run_prints_without_modifying_fixture(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    fixture = tmp_path / "tests" / "fixtures" / "release-tag-checklist.json"
+    write(fixture, "{}\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-tag-fixture",
+            "--dry-run-release-tag-fixture",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == {
+        "checks": {
+            "docker_verified": True,
+            "git_clean": "skipped",
+            "tag_matches_version": True,
+        },
+        "expected_tag": "v0.1.0",
+        "ready": True,
+        "tag": "v0.1.0",
+        "version": "0.1.0",
+    }
+    assert result.stderr == ""
+    assert fixture.read_text(encoding="utf-8") == "{}\n"
+
+
 def test_cli_check_release_tag_reports_mismatched_tag_name():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

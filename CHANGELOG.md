@@ -22,3 +22,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added `--check-release-tag` so release automation can verify candidate tag names, Docker verification evidence, and clean git state before publishing.
 - Added JSON output for `--check-release-tag` so release automation can consume machine-readable checklist summaries before publishing.
 - Added `--check-release-tag-fixture` and `tests/fixtures/release-tag-checklist.json` so release automation can detect frozen checklist JSON drift.
+- Added `--write-release-tag-fixture` and `--dry-run-release-tag-fixture` so release automation can refresh or preview frozen release checklist JSON fixtures without manual copying.

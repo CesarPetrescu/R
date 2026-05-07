@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a README schema example writer if compact JSON Schema docs begin changing often enough that checks alone are noisy.
-3. Add a release checklist fixture writer if release automation starts updating frozen summary fixtures frequently.
+3. Add a release checklist fixture writer verification mode that can target future package versions once release automation starts preparing non-current tags.
 
 ## Every-run checklist
 
