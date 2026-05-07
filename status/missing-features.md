@@ -38,6 +38,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add Markdown threshold violation renderers so PR comments can show which grouped byte-span totals exceed dashboard budgets.
 - [x] Add fixture-backed CLI/demo output for memory-layout threshold violation examples.
 - [x] Add structured JSON output for the memory-threshold demo so runtime diagnostics have machine-readable CLI fixtures.
+- [x] Add fixture-backed grouped overlap totals CLI/demo output in Markdown and JSON so dashboards can consume compact non-violation summaries.
 
 ## P2 — project quality
 

@@ -29,11 +29,13 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   detector for intersecting runtime ranges, Markdown overlap reports for
   human-readable runtime diagnostics, grouped overlap reports by shared
   provenance tag or qualified-name prefix, compact grouped overlap totals
-  for larger trace dashboards, and Markdown grouped-total tables for PR
-  comments and dashboards, threshold helpers that flag grouped totals above
-  dashboard overlap-count or intersecting-byte budgets, Markdown threshold
-  violation tables for PR comments and dashboard gates, and a fixture-backed
-  CLI demo with Markdown and JSON output for stable threshold violation output
+  for larger trace dashboards, Markdown grouped-total tables for PR
+  comments and dashboards, fixture-backed Markdown and JSON CLI demo output
+  for compact grouped total summaries, threshold helpers that flag grouped
+  totals above dashboard overlap-count or intersecting-byte budgets, Markdown
+  threshold violation tables for PR comments and dashboard gates, and a
+  fixture-backed CLI demo with Markdown and JSON output for stable threshold
+  violation output
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -80,6 +82,8 @@ PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
+PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo
+PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --json
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -212,13 +216,15 @@ r-project --root . --json --fail-on-blockers
 r-project --root . --check-readme-examples
 r-project --memory-threshold-demo
 r-project --memory-threshold-demo --json
+r-project --memory-overlap-totals-demo
+r-project --memory-overlap-totals-demo --json
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 38, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 27, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 39, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 28, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -230,7 +236,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 38 |
+| Completed backlog items | 39 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -239,7 +245,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 27 | 0 | None |
+| P1 | 28 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
@@ -266,6 +272,8 @@ PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
+PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo
+PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --json
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
