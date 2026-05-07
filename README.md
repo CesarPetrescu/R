@@ -27,8 +27,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   spans for fully qualified nested range comparisons, span filtering by
   qualified names and tags for narrowed diagnostics, a stable overlap
   detector for intersecting runtime ranges, Markdown overlap reports for
-  human-readable runtime diagnostics, and grouped overlap reports by shared
-  provenance tag or qualified-name prefix for larger trace reviews
+  human-readable runtime diagnostics, grouped overlap reports by shared
+  provenance tag or qualified-name prefix, and compact grouped overlap totals
+  for larger trace dashboards
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -57,6 +58,8 @@ while excluding endpoint-only touching ranges, call
 Markdown for PR comments and trace reports, or use
 `group_byte_span_overlaps(...)`/`render_grouped_byte_span_overlaps(...)` to
 summarize larger diagnostics by shared provenance tag or qualified-name prefix.
+Use `group_byte_span_overlap_totals(...)` when dashboards need compact overlap
+counts and total intersecting bytes per group instead of full pair rows.
 
 Run from a checkout:
 
@@ -73,7 +76,7 @@ runtime work:
 
 ```python
 from r_project import vector_layout
-from r_project.memory import ByteSpan, MemoryField, filter_byte_spans, find_overlapping_byte_spans, flatten_byte_spans, group_byte_span_overlaps, layout_field, leaf_byte_spans, render_byte_span_overlaps, render_grouped_byte_span_overlaps, render_layout, struct_layout
+from r_project.memory import ByteSpan, MemoryField, filter_byte_spans, find_overlapping_byte_spans, flatten_byte_spans, group_byte_span_overlap_totals, group_byte_span_overlaps, layout_field, leaf_byte_spans, render_byte_span_overlaps, render_grouped_byte_span_overlaps, render_layout, struct_layout
 
 payload = vector_layout(header_size=3, element_size=4, element_alignment=4, length=2)
 record = struct_layout(
@@ -128,6 +131,7 @@ tagged_spans = [
     ByteSpan("scratch", 6, 10),
 ]
 assert list(group_byte_span_overlaps(tagged_spans, by="tag")) == ["source:literal", "untagged"]
+assert group_byte_span_overlap_totals(tagged_spans, by="tag")["untagged"].total_overlap_size == 6
 assert render_grouped_byte_span_overlaps(tagged_spans, by="tag") == "\n".join(
     [
         "# Byte Span Overlaps by Tag",
@@ -171,7 +175,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 32, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 21, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 33, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 22, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -183,7 +187,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 32 |
+| Completed backlog items | 33 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -192,7 +196,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 21 | 0 | None |
+| P1 | 22 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
