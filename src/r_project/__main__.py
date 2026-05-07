@@ -33,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when README JSON/Markdown examples drift from current CLI output.",
     )
     parser.add_argument(
+        "--generate-readme-examples",
+        action="store_true",
+        help="Emit README-ready JSON and Markdown example fences from the current report.",
+    )
+    parser.add_argument(
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
@@ -157,6 +162,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     root = Path(args.root)
     report = analyze_project(root)
+    if args.generate_readme_examples:
+        print(_readme_example_blocks(report))
+        return 0
     if args.check_readme_examples:
         mismatches = _readme_example_mismatches(root, report)
         if mismatches:
@@ -199,6 +207,15 @@ def _readme_example_mismatches(root: Path, report) -> list[str]:
         "markdown": report.to_markdown(),
     }
     return [language for language, output in expected.items() if _fenced_block(text, language) != output]
+
+
+def _readme_example_blocks(report) -> str:
+    return "\n\n".join(
+        [
+            f"```json\n{json.dumps(report.to_dict(), sort_keys=True)}\n```",
+            f"```markdown\n{report.to_markdown()}\n```",
+        ]
+    )
 
 
 def _fenced_block(text: str, language: str) -> str | None:
