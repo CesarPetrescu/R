@@ -59,3 +59,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a README example writer that patches generated JSON/Markdown example fences into README.md automatically.
 - [x] Add a README example writer dry-run mode so agents can preview patched README content before modifying README.md.
 - [x] Add a CHANGELOG/version drift guard so release automation can verify documented user-visible version notes before tagging.
+- [x] Add compact README JSON Schema docs/examples for memory-overlap demo dashboard consumers.
