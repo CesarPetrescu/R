@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .memory import (
     ByteSpan,
+    filter_byte_spans,
     find_grouped_byte_span_overlap_total_violations,
     group_byte_span_overlap_totals,
     render_grouped_byte_span_overlap_threshold_violations,
@@ -65,6 +66,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Maximum grouped intersecting-byte budget for the memory threshold demo (default: demo preset).",
     )
+    parser.add_argument(
+        "--memory-overlap-name-prefix",
+        default=None,
+        help="Only include memory overlap demo fixture spans whose qualified names start with this prefix.",
+    )
+    parser.add_argument(
+        "--memory-overlap-tag",
+        action="append",
+        default=[],
+        help="Only include memory overlap demo fixture spans with this provenance tag; repeat to require multiple tags.",
+    )
     return parser
 
 
@@ -79,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
                         prefix_depth=args.memory_overlap_prefix_depth,
                         max_overlap_count=args.memory_overlap_max_count,
                         max_total_overlap_size=args.memory_overlap_max_bytes,
+                        name_prefix=args.memory_overlap_name_prefix,
+                        tags_all=tuple(args.memory_overlap_tag),
                     ),
                     sort_keys=True,
                 )
@@ -90,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
                     prefix_depth=args.memory_overlap_prefix_depth,
                     max_overlap_count=args.memory_overlap_max_count,
                     max_total_overlap_size=args.memory_overlap_max_bytes,
+                    name_prefix=args.memory_overlap_name_prefix,
+                    tags_all=tuple(args.memory_overlap_tag),
                 )
             )
         return 0
@@ -100,6 +116,8 @@ def main(argv: list[str] | None = None) -> int:
                     memory_overlap_totals_demo_json(
                         by=args.memory_overlap_group_by,
                         prefix_depth=args.memory_overlap_prefix_depth,
+                        name_prefix=args.memory_overlap_name_prefix,
+                        tags_all=tuple(args.memory_overlap_tag),
                     ),
                     sort_keys=True,
                 )
@@ -109,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
                 memory_overlap_totals_demo_markdown(
                     by=args.memory_overlap_group_by,
                     prefix_depth=args.memory_overlap_prefix_depth,
+                    name_prefix=args.memory_overlap_name_prefix,
+                    tags_all=tuple(args.memory_overlap_tag),
                 )
             )
         return 0
@@ -171,7 +191,13 @@ def _fenced_block(text: str, language: str) -> str | None:
 
 
 def memory_threshold_demo_markdown(
-    *, by: str = "tag", prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+    *,
+    by: str = "tag",
+    prefix_depth: int = 1,
+    max_overlap_count: int | None = None,
+    max_total_overlap_size: int | None = None,
+    name_prefix: str | None = None,
+    tags_all: tuple[str, ...] = (),
 ) -> str:
     """Return the stable fixture-backed memory threshold violation demo."""
 
@@ -179,7 +205,7 @@ def memory_threshold_demo_markdown(
         by, max_overlap_count=max_overlap_count, max_total_overlap_size=max_total_overlap_size
     )
     return render_grouped_byte_span_overlap_threshold_violations(
-        _memory_threshold_demo_spans(),
+        _filtered_memory_threshold_demo_spans(name_prefix=name_prefix, tags_all=tags_all),
         by=by,
         prefix_depth=prefix_depth,
         max_overlap_count=max_overlap_count,
@@ -188,7 +214,13 @@ def memory_threshold_demo_markdown(
 
 
 def memory_threshold_demo_json(
-    *, by: str = "tag", prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+    *,
+    by: str = "tag",
+    prefix_depth: int = 1,
+    max_overlap_count: int | None = None,
+    max_total_overlap_size: int | None = None,
+    name_prefix: str | None = None,
+    tags_all: tuple[str, ...] = (),
 ) -> dict:
     """Return stable machine-readable memory threshold violation demo data."""
 
@@ -196,7 +228,7 @@ def memory_threshold_demo_json(
         by, max_overlap_count=max_overlap_count, max_total_overlap_size=max_total_overlap_size
     )
     violations = find_grouped_byte_span_overlap_total_violations(
-        _memory_threshold_demo_spans(),
+        _filtered_memory_threshold_demo_spans(name_prefix=name_prefix, tags_all=tags_all),
         by=by,
         prefix_depth=prefix_depth,
         max_overlap_count=max_overlap_count,
@@ -247,16 +279,24 @@ def _threshold_exceeded_labels(violation) -> list[str]:
     return labels
 
 
-def memory_overlap_totals_demo_markdown(*, by: str = "tag", prefix_depth: int = 1) -> str:
+def memory_overlap_totals_demo_markdown(
+    *, by: str = "tag", prefix_depth: int = 1, name_prefix: str | None = None, tags_all: tuple[str, ...] = ()
+) -> str:
     """Return the stable fixture-backed memory overlap totals demo."""
 
-    return render_grouped_byte_span_overlap_totals(_memory_threshold_demo_spans(), by=by, prefix_depth=prefix_depth)
+    return render_grouped_byte_span_overlap_totals(
+        _filtered_memory_threshold_demo_spans(name_prefix=name_prefix, tags_all=tags_all), by=by, prefix_depth=prefix_depth
+    )
 
 
-def memory_overlap_totals_demo_json(*, by: str = "tag", prefix_depth: int = 1) -> dict:
+def memory_overlap_totals_demo_json(
+    *, by: str = "tag", prefix_depth: int = 1, name_prefix: str | None = None, tags_all: tuple[str, ...] = ()
+) -> dict:
     """Return stable machine-readable memory overlap totals demo data."""
 
-    totals = group_byte_span_overlap_totals(_memory_threshold_demo_spans(), by=by, prefix_depth=prefix_depth)
+    totals = group_byte_span_overlap_totals(
+        _filtered_memory_threshold_demo_spans(name_prefix=name_prefix, tags_all=tags_all), by=by, prefix_depth=prefix_depth
+    )
     payload = {
         "by": by,
         "totals": [
@@ -271,6 +311,10 @@ def memory_overlap_totals_demo_json(*, by: str = "tag", prefix_depth: int = 1) -
     if by == "name_prefix":
         payload["prefix_depth"] = prefix_depth
     return payload
+
+
+def _filtered_memory_threshold_demo_spans(*, name_prefix: str | None = None, tags_all: tuple[str, ...] = ()) -> list[ByteSpan]:
+    return filter_byte_spans(_memory_threshold_demo_spans(), name_prefix=name_prefix, tags_all=tags_all)
 
 
 def _memory_threshold_demo_spans() -> list[ByteSpan]:

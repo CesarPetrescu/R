@@ -498,6 +498,69 @@ def test_cli_outputs_fixture_backed_memory_overlap_totals_demo_by_name_prefix_de
     assert result.stderr == ""
 
 
+def test_cli_memory_overlap_totals_demo_filters_spans_by_name_prefix():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-overlap-totals-demo",
+            "--memory-overlap-name-prefix",
+            "left.",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == "# Byte Span Overlap Totals by Tag\n\nNo overlapping byte spans.\n"
+    assert result.stderr == ""
+
+
+def test_cli_memory_threshold_demo_filters_spans_by_required_tag_before_json_budgeting():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-threshold-demo",
+            "--json",
+            "--memory-overlap-tag",
+            "source:literal",
+            "--memory-overlap-max-count",
+            "0",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert json.loads(result.stdout) == {
+        "by": "tag",
+        "max_overlap_count": 0,
+        "max_total_overlap_size": 4,
+        "violations": [
+            {
+                "exceeded": ["overlap_count"],
+                "group": "source:literal",
+                "max_overlap_count": 0,
+                "max_total_overlap_size": 4,
+                "overlap_count": 1,
+                "total_overlap_size": 4,
+            }
+        ],
+    }
+    assert result.stderr == ""
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")
