@@ -95,6 +95,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="With --write-release-tag-fixture, print the updated fixture content without modifying it.",
     )
     parser.add_argument(
+        "--release-tag-fixture-version",
+        metavar="VERSION",
+        help=(
+            "With --check-release-tag-fixture or --write-release-tag-fixture, generate the fixture for a future "
+            "package version without editing pyproject.toml."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -191,9 +199,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
     if args.check_release_tag_fixture:
-        return _check_release_tag_fixture(Path(args.root))
+        return _check_release_tag_fixture(Path(args.root), version=args.release_tag_fixture_version)
     if args.write_release_tag_fixture:
-        return _write_release_tag_fixture(Path(args.root), dry_run=args.dry_run_release_tag_fixture)
+        return _write_release_tag_fixture(
+            Path(args.root), dry_run=args.dry_run_release_tag_fixture, version=args.release_tag_fixture_version
+        )
     if args.check_release_tag:
         return _check_release_tag(
             Path(args.root),
@@ -411,19 +421,30 @@ def _release_tag_checklist_json_payload(checklist: dict) -> dict:
     return {key: value for key, value in checklist.items() if key != "git_error"}
 
 
-def _release_tag_checklist_fixture_output(root: Path) -> str:
-    version = _pyproject_version(root)
-    checklist = _release_tag_checklist(
-        root,
-        f"v{version}",
-        docker_verified=True,
-        skip_git_clean_check=True,
-    )
+def _release_tag_checklist_fixture_output(root: Path, *, version: str | None = None) -> str:
+    version = _pyproject_version(root) if version is None else version
+    checklist = _release_tag_checklist_for_version(version)
     return json.dumps(_release_tag_checklist_json_payload(checklist), sort_keys=True) + "\n"
 
 
-def _check_release_tag_fixture(root: Path) -> int:
-    expected = _release_tag_checklist_fixture_output(root)
+def _release_tag_checklist_for_version(version: str) -> dict:
+    tag = f"v{version}"
+    return {
+        "checks": {
+            "docker_verified": True,
+            "git_clean": "skipped",
+            "tag_matches_version": True,
+        },
+        "expected_tag": tag,
+        "git_error": "",
+        "ready": True,
+        "tag": tag,
+        "version": version,
+    }
+
+
+def _check_release_tag_fixture(root: Path, *, version: str | None = None) -> int:
+    expected = _release_tag_checklist_fixture_output(root, version=version)
     fixture = root / "tests" / "fixtures" / "release-tag-checklist.json"
     actual = fixture.read_text(encoding="utf-8") if fixture.exists() else ""
     if actual != expected:
@@ -433,8 +454,8 @@ def _check_release_tag_fixture(root: Path) -> int:
     return 0
 
 
-def _write_release_tag_fixture(root: Path, *, dry_run: bool) -> int:
-    output = _release_tag_checklist_fixture_output(root)
+def _write_release_tag_fixture(root: Path, *, dry_run: bool, version: str | None = None) -> int:
+    output = _release_tag_checklist_fixture_output(root, version=version)
     if dry_run:
         print(output, end="")
         return 0
