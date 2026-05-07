@@ -5,7 +5,7 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add a fixture-backed README example generator if report examples become longer.
-2. Add a CLI option to emit fixture-backed grouped overlap totals filtered by name-prefix depth if dashboards need scoped summaries.
+2. Add a fixture-backed CLI demo for grouped overlap threshold violations by qualified-name prefix if dashboard gates need scoped budget failures.
 3. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist

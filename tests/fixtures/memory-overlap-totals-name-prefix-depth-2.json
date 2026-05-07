@@ -1,0 +1,1 @@
+{"by": "name_prefix", "prefix_depth": 2, "totals": [{"group": "left.value \u2194 right.value", "overlap_count": 1, "total_overlap_size": 4}, {"group": "left.value \u2194 scratch", "overlap_count": 1, "total_overlap_size": 2}, {"group": "right.value \u2194 scratch", "overlap_count": 1, "total_overlap_size": 4}]}
