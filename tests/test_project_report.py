@@ -764,6 +764,51 @@ def test_readme_documents_memory_overlap_schema_examples_for_dashboard_consumers
     assert '"required": ["group", "overlap_count", "total_overlap_size", "max_overlap_count", "max_total_overlap_size", "exceeded"]' in readme
 
 
+def test_cli_check_readme_schema_examples_succeeds_when_docs_match_current_schema():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--check-readme-schema-examples"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "README memory-overlap schema example matches current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_cli_check_readme_schema_examples_reports_compact_schema_doc_drift(tmp_path):
+    write(
+        tmp_path / "README.md",
+        """# Schema Drift Demo
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--check-readme-schema-examples"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "README memory-overlap schema example is out of date.\n"
+
+
 def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

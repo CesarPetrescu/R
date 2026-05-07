@@ -62,3 +62,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add compact README JSON Schema docs/examples for memory-overlap demo dashboard consumers.
 - [x] Add a release tag checklist command so release automation can verify tag names, Docker evidence, and clean git state before publishing.
 - [x] Add release-tag checklist JSON output so external release automation can consume machine-readable dry-run summaries.
+- [x] Add schema-specific README drift checks for compact memory-overlap JSON Schema docs.

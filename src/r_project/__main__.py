@@ -55,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
     )
     parser.add_argument(
+        "--check-readme-schema-examples",
+        action="store_true",
+        help="Exit nonzero when README compact memory-overlap JSON Schema examples drift from current CLI output.",
+    )
+    parser.add_argument(
         "--check-changelog-version",
         action="store_true",
         help="Exit nonzero when README/CHANGELOG do not mention the pyproject package version.",
@@ -141,6 +146,13 @@ def main(argv: list[str] | None = None) -> int:
             print("Memory overlap demo schema fixture is out of date.", file=sys.stderr)
             return 1
         print("Memory overlap demo schema fixture matches current CLI output.")
+        return 0
+    if args.check_readme_schema_examples:
+        root = Path(args.root)
+        if _readme_schema_example_mismatch(root):
+            print("README memory-overlap schema example is out of date.", file=sys.stderr)
+            return 1
+        print("README memory-overlap schema example matches current CLI output.")
         return 0
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
@@ -398,6 +410,39 @@ def _replace_fenced_block(text: str, language: str, output: str) -> str:
     if end == -1:
         raise ValueError(f"README has an unterminated {language} fenced block")
     return f"{text[:content_start]}{output}{text[end:]}"
+
+
+def _readme_schema_example_mismatch(root: Path) -> bool:
+    readme = root / "README.md"
+    text = readme.read_text(encoding="utf-8") if readme.exists() else ""
+    return _memory_overlap_schema_fenced_block(text) != json.dumps(_compact_memory_overlap_demo_schema())
+
+
+def _memory_overlap_schema_fenced_block(text: str) -> str | None:
+    heading = "## Memory overlap demo JSON Schemas"
+    heading_start = text.find(heading)
+    if heading_start == -1:
+        return None
+    return _fenced_block(text[heading_start:], "json")
+
+
+def _compact_memory_overlap_demo_schema() -> dict:
+    schema = memory_overlap_demo_schema()
+    totals = schema["$defs"]["memoryOverlapTotalsDemo"]
+    threshold = schema["$defs"]["memoryThresholdDemo"]
+    return {
+        "$schema": schema["$schema"],
+        "$defs": {
+            "memoryOverlapTotalsDemo": {
+                "required": totals["required"],
+                "totals_item": {"required": totals["properties"]["totals"]["items"]["required"]},
+            },
+            "memoryThresholdDemo": {
+                "required": threshold["required"],
+                "violations_item": {"required": threshold["properties"]["violations"]["items"]["required"]},
+            },
+        },
+    }
 
 
 def memory_threshold_demo_markdown(

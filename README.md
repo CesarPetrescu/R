@@ -21,7 +21,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - a README example drift check that exits nonzero when documented JSON/Markdown
   output no longer matches the current analyzer, plus generator, writer, and
   dry-run writer commands that emit, preview, or patch refreshed README
-  JSON/Markdown example fences from current analyzer output
+  JSON/Markdown example fences from current analyzer output, and a compact
+  memory-overlap JSON Schema README drift check for dashboard docs
 - optional nonzero exit status when active blockers are present
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
 - an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing
@@ -109,6 +110,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
@@ -259,6 +261,7 @@ r-project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
 r-project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
 r-project --memory-overlap-demo-schema
 r-project --root . --check-memory-overlap-demo-schema
+r-project --root . --check-readme-schema-examples
 r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --json --check-release-tag v0.1.0 --docker-verified
@@ -268,7 +271,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 52, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 15, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 53, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 16, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -280,7 +283,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 52 |
+| Completed backlog items | 53 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -290,7 +293,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 15 | 0 | None |
+| P2 | 16 | 0 | None |
 
 ## Next backlog item
 
@@ -328,6 +331,13 @@ CLI output before publishing dashboard integrations:
 r-project --root . --check-memory-overlap-demo-schema
 ```
 
+Run the README-specific guard when editing the compact schema example in this
+section:
+
+```bash
+r-project --root . --check-readme-schema-examples
+```
+
 ## Development
 
 Run the host checks directly when iterating:
@@ -356,6 +366,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
