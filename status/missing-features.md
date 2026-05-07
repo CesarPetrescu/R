@@ -41,6 +41,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add fixture-backed grouped overlap totals CLI/demo output in Markdown and JSON so dashboards can consume compact non-violation summaries.
 - [x] Add CLI options to emit fixture-backed grouped overlap totals by qualified-name prefix depth for scoped dashboard summaries.
 - [x] Add fixture-backed grouped overlap threshold violation CLI output by qualified-name prefix depth for scoped dashboard gates.
+- [x] Add CLI flags for custom memory-overlap threshold budgets so dashboard gates can tune overlap-count and intersecting-byte limits.
 
 ## P2 — project quality
 

@@ -5,7 +5,7 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add a fixture-backed README example generator if report examples become longer.
-2. Add CLI flags for custom memory-overlap threshold budgets if dashboard gates need thresholds beyond the stable demo presets.
+2. Add CLI filters that let memory-overlap demos narrow fixture spans by qualified-name prefix or provenance tag before totals/threshold calculations.
 3. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist
