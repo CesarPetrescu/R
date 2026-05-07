@@ -10,6 +10,8 @@ services:
       && python -m r_project --root . --check-readme-examples
       && python -m r_project --memory-threshold-demo
       && python -m r_project --memory-threshold-demo --json
+      && python -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6
+      && python -m r_project --memory-threshold-demo --json --memory-overlap-max-count 2 --memory-overlap-max-bytes 6
       && python -m r_project --memory-threshold-demo --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
       && python -m r_project --memory-threshold-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
       && python -m r_project --memory-overlap-totals-demo

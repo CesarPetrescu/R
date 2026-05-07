@@ -53,6 +53,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=1,
         help="Qualified-name prefix depth when grouping memory overlap demo totals by name_prefix (default: 1).",
     )
+    parser.add_argument(
+        "--memory-overlap-max-count",
+        type=_non_negative_int,
+        default=None,
+        help="Maximum grouped overlap count budget for the memory threshold demo (default: demo preset).",
+    )
+    parser.add_argument(
+        "--memory-overlap-max-bytes",
+        type=_non_negative_int,
+        default=None,
+        help="Maximum grouped intersecting-byte budget for the memory threshold demo (default: demo preset).",
+    )
     return parser
 
 
@@ -65,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
                     memory_threshold_demo_json(
                         by=args.memory_overlap_group_by,
                         prefix_depth=args.memory_overlap_prefix_depth,
+                        max_overlap_count=args.memory_overlap_max_count,
+                        max_total_overlap_size=args.memory_overlap_max_bytes,
                     ),
                     sort_keys=True,
                 )
@@ -74,6 +88,8 @@ def main(argv: list[str] | None = None) -> int:
                 memory_threshold_demo_markdown(
                     by=args.memory_overlap_group_by,
                     prefix_depth=args.memory_overlap_prefix_depth,
+                    max_overlap_count=args.memory_overlap_max_count,
+                    max_total_overlap_size=args.memory_overlap_max_bytes,
                 )
             )
         return 0
@@ -125,6 +141,13 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _non_negative_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be non-negative")
+    return parsed
+
+
 def _readme_example_mismatches(root: Path, report) -> list[str]:
     readme = root / "README.md"
     text = readme.read_text(encoding="utf-8") if readme.exists() else ""
@@ -147,10 +170,14 @@ def _fenced_block(text: str, language: str) -> str | None:
     return text[content_start:end]
 
 
-def memory_threshold_demo_markdown(*, by: str = "tag", prefix_depth: int = 1) -> str:
+def memory_threshold_demo_markdown(
+    *, by: str = "tag", prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+) -> str:
     """Return the stable fixture-backed memory threshold violation demo."""
 
-    max_overlap_count, max_total_overlap_size = _memory_threshold_demo_budgets(by)
+    max_overlap_count, max_total_overlap_size = _memory_threshold_demo_budgets(
+        by, max_overlap_count=max_overlap_count, max_total_overlap_size=max_total_overlap_size
+    )
     return render_grouped_byte_span_overlap_threshold_violations(
         _memory_threshold_demo_spans(),
         by=by,
@@ -160,10 +187,14 @@ def memory_threshold_demo_markdown(*, by: str = "tag", prefix_depth: int = 1) ->
     )
 
 
-def memory_threshold_demo_json(*, by: str = "tag", prefix_depth: int = 1) -> dict:
+def memory_threshold_demo_json(
+    *, by: str = "tag", prefix_depth: int = 1, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+) -> dict:
     """Return stable machine-readable memory threshold violation demo data."""
 
-    max_overlap_count, max_total_overlap_size = _memory_threshold_demo_budgets(by)
+    max_overlap_count, max_total_overlap_size = _memory_threshold_demo_budgets(
+        by, max_overlap_count=max_overlap_count, max_total_overlap_size=max_total_overlap_size
+    )
     violations = find_grouped_byte_span_overlap_total_violations(
         _memory_threshold_demo_spans(),
         by=by,
@@ -192,12 +223,19 @@ def memory_threshold_demo_json(*, by: str = "tag", prefix_depth: int = 1) -> dic
     return payload
 
 
-def _memory_threshold_demo_budgets(by: str) -> tuple[int, int]:
+def _memory_threshold_demo_budgets(
+    by: str, *, max_overlap_count: int | None = None, max_total_overlap_size: int | None = None
+) -> tuple[int, int]:
     if by == "tag":
-        return 1, 4
-    if by == "name_prefix":
-        return 0, 3
-    raise ValueError("by must be 'tag' or 'name_prefix'")
+        preset = (1, 4)
+    elif by == "name_prefix":
+        preset = (0, 3)
+    else:
+        raise ValueError("by must be 'tag' or 'name_prefix'")
+    return (
+        preset[0] if max_overlap_count is None else max_overlap_count,
+        preset[1] if max_total_overlap_size is None else max_total_overlap_size,
+    )
 
 
 def _threshold_exceeded_labels(violation) -> list[str]:

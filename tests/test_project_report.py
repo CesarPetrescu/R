@@ -302,6 +302,62 @@ def test_cli_outputs_fixture_backed_memory_threshold_demo_json():
     assert result.stderr == ""
 
 
+def test_cli_memory_threshold_demo_accepts_custom_budget_flags_for_markdown():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-threshold-demo",
+            "--memory-overlap-max-count",
+            "2",
+            "--memory-overlap-max-bytes",
+            "6",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == "# Byte Span Overlap Threshold Violations by Tag\n\nNo grouped overlap threshold violations.\n"
+    assert result.stderr == ""
+
+
+def test_cli_memory_threshold_demo_accepts_custom_budget_flags_for_json():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-threshold-demo",
+            "--json",
+            "--memory-overlap-max-count",
+            "2",
+            "--memory-overlap-max-bytes",
+            "6",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert json.loads(result.stdout) == {
+        "by": "tag",
+        "max_overlap_count": 2,
+        "max_total_overlap_size": 6,
+        "violations": [],
+    }
+    assert result.stderr == ""
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo_by_name_prefix_depth():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations-name-prefix-depth-2.md").read_text(encoding="utf-8")
