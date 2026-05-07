@@ -268,6 +268,34 @@ def test_cli_check_readme_examples_succeeds_when_examples_match_current_output()
     assert result.stderr == ""
 
 
+def test_cli_generates_readme_example_blocks_from_current_report(tmp_path):
+    write(tmp_path / "README.md", "# Generator Demo\n")
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+## P1
+- [x] Build report.
+- [ ] Add generated examples.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--generate-readme-examples"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    json_output = json.dumps(analyze_project(tmp_path).to_dict(), sort_keys=True)
+    markdown_output = analyze_project(tmp_path).to_markdown()
+    assert result.stdout == f"```json\n{json_output}\n```\n\n```markdown\n{markdown_output}\n```\n"
+    assert result.stderr == ""
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations.md").read_text(encoding="utf-8")
