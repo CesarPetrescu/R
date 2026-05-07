@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 from r_project.report import analyze_project
@@ -10,6 +11,16 @@ from r_project.report import analyze_project
 def write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
+
+
+def test_repository_declares_strong_copyleft_license():
+    pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    license_text = Path("LICENSE").read_text(encoding="utf-8")
+
+    assert pyproject["project"]["license"] == "AGPL-3.0-or-later"
+    assert license_text.startswith("GNU AFFERO GENERAL PUBLIC LICENSE")
+    assert "Version 3, 19 November 2007" in license_text
+    assert "Appropriate Legal Notices" in license_text
 
 
 def test_analyze_project_reports_backlog_counts_and_next_item(tmp_path):
@@ -280,6 +291,59 @@ def test_cli_outputs_fixture_backed_memory_threshold_demo_json():
 
     result = subprocess.run(
         [sys.executable, "-m", "r_project", "--memory-threshold-demo", "--json"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == expected
+    assert result.stderr == ""
+
+
+def test_cli_outputs_fixture_backed_memory_threshold_demo_by_name_prefix_depth():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    expected = Path("tests/fixtures/memory-threshold-violations-name-prefix-depth-2.md").read_text(encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-threshold-demo",
+            "--memory-overlap-group-by",
+            "name_prefix",
+            "--memory-overlap-prefix-depth",
+            "2",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == expected
+    assert result.stderr == ""
+
+
+def test_cli_outputs_fixture_backed_memory_threshold_demo_by_name_prefix_depth_json():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    expected = Path("tests/fixtures/memory-threshold-violations-name-prefix-depth-2.json").read_text(encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--memory-threshold-demo",
+            "--json",
+            "--memory-overlap-group-by",
+            "name_prefix",
+            "--memory-overlap-prefix-depth",
+            "2",
+        ],
         check=True,
         text=True,
         stdout=subprocess.PIPE,
