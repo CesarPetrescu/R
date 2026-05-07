@@ -787,6 +787,52 @@ def test_cli_check_memory_overlap_demo_schema_reports_fixture_drift(tmp_path):
     assert result.stderr == "Memory overlap demo schema fixture is out of date.\n"
 
 
+def test_cli_check_changelog_version_succeeds_when_docs_match_pyproject_version():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--check-changelog-version"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "CHANGELOG and README mention pyproject version 0.1.0.\n"
+    assert result.stderr == ""
+
+
+def test_cli_check_changelog_version_reports_missing_documented_version(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.2.0"
+""",
+    )
+    write(tmp_path / "README.md", "# R\n\nPackage version is `0.1.0`.\n")
+    write(tmp_path / "CHANGELOG.md", "# Changelog\n\n## Unreleased\n\n- Old notes for `0.1.0`.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--check-changelog-version"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "README.md does not mention pyproject version 0.2.0.\n"
+        "CHANGELOG.md does not mention pyproject version 0.2.0.\n"
+    )
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")

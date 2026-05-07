@@ -24,4 +24,5 @@ services:
       && python -m r_project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
       && python -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
       && python -m r_project --memory-overlap-demo-schema
-      && python -m r_project --root . --check-memory-overlap-demo-schema"
+      && python -m r_project --root . --check-memory-overlap-demo-schema
+      && python -m r_project --root . --check-changelog-version"

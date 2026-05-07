@@ -5,8 +5,8 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add compact JSON Schema docs/examples to the README if dashboard consumers ask for schema discoverability beyond the CLI.
-2. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-3. Add a CHANGELOG/version drift guard if release automation needs to verify documented user-visible changes before tagging.
+2. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+3. Add a release tag checklist command if release automation needs to verify clean git state, passing Docker verification, and matching tag names before publishing.
 
 ## Every-run checklist
 

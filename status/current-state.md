@@ -49,6 +49,7 @@ Last updated: 2026-05-07
 - `python3 -m r_project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2` emits the same scoped grouped overlap totals as stable JSON.
 - `python3 -m r_project --memory-overlap-demo-schema` emits JSON Schema definitions for the memory threshold and grouped-total demo JSON payloads so dashboard consumers can validate fields without reading source.
 - `python3 -m r_project --root <path> --check-memory-overlap-demo-schema` compares the stored schema fixture against current generated schema output and exits with status 1 plus drift diagnostics when they differ.
+- `python3 -m r_project --root <path> --check-changelog-version` compares `pyproject.toml` package version metadata with README and CHANGELOG mentions so release automation can catch stale documented version notes before tagging.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
 - `r_project.memory.render_grouped_byte_span_overlap_totals(spans, ...)` formats compact grouped overlap totals as stable Markdown tables for PR comments, trace logs, and dashboards.
 - `r_project.memory.render_grouped_byte_span_overlaps(spans, ...)` formats those grouped intersections as stable Markdown sections for PR comments, trace logs, and status reports.
@@ -83,6 +84,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
+PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```
