@@ -25,7 +25,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   memory-overlap JSON Schema README drift check for dashboard docs
 - optional nonzero exit status when active blockers are present
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
-- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing
+- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus a fixture drift check for the machine-readable checklist JSON
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
@@ -114,6 +114,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
+PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -265,13 +266,14 @@ r-project --root . --check-readme-schema-examples
 r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --json --check-release-tag v0.1.0 --docker-verified
+r-project --root . --check-release-tag-fixture
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 53, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 16, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 54, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 17, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -283,7 +285,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 53 |
+| Completed backlog items | 54 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -293,7 +295,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 16 | 0 | None |
+| P2 | 17 | 0 | None |
 
 ## Next backlog item
 
@@ -370,6 +372,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
+PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -387,7 +390,7 @@ The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic
 - increment the minor version for backward-compatible CLI/report/helper additions;
 - reserve major version changes for incompatible report schema, CLI, or helper API changes.
 
-Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing.
+Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing. If automation relies on the frozen checklist fixture, run `r-project --root . --check-release-tag-fixture` to confirm `tests/fixtures/release-tag-checklist.json` still matches current CLI output.
 
 ## License
 

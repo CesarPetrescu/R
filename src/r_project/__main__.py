@@ -70,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero unless TAG matches the pyproject version, Docker verification evidence is present, and git is clean.",
     )
     parser.add_argument(
+        "--check-release-tag-fixture",
+        action="store_true",
+        help="Exit nonzero when the release tag checklist JSON fixture drifts from current CLI output.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -156,6 +161,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
+    if args.check_release_tag_fixture:
+        return _check_release_tag_fixture(Path(args.root))
     if args.check_release_tag:
         return _check_release_tag(
             Path(args.root),
@@ -290,44 +297,20 @@ def _check_release_tag(
     skip_git_clean_check: bool,
     json_output: bool = False,
 ) -> int:
-    version = _pyproject_version(root)
-    expected_tag = f"v{version}"
-    tag_matches_version = tag == expected_tag
-    git_clean: bool | str = "skipped" if skip_git_clean_check else True
-    git_error = ""
-    if not skip_git_clean_check:
-        status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=root,
-            check=False,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if status.returncode != 0:
-            git_clean = False
-            git_error = status.stderr or "git status --porcelain failed.\n"
-        elif status.stdout:
-            git_clean = False
-
-    ready = tag_matches_version and docker_verified and (git_clean is True or git_clean == "skipped")
+    checklist = _release_tag_checklist(
+        root,
+        tag,
+        docker_verified=docker_verified,
+        skip_git_clean_check=skip_git_clean_check,
+    )
+    version = checklist["version"]
+    expected_tag = checklist["expected_tag"]
+    tag_matches_version = checklist["checks"]["tag_matches_version"]
+    git_clean = checklist["checks"]["git_clean"]
+    git_error = checklist["git_error"]
+    ready = checklist["ready"]
     if json_output:
-        print(
-            json.dumps(
-                {
-                    "checks": {
-                        "docker_verified": docker_verified,
-                        "git_clean": git_clean,
-                        "tag_matches_version": tag_matches_version,
-                    },
-                    "expected_tag": expected_tag,
-                    "ready": ready,
-                    "tag": tag,
-                    "version": version,
-                },
-                sort_keys=True,
-            )
-        )
+        print(json.dumps(_release_tag_checklist_json_payload(checklist), sort_keys=True))
         return 0 if ready else 1
 
     if not tag_matches_version:
@@ -349,6 +332,73 @@ def _check_release_tag(
         print("Release tag check requires a clean git working tree.", file=sys.stderr)
         return 1
     print(f"Release tag {tag} matches pyproject version {version} and Docker verification evidence is present.")
+    return 0
+
+
+def _release_tag_checklist(
+    root: Path,
+    tag: str,
+    *,
+    docker_verified: bool,
+    skip_git_clean_check: bool,
+) -> dict:
+    version = _pyproject_version(root)
+    expected_tag = f"v{version}"
+    tag_matches_version = tag == expected_tag
+    git_clean: bool | str = "skipped" if skip_git_clean_check else True
+    git_error = ""
+    if not skip_git_clean_check:
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if status.returncode != 0:
+            git_clean = False
+            git_error = status.stderr or "git status --porcelain failed.\n"
+        elif status.stdout:
+            git_clean = False
+    ready = tag_matches_version and docker_verified and (git_clean is True or git_clean == "skipped")
+    return {
+        "checks": {
+            "docker_verified": docker_verified,
+            "git_clean": git_clean,
+            "tag_matches_version": tag_matches_version,
+        },
+        "expected_tag": expected_tag,
+        "git_error": git_error,
+        "ready": ready,
+        "tag": tag,
+        "version": version,
+    }
+
+
+def _release_tag_checklist_json_payload(checklist: dict) -> dict:
+    return {key: value for key, value in checklist.items() if key != "git_error"}
+
+
+def _release_tag_checklist_fixture_output(root: Path) -> str:
+    version = _pyproject_version(root)
+    checklist = _release_tag_checklist(
+        root,
+        f"v{version}",
+        docker_verified=True,
+        skip_git_clean_check=True,
+    )
+    return json.dumps(_release_tag_checklist_json_payload(checklist), sort_keys=True) + "\n"
+
+
+def _check_release_tag_fixture(root: Path) -> int:
+    expected = _release_tag_checklist_fixture_output(root)
+    fixture = root / "tests" / "fixtures" / "release-tag-checklist.json"
+    actual = fixture.read_text(encoding="utf-8") if fixture.exists() else ""
+    if actual != expected:
+        print("Release tag checklist fixture is out of date.", file=sys.stderr)
+        return 1
+    print("Release tag checklist fixture matches current CLI output.")
     return 0
 
 
