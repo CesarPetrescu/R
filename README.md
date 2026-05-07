@@ -313,7 +313,7 @@ Before cutting a release, update `CHANGELOG.md` with the user-visible changes, v
 
 ## License
 
-R is distributed under the MIT License. See [`LICENSE`](LICENSE).
+R is distributed under the GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`). See [`LICENSE`](LICENSE).
 
 ## Autonomous maintenance
 
