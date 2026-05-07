@@ -12,6 +12,7 @@ from r_project.memory import (
     leaf_byte_spans,
     layout_field,
     render_byte_span_overlaps,
+    render_grouped_byte_span_overlap_totals,
     render_grouped_byte_span_overlaps,
     render_layout,
     struct_layout,
@@ -402,6 +403,33 @@ def test_group_byte_span_overlap_totals_summarize_large_reports_for_dashboards()
     assert totals["source:literal"].total_overlap_size == 4
     assert totals["untagged"].overlap_count == 2
     assert totals["untagged"].total_overlap_size == 6
+
+
+def test_render_grouped_byte_span_overlap_totals_formats_compact_dashboard_table():
+    spans = [
+        ByteSpan("left.value", 0, 8, tags=("source:literal", "runtime:left")),
+        ByteSpan("right.value", 4, 12, tags=("source:literal", "runtime:right")),
+        ByteSpan("scratch", 6, 10),
+    ]
+
+    assert render_grouped_byte_span_overlap_totals(spans, by="tag") == "\n".join(
+        [
+            "# Byte Span Overlap Totals by Tag",
+            "",
+            "| Group | Overlaps | Total overlap bytes |",
+            "| --- | ---: | ---: |",
+            "| source:literal | 1 | 4 |",
+            "| untagged | 2 | 6 |",
+        ]
+    )
+
+
+def test_render_grouped_byte_span_overlap_totals_reports_empty_state_when_ranges_do_not_intersect():
+    spans = [ByteSpan("left", 0, 4), ByteSpan("right", 4, 8)]
+
+    assert render_grouped_byte_span_overlap_totals(spans, by="tag") == (
+        "# Byte Span Overlap Totals by Tag\n\nNo overlapping byte spans."
+    )
 
 
 def test_render_grouped_byte_span_overlaps_can_group_intersections_by_name_prefix():

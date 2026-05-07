@@ -5,7 +5,7 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add a fixture-backed README example generator if report examples become longer.
-2. Add a renderer for compact byte-span overlap total tables so dashboards and PR comments can display group totals without full overlap rows.
+2. Add threshold helpers for grouped byte-span overlap totals so dashboards can flag groups that exceed expected counts or intersecting-byte budgets.
 3. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist
