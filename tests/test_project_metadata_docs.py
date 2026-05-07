@@ -8,7 +8,8 @@ def test_readme_documents_release_versioning_policy():
 
     assert "## Release and versioning" in readme
     assert "0.1.0" in readme
-    assert "CHANGELOG.md" in readme
+    assert "--check-release-tag v0.1.0 --docker-verified" in readme
+    assert "--json --check-release-tag v0.1.0 --docker-verified" in readme
     assert "semantic versioning" in readme.lower()
 
 

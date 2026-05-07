@@ -20,3 +20,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added memory-threshold demo CLI flags for custom overlap-count and intersecting-byte dashboard budgets.
 - Added `--check-changelog-version` so release automation can catch README/CHANGELOG version drift against `pyproject.toml` before tagging.
 - Added `--check-release-tag` so release automation can verify candidate tag names, Docker verification evidence, and clean git state before publishing.
+- Added JSON output for `--check-release-tag` so release automation can consume machine-readable checklist summaries before publishing.
