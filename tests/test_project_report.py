@@ -913,6 +913,270 @@ def test_cli_dry_runs_readme_schema_example_writer_without_modifying_readme(tmp_
     assert (tmp_path / "README.md").read_text(encoding="utf-8") == original_readme
 
 
+def test_cli_writes_readme_schema_example_to_alternate_docs_path(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-schema.md"
+    write(
+        docs_readme,
+        """# Dashboard Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Updated docs/dashboard-schema.md memory-overlap schema example fence.\n"
+    assert result.stderr == ""
+    assert '"memoryOverlapTotalsDemo"' in docs_readme.read_text(encoding="utf-8")
+    assert not (tmp_path / "README.md").exists()
+
+
+def test_cli_checks_readme_schema_example_at_alternate_docs_path(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-schema.md"
+    write(
+        docs_readme,
+        """# Dashboard Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    write_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    check_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert write_result.returncode == 0
+    assert check_result.returncode == 0
+    assert check_result.stdout == "docs/dashboard-schema.md memory-overlap schema example matches current CLI output.\n"
+    assert check_result.stderr == ""
+
+
+def test_cli_rejects_readme_schema_path_that_escapes_root(tmp_path):
+    outside = tmp_path.parent / "outside-dashboard-schema.md"
+    write(
+        outside,
+        """# Outside Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "../outside-dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must stay under --root" in result.stderr
+    assert outside.read_text(encoding="utf-8") == """# Outside Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+"""
+
+
+def test_cli_check_rejects_readme_schema_path_that_escapes_root(tmp_path):
+    outside = tmp_path.parent / "outside-check-dashboard-schema.md"
+    write(
+        outside,
+        """# Outside Check Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            "../outside-check-dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must stay under --root" in result.stderr
+
+
+def test_cli_check_rejects_absolute_readme_schema_path(tmp_path):
+    outside = tmp_path / "absolute-dashboard-schema.md"
+    write(
+        outside,
+        """# Absolute Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            str(outside),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must be relative to --root" in result.stderr
+
+
+def test_cli_write_rejects_absolute_readme_schema_path(tmp_path):
+    outside = tmp_path / "absolute-write-dashboard-schema.md"
+    write(
+        outside,
+        """# Absolute Write Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            str(outside),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must be relative to --root" in result.stderr
+    assert outside.read_text(encoding="utf-8") == """# Absolute Write Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+"""
+
+
 def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 
