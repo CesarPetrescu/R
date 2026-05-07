@@ -5,7 +5,7 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 ## Unreleased
 
 - Added release/versioning policy notes for the current `0.1.0` package.
-- Added MIT license metadata for Project R contributors.
+- Switched Project R from MIT to GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) so distributed and network-served modified versions remain open-source.
 - Added `r-project-lint` and `python -m r_project.lint` syntax-check commands for source/test files.
 - Documented and enforced memory-layout validation for non-power-of-two alignments.
 - Added `layout_field(...)` for embedding computed struct/vector layouts into larger composite runtime structures.

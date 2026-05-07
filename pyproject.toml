@@ -7,6 +7,7 @@ name = "r-project"
 version = "0.1.0"
 description = "Repository readiness reporting tools for autonomous project R maintenance."
 requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
 
 [project.scripts]
 r-project = "r_project.__main__:main"

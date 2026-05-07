@@ -23,5 +23,6 @@ def test_changelog_tracks_unreleased_changes():
 def test_license_file_declares_project_license():
     license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
 
-    assert "MIT License" in license_text
-    assert "Project R contributors" in license_text
+    assert license_text.startswith("GNU AFFERO GENERAL PUBLIC LICENSE")
+    assert "Version 3, 19 November 2007" in license_text
+    assert "Appropriate Legal Notices" in license_text
