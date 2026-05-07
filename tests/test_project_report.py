@@ -845,6 +845,86 @@ version = "0.2.0"
     )
 
 
+def test_cli_check_release_tag_succeeds_for_matching_tag_clean_tree_and_docker_evidence():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-tag",
+            "v0.1.0",
+            "--docker-verified",
+            "--skip-git-clean-check",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Release tag v0.1.0 matches pyproject version 0.1.0 and Docker verification evidence is present.\n"
+    assert result.stderr == ""
+
+
+def test_cli_check_release_tag_reports_mismatched_tag_name():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-tag",
+            "v0.2.0",
+            "--docker-verified",
+            "--skip-git-clean-check",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Release tag v0.2.0 does not match expected tag v0.1.0 from pyproject version 0.1.0.\n"
+
+
+def test_cli_check_release_tag_requires_docker_verification_evidence():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-tag",
+            "v0.1.0",
+            "--skip-git-clean-check",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Release tag check requires --docker-verified evidence from docker compose run --build --rm test.\n"
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")

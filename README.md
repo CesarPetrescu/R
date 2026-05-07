@@ -24,6 +24,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   JSON/Markdown example fences from current analyzer output
 - optional nonzero exit status when active blockers are present
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
+- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
@@ -109,6 +110,7 @@ PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-over
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
+PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -257,13 +259,14 @@ r-project --memory-threshold-demo --json --memory-overlap-tag source:literal --m
 r-project --memory-overlap-demo-schema
 r-project --root . --check-memory-overlap-demo-schema
 r-project --root . --check-changelog-version
+r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 50, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 13, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 51, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 14, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -275,7 +278,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 50 |
+| Completed backlog items | 51 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -285,7 +288,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 13 | 0 | None |
+| P2 | 14 | 0 | None |
 
 ## Next backlog item
 
@@ -352,6 +355,7 @@ PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-over
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
+PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 

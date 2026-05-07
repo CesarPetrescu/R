@@ -19,3 +19,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added Markdown threshold violation tables for grouped byte-span overlap dashboard budgets.
 - Added memory-threshold demo CLI flags for custom overlap-count and intersecting-byte dashboard budgets.
 - Added `--check-changelog-version` so release automation can catch README/CHANGELOG version drift against `pyproject.toml` before tagging.
+- Added `--check-release-tag` so release automation can verify candidate tag names, Docker verification evidence, and clean git state before publishing.

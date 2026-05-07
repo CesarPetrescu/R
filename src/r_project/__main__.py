@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -57,6 +58,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--check-changelog-version",
         action="store_true",
         help="Exit nonzero when README/CHANGELOG do not mention the pyproject package version.",
+    )
+    parser.add_argument(
+        "--check-release-tag",
+        metavar="TAG",
+        help="Exit nonzero unless TAG matches the pyproject version, Docker verification evidence is present, and git is clean.",
+    )
+    parser.add_argument(
+        "--docker-verified",
+        action="store_true",
+        help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
+    )
+    parser.add_argument(
+        "--skip-git-clean-check",
+        action="store_true",
+        help="With --check-release-tag, skip git status cleanliness checks for copied container test contexts.",
     )
     parser.add_argument(
         "--memory-threshold-demo",
@@ -128,6 +144,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
+    if args.check_release_tag:
+        return _check_release_tag(
+            Path(args.root),
+            args.check_release_tag,
+            docker_verified=args.docker_verified,
+            skip_git_clean_check=args.skip_git_clean_check,
+        )
     if args.memory_threshold_demo:
         if args.json:
             print(
@@ -244,6 +267,40 @@ def _check_changelog_version(root: Path) -> int:
 def _pyproject_version(root: Path) -> str:
     pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
     return pyproject["project"]["version"]
+
+
+def _check_release_tag(root: Path, tag: str, *, docker_verified: bool, skip_git_clean_check: bool) -> int:
+    version = _pyproject_version(root)
+    expected_tag = f"v{version}"
+    if tag != expected_tag:
+        print(
+            f"Release tag {tag} does not match expected tag {expected_tag} from pyproject version {version}.",
+            file=sys.stderr,
+        )
+        return 1
+    if not docker_verified:
+        print(
+            "Release tag check requires --docker-verified evidence from docker compose run --build --rm test.",
+            file=sys.stderr,
+        )
+        return 1
+    if not skip_git_clean_check:
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if status.returncode != 0:
+            print(status.stderr or "git status --porcelain failed.", end="", file=sys.stderr)
+            return 1
+        if status.stdout:
+            print("Release tag check requires a clean git working tree.", file=sys.stderr)
+            return 1
+    print(f"Release tag {tag} matches pyproject version {version} and Docker verification evidence is present.")
+    return 0
 
 
 def _readme_example_mismatches(root: Path, report) -> list[str]:
