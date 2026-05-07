@@ -26,6 +26,7 @@ services:
       && python -m r_project --memory-overlap-demo-schema
       && python -m r_project --root . --check-memory-overlap-demo-schema
       && python -m r_project --root . --check-readme-schema-examples
+      && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples
       && python -m r_project --root . --check-changelog-version
       && python -m r_project --root . --check-release-tag v0.1.0 --docker-verified --skip-git-clean-check
       && python -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified --skip-git-clean-check
