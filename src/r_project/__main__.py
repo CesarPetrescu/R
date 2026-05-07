@@ -43,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Patch README JSON and Markdown example fences in place with current report output.",
     )
     parser.add_argument(
+        "--dry-run-readme-examples",
+        action="store_true",
+        help="With --write-readme-examples, print the updated README content without modifying README.md.",
+    )
+    parser.add_argument(
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
@@ -171,8 +176,11 @@ def main(argv: list[str] | None = None) -> int:
         print(_readme_example_blocks(report))
         return 0
     if args.write_readme_examples:
-        _write_readme_example_blocks(root, report)
-        print("Updated README JSON and Markdown example fences.")
+        if args.dry_run_readme_examples:
+            print(_updated_readme_example_blocks(root, report), end="")
+        else:
+            _write_readme_example_blocks(root, report)
+            print("Updated README JSON and Markdown example fences.")
         return 0
     if args.check_readme_examples:
         mismatches = _readme_example_mismatches(root, report)
@@ -229,6 +237,11 @@ def _readme_example_blocks(report) -> str:
 
 def _write_readme_example_blocks(root: Path, report) -> None:
     readme = root / "README.md"
+    readme.write_text(_updated_readme_example_blocks(root, report), encoding="utf-8")
+
+
+def _updated_readme_example_blocks(root: Path, report) -> str:
+    readme = root / "README.md"
     text = readme.read_text(encoding="utf-8")
     replacements = {
         "json": json.dumps(report.to_dict(), sort_keys=True),
@@ -236,7 +249,7 @@ def _write_readme_example_blocks(root: Path, report) -> None:
     }
     for language, output in replacements.items():
         text = _replace_fenced_block(text, language, output)
-    readme.write_text(text, encoding="utf-8")
+    return text
 
 
 def _fenced_block(text: str, language: str) -> str | None:

@@ -358,6 +358,74 @@ Tail stays.
 """
 
 
+def test_cli_dry_runs_readme_example_writer_without_modifying_readme(tmp_path):
+    original_readme = """# Dry Run Demo
+
+Intro stays.
+
+```json
+{}
+```
+
+Between stays.
+
+```markdown
+old report
+```
+
+Tail stays.
+"""
+    write(tmp_path / "README.md", original_readme)
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+## P1
+- [x] Build report.
+- [ ] Preview written examples.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--dry-run-readme-examples",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    json_output = json.dumps(analyze_project(tmp_path).to_dict(), sort_keys=True)
+    markdown_output = analyze_project(tmp_path).to_markdown()
+    assert result.stdout == f"""# Dry Run Demo
+
+Intro stays.
+
+```json
+{json_output}
+```
+
+Between stays.
+
+```markdown
+{markdown_output}
+```
+
+Tail stays.
+"""
+    assert result.stderr == ""
+    assert (tmp_path / "README.md").read_text(encoding="utf-8") == original_readme
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations.md").read_text(encoding="utf-8")

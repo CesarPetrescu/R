@@ -57,3 +57,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a CLI generator that emits README JSON/Markdown example fences from the current report on demand.
 - [x] Add a CLI check that reports memory-overlap demo JSON Schema fixture drift on demand.
 - [x] Add a README example writer that patches generated JSON/Markdown example fences into README.md automatically.
+- [x] Add a README example writer dry-run mode so agents can preview patched README content before modifying README.md.
