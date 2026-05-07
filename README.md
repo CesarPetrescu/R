@@ -263,7 +263,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 49, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 12, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 50, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 13, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -275,7 +275,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 49 |
+| Completed backlog items | 50 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -285,7 +285,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 12 | 0 | None |
+| P2 | 13 | 0 | None |
 
 ## Next backlog item
 
@@ -297,6 +297,31 @@ None
 ```
 
 A documented test fixture lives at `tests/fixtures/readiness-repo/` and is used by the CLI tests as an executable example of expected report behavior.
+
+## Memory overlap demo JSON Schemas
+
+Dashboard consumers that validate memory-overlap demo JSON can inspect the
+schema surface without reading source by running:
+
+```bash
+r-project --memory-overlap-demo-schema
+```
+
+The schema payload uses JSON Schema draft 2020-12 and contains two definitions:
+`"memoryOverlapTotalsDemo"` for `r-project --memory-overlap-totals-demo --json`
+and `"memoryThresholdDemo"` for `r-project --memory-threshold-demo --json`.
+The compact required-field contracts are:
+
+```json
+{"$schema": "https://json-schema.org/draft/2020-12/schema", "$defs": {"memoryOverlapTotalsDemo": {"required": ["by", "totals"], "totals_item": {"required": ["group", "overlap_count", "total_overlap_size"]}}, "memoryThresholdDemo": {"required": ["by", "max_overlap_count", "max_total_overlap_size", "violations"], "violations_item": {"required": ["group", "overlap_count", "total_overlap_size", "max_overlap_count", "max_total_overlap_size", "exceeded"]}}}}
+```
+
+Use the on-demand drift guard to ensure the stored fixture still matches current
+CLI output before publishing dashboard integrations:
+
+```bash
+r-project --root . --check-memory-overlap-demo-schema
+```
 
 ## Development
 

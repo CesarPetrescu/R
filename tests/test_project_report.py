@@ -752,6 +752,18 @@ def test_cli_outputs_fixture_backed_memory_overlap_demo_json_schema():
     assert result.stderr == ""
 
 
+def test_readme_documents_memory_overlap_schema_examples_for_dashboard_consumers():
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    assert "## Memory overlap demo JSON Schemas" in readme
+    assert "r-project --memory-overlap-demo-schema" in readme
+    assert '"$schema": "https://json-schema.org/draft/2020-12/schema"' in readme
+    assert '"memoryOverlapTotalsDemo"' in readme
+    assert '"memoryThresholdDemo"' in readme
+    assert '"required": ["group", "overlap_count", "total_overlap_size"]' in readme
+    assert '"required": ["group", "overlap_count", "total_overlap_size", "max_overlap_count", "max_total_overlap_size", "exceeded"]' in readme
+
+
 def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 
