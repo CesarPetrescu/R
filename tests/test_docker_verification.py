@@ -36,6 +36,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0" in compose_text
     assert "python -m r_project --memory-overlap-demo-schema" in compose_text
     assert "python -m r_project --root . --check-memory-overlap-demo-schema" in compose_text
+    assert "python -m r_project --root . --check-readme-schema-examples" in compose_text
     assert "python -m r_project --root . --check-changelog-version" in compose_text
     assert "python -m r_project --root . --check-release-tag v0.1.0 --docker-verified --skip-git-clean-check" in compose_text
     assert "python -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified --skip-git-clean-check" in compose_text

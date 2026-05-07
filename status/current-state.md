@@ -8,7 +8,7 @@ Last updated: 2026-05-07
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, an on-demand schema fixture drift check, release/versioning notes, a release tag checklist guard with JSON summary output, and AGPL-3.0-or-later licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, on-demand schema fixture and README schema example drift checks, release/versioning notes, a release tag checklist guard with JSON summary output, and AGPL-3.0-or-later licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -49,6 +49,7 @@ Last updated: 2026-05-07
 - `python3 -m r_project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2` emits the same scoped grouped overlap totals as stable JSON.
 - `python3 -m r_project --memory-overlap-demo-schema` emits JSON Schema definitions for the memory threshold and grouped-total demo JSON payloads so dashboard consumers can validate fields without reading source.
 - `python3 -m r_project --root <path> --check-memory-overlap-demo-schema` compares the stored schema fixture against current generated schema output and exits with status 1 plus drift diagnostics when they differ.
+- `python3 -m r_project --root <path> --check-readme-schema-examples` compares the README compact memory-overlap JSON Schema example against current generated schema output and exits with status 1 plus drift diagnostics when it differs.
 - `README.md` documents compact JSON Schema examples for the memory-overlap totals and threshold demo JSON payloads so dashboard consumers can discover required fields from the docs as well as the CLI.
 - `python3 -m r_project --root <path> --check-changelog-version` compares `pyproject.toml` package version metadata with README and CHANGELOG mentions so release automation can catch stale documented version notes before tagging.
 - `python3 -m r_project --root <path> --check-release-tag vX.Y.Z --docker-verified` checks that a candidate release tag matches the `pyproject.toml` version, Docker verification evidence is present, and the git working tree is clean before publishing; use `--skip-git-clean-check` only for copied container contexts without `.git`. Add `--json` to emit a machine-readable release checklist summary with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields for release automation.
@@ -86,6 +87,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
 PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
