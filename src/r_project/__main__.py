@@ -171,7 +171,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     if args.memory_overlap_demo_schema:
         print(json.dumps(memory_overlap_demo_schema(), sort_keys=True))
         return 0
@@ -187,7 +188,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_readme_schema_examples:
         root = Path(args.root)
-        readme_schema_path = Path(args.readme_schema_path)
+        try:
+            readme_schema_path = _readme_schema_path_under_root(root, Path(args.readme_schema_path))
+        except ValueError as error:
+            parser.error(str(error))
         label = _readme_schema_path_label(readme_schema_path)
         if _readme_schema_example_mismatch(root, readme_schema_path):
             print(f"{label} memory-overlap schema example is out of date.", file=sys.stderr)
@@ -196,7 +200,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.write_readme_schema_examples:
         root = Path(args.root)
-        readme_schema_path = Path(args.readme_schema_path)
+        try:
+            readme_schema_path = _readme_schema_path_under_root(root, Path(args.readme_schema_path))
+        except ValueError as error:
+            parser.error(str(error))
         updated = _updated_readme_schema_example_block(root, readme_schema_path)
         if args.dry_run_readme_schema_examples:
             print(updated, end="")
@@ -555,6 +562,17 @@ def _updated_readme_schema_example_block(root: Path, readme_schema_path: Path = 
 def _readme_schema_path_label(readme_schema_path: Path) -> str:
     path_text = readme_schema_path.as_posix()
     return "README" if path_text == "README.md" else path_text
+
+
+def _readme_schema_path_under_root(root: Path, readme_schema_path: Path) -> Path:
+    if readme_schema_path.is_absolute():
+        raise ValueError("--readme-schema-path must be relative to --root")
+    root_resolved = root.resolve()
+    target_resolved = (root / readme_schema_path).resolve()
+    try:
+        return target_resolved.relative_to(root_resolved)
+    except ValueError as error:
+        raise ValueError("--readme-schema-path must stay under --root") from error
 
 
 def _memory_overlap_schema_fenced_block(text: str) -> str | None:

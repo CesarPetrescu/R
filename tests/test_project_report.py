@@ -1009,6 +1009,90 @@ def test_cli_checks_readme_schema_example_at_alternate_docs_path(tmp_path):
     assert check_result.stderr == ""
 
 
+def test_cli_rejects_readme_schema_path_that_escapes_root(tmp_path):
+    outside = tmp_path.parent / "outside-dashboard-schema.md"
+    write(
+        outside,
+        """# Outside Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "../outside-dashboard-schema.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must stay under --root" in result.stderr
+    assert outside.read_text(encoding="utf-8") == """# Outside Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+"""
+
+
+def test_cli_rejects_absolute_readme_schema_path(tmp_path):
+    outside = tmp_path / "absolute-dashboard-schema.md"
+    write(
+        outside,
+        """# Absolute Schema Docs
+
+## Memory overlap demo JSON Schemas
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            str(outside),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-schema-path must be relative to --root" in result.stderr
+
+
 def test_cli_check_memory_overlap_demo_schema_succeeds_when_fixture_matches_current_schema():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 
