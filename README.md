@@ -35,7 +35,8 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   provenance tag or qualified-name prefix, compact grouped overlap totals
   for larger trace dashboards, Markdown grouped-total tables for PR
   comments and dashboards, fixture-backed Markdown and JSON CLI demo output
-  for compact grouped total summaries, threshold helpers that flag grouped
+  for compact grouped total summaries, JSON Schema definitions for the memory
+  overlap demo payloads, threshold helpers that flag grouped
   totals above dashboard overlap-count or intersecting-byte budgets, Markdown
   threshold violation tables for PR comments and dashboard gates, and a
   fixture-backed CLI demo with Markdown and JSON output for stable threshold
@@ -99,6 +100,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
 PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
+PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -241,13 +243,14 @@ r-project --memory-overlap-totals-demo --memory-overlap-group-by name_prefix --m
 r-project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
 r-project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
 r-project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
+r-project --memory-overlap-demo-schema
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 43, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 32, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 44, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -259,7 +262,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 43 |
+| Completed backlog items | 44 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -268,7 +271,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 32 | 0 | None |
+| P1 | 33 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
@@ -305,6 +308,7 @@ PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overla
 PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --json --memory-overlap-group-by name_prefix --memory-overlap-prefix-depth 2
 PYTHONPATH=src python3 -m r_project --memory-overlap-totals-demo --memory-overlap-name-prefix left.
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json --memory-overlap-tag source:literal --memory-overlap-max-count 0
+PYTHONPATH=src python3 -m r_project --memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 

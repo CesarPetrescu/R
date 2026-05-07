@@ -561,6 +561,39 @@ def test_cli_memory_threshold_demo_filters_spans_by_required_tag_before_json_bud
     assert result.stderr == ""
 
 
+def test_cli_outputs_fixture_backed_memory_overlap_demo_json_schema():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    expected = Path("tests/fixtures/memory-overlap-demo-schema.json").read_text(encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--memory-overlap-demo-schema"],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    schema = json.loads(result.stdout)
+    assert result.stdout == expected
+    assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert set(schema["$defs"]) == {"memoryOverlapTotalsDemo", "memoryThresholdDemo"}
+    assert schema["$defs"]["memoryOverlapTotalsDemo"]["properties"]["totals"]["items"]["required"] == [
+        "group",
+        "overlap_count",
+        "total_overlap_size",
+    ]
+    assert schema["$defs"]["memoryThresholdDemo"]["properties"]["violations"]["items"]["required"] == [
+        "group",
+        "overlap_count",
+        "total_overlap_size",
+        "max_overlap_count",
+        "max_total_overlap_size",
+        "exceeded",
+    ]
+    assert result.stderr == ""
+
+
 def test_cli_check_readme_examples_reports_drift(tmp_path):
     write(tmp_path / "README.md", """# Drift Demo\n\n```json\n{}\n```\n\n```markdown\nold report\n```\n""")
     write(tmp_path / "status" / "missing-features.md", "- [x] Current feature.\n")
