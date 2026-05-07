@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add a README example writer if the generated example fences should be patched into README.md automatically rather than copied from stdout.
-2. Add compact JSON Schema docs/examples to the README if dashboard consumers ask for schema discoverability beyond the CLI.
-3. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+1. Add compact JSON Schema docs/examples to the README if dashboard consumers ask for schema discoverability beyond the CLI.
+2. Add a CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+3. Add a dry-run mode for the README example writer if agents need patch previews before modifying README.md.
 
 ## Every-run checklist
 

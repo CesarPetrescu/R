@@ -19,8 +19,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - active blockers from `status/stuck.md`
 - JSON for automation or Markdown for human-readable status pages
 - a README example drift check that exits nonzero when documented JSON/Markdown
-  output no longer matches the current analyzer, plus a generator that emits
-  refreshed README JSON/Markdown example fences from current analyzer output
+  output no longer matches the current analyzer, plus generator and writer
+  commands that emit or patch refreshed README JSON/Markdown example fences
+  from current analyzer output
 - optional nonzero exit status when active blockers are present
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
@@ -90,6 +91,7 @@ PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --generate-readme-examples
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6
@@ -235,6 +237,7 @@ r-project --root . --markdown
 r-project --root . --json --fail-on-blockers
 r-project --root . --check-readme-examples
 r-project --root . --generate-readme-examples
+r-project --root . --write-readme-examples
 r-project --memory-threshold-demo
 r-project --memory-threshold-demo --json
 r-project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6
@@ -255,7 +258,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 46, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 9, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 47, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 10, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -267,7 +270,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 46 |
+| Completed backlog items | 47 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -277,7 +280,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 9 | 0 | None |
+| P2 | 10 | 0 | None |
 
 ## Next backlog item
 
@@ -302,6 +305,7 @@ PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --generate-readme-examples
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6
