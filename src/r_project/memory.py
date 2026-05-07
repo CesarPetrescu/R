@@ -302,6 +302,26 @@ def group_byte_span_overlap_totals(
     }
 
 
+def render_grouped_byte_span_overlap_totals(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
+    """Render compact grouped overlap totals as a stable Markdown table."""
+
+    totals = group_byte_span_overlap_totals(spans, by=by, prefix_depth=prefix_depth)
+    title = _grouped_overlap_total_title(by)
+    if not totals:
+        return f"# {title}\n\nNo overlapping byte spans."
+
+    lines = [
+        f"# {title}",
+        "",
+        "| Group | Overlaps | Total overlap bytes |",
+        "| --- | ---: | ---: |",
+    ]
+    lines.extend(
+        f"| {group_name} | {total.overlap_count} | {total.total_overlap_size} |" for group_name, total in totals.items()
+    )
+    return "\n".join(lines)
+
+
 def render_grouped_byte_span_overlaps(spans: list[ByteSpan], *, by: str, prefix_depth: int = 1) -> str:
     """Render overlap diagnostics grouped by provenance tag or name prefix."""
 
@@ -350,6 +370,14 @@ def _grouped_overlap_title(by: str) -> str:
         return "Byte Span Overlaps by Tag"
     if by == "name_prefix":
         return "Byte Span Overlaps by Name Prefix"
+    raise ValueError("by must be 'tag' or 'name_prefix'")
+
+
+def _grouped_overlap_total_title(by: str) -> str:
+    if by == "tag":
+        return "Byte Span Overlap Totals by Tag"
+    if by == "name_prefix":
+        return "Byte Span Overlap Totals by Name Prefix"
     raise ValueError("by must be 'tag' or 'name_prefix'")
 
 
