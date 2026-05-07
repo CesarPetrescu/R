@@ -35,6 +35,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add grouped byte-span overlap totals so compact dashboards can consume counts and intersecting-byte totals without full reports.
 - [x] Add compact grouped byte-span overlap total renderers for dashboard and PR-comment Markdown tables.
 - [x] Add grouped byte-span overlap threshold helpers so dashboards can flag overlap-count or intersecting-byte budget violations.
+- [x] Add Markdown threshold violation renderers so PR comments can show which grouped byte-span totals exceed dashboard budgets.
 
 ## P2 — project quality
 
