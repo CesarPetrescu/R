@@ -63,3 +63,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release tag checklist command so release automation can verify tag names, Docker evidence, and clean git state before publishing.
 - [x] Add release-tag checklist JSON output so external release automation can consume machine-readable dry-run summaries.
 - [x] Add schema-specific README drift checks for compact memory-overlap JSON Schema docs.
+- [x] Add release-tag checklist fixture drift tests for external release automation that depends on frozen JSON summaries.

@@ -955,6 +955,60 @@ def test_cli_check_release_tag_json_summarizes_matching_tag_clean_tree_and_docke
     assert result.stderr == ""
 
 
+
+def test_release_tag_checklist_json_fixture_matches_current_cli_output():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--json",
+            "--check-release-tag",
+            "v0.1.0",
+            "--docker-verified",
+            "--skip-git-clean-check",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == Path("tests/fixtures/release-tag-checklist.json").read_text(encoding="utf-8")
+
+
+
+def test_cli_check_release_tag_fixture_reports_drift(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    write(tmp_path / "tests" / "fixtures" / "release-tag-checklist.json", "{}\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", str(tmp_path), "--check-release-tag-fixture"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Release tag checklist fixture is out of date.\n"
+
+
 def test_cli_check_release_tag_reports_mismatched_tag_name():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 
