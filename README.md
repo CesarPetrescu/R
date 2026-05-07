@@ -24,6 +24,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   JSON/Markdown example fences from current analyzer output, and a compact
   memory-overlap JSON Schema README drift check and writer for dashboard docs
 - optional nonzero exit status when active blockers are present
+- README-style path overrides for compact memory-overlap JSON Schema drift checks and writers when dashboard docs move out of the main README
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
 - an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands for the machine-readable checklist JSON
 - a lightweight Python syntax lint command for source and test files
@@ -113,6 +114,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path README.md
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
@@ -270,6 +272,7 @@ r-project --root . --check-memory-overlap-demo-schema
 r-project --root . --check-readme-schema-examples
 r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples
 r-project --root . --write-readme-schema-examples
+r-project --root . --check-readme-schema-examples --readme-schema-path README.md
 r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --json --check-release-tag v0.1.0 --docker-verified
@@ -283,7 +286,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 57, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 20, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 58, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 21, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -295,7 +298,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 57 |
+| Completed backlog items | 58 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -305,7 +308,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 20 | 0 | None |
+| P2 | 21 | 0 | None |
 
 ## Next backlog item
 
@@ -358,6 +361,14 @@ r-project --root . --write-readme-schema-examples --dry-run-readme-schema-exampl
 r-project --root . --write-readme-schema-examples
 ```
 
+If dashboard-facing schema docs move into another README-style Markdown file,
+pass a root-relative path to the same checker or writer, for example:
+
+```bash
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-schema.md
+r-project --root . --write-readme-schema-examples --readme-schema-path docs/dashboard-schema.md
+```
+
 ## Development
 
 Run the host checks directly when iterating:
@@ -389,6 +400,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-memory-overlap-demo-schema
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path README.md
 PYTHONPATH=src python3 -m r_project --root . --check-changelog-version
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag v0.1.0 --docker-verified
 PYTHONPATH=src python3 -m r_project --root . --json --check-release-tag v0.1.0 --docker-verified
