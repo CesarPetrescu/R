@@ -31,8 +31,9 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   provenance tag or qualified-name prefix, compact grouped overlap totals
   for larger trace dashboards, and Markdown grouped-total tables for PR
   comments and dashboards, threshold helpers that flag grouped totals above
-  dashboard overlap-count or intersecting-byte budgets, and Markdown threshold
-  violation tables for PR comments and dashboard gates
+  dashboard overlap-count or intersecting-byte budgets, Markdown threshold
+  violation tables for PR comments and dashboard gates, and a fixture-backed
+  CLI demo for stable threshold violation output
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -77,6 +78,7 @@ PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
+PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -207,13 +209,14 @@ r-project --root . --json
 r-project --root . --markdown
 r-project --root . --json --fail-on-blockers
 r-project --root . --check-readme-examples
+r-project --memory-threshold-demo
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 36, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 25, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 37, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 26, "next_item": null, "open": 0}, "P2": {"completed": 7, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -225,7 +228,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 36 |
+| Completed backlog items | 37 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -234,7 +237,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 25 | 0 | None |
+| P1 | 26 | 0 | None |
 | P2 | 7 | 0 | None |
 
 ## Next backlog item
@@ -259,6 +262,7 @@ PYTHONPATH=src python3 -m r_project --root . --json
 PYTHONPATH=src python3 -m r_project --root . --markdown
 PYTHONPATH=src python3 -m r_project --root . --json --fail-on-blockers
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
+PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
