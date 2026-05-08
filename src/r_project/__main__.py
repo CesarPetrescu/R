@@ -768,15 +768,24 @@ def _check_automation_index_commands(root: Path) -> int:
 
 def _check_automation_command_fixtures(root: Path) -> int:
     fixture_index = root / "docs" / "automation-command-fixtures.md"
+    automation_index = root / "docs" / "automation-index.md"
     compose = root / "docker-compose.yml"
     index_text = fixture_index.read_text(encoding="utf-8") if fixture_index.exists() else ""
+    automation_index_text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
     compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
     documented_commands = _automation_command_fixture_index_commands(index_text)
+    missing_index_commands = [
+        command for command in _automation_index_r_project_commands(automation_index_text) if command not in documented_commands
+    ]
     missing_commands = [
         command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
     ]
     if not documented_commands:
         print("Automation command fixture index does not document any r-project commands.", file=sys.stderr)
+        return 1
+    if missing_index_commands:
+        for command in missing_index_commands:
+            print(f"Automation command fixture index is missing automation-index command: {command}", file=sys.stderr)
         return 1
     if missing_commands:
         for command in missing_commands:

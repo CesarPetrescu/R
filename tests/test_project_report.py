@@ -1568,6 +1568,62 @@ def test_automation_command_fixture_guard_reports_missing_docker_coverage(tmp_pa
     )
 
 
+def test_automation_command_fixture_guard_reports_missing_index_command(tmp_path):
+    write(
+        tmp_path / "docs" / "automation-index.md",
+        """# Automation Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    write(
+        tmp_path / "docs" / "automation-command-fixtures.md",
+        """# Automation Command Fixture Index
+
+| Source docs | Purpose | Docker-covered command |
+| --- | --- | --- |
+| [Automation index](automation-index.md) | Dashboard readiness examples | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-automation-command-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Automation command fixture index is missing automation-index command: "
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
+    )
+
+
 def test_automation_index_release_writer_smoke_fixture_preserves_other_embedded_examples(tmp_path):
     fixture = Path("tests/fixtures/automation-index-release-smoke.md")
     automation_index = tmp_path / "docs" / "automation-index.md"

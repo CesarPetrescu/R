@@ -11,6 +11,8 @@ docker compose run --build --rm test
 
 | Source docs | Purpose | Docker-covered command |
 | --- | --- | --- |
+| [Automation index](automation-index.md) | Dashboard index readiness examples | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+| [Automation index](automation-index.md) | Dashboard index schema examples | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md` |
 | [Automation index](automation-index.md) | Dashboard readiness examples in the combined automation index | `r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Dashboard schema examples in the combined automation index | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Release version documentation guard | `r-project --root . --check-changelog-version` |
