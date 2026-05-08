@@ -8,6 +8,7 @@ Generate or verify this example from current CLI output with:
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
 ```
 
 Use `--release-examples-version X.Y.Z` with the checker or writer to preview a
