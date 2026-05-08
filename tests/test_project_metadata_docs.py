@@ -27,6 +27,20 @@ def test_release_checklist_document_explains_external_fixture_path():
     assert "docker compose run --build --rm test" in text
 
 
+def test_release_readiness_index_links_release_docs_and_guard_commands():
+    index_doc = ROOT / "docs" / "release-index.md"
+
+    assert index_doc.exists()
+    text = index_doc.read_text(encoding="utf-8")
+    assert "# Release Readiness Index" in text
+    assert "[release checklist fixture workflow](release-checklist.md)" in text
+    assert "[checked release checklist JSON](release/checklist.json)" in text
+    assert "r-project --root . --check-changelog-version" in text
+    assert "r-project --root . --check-release-tag v0.1.0 --docker-verified" in text
+    assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
+    assert "docker compose run --build --rm test" in text
+
+
 def test_release_checklist_document_fixture_matches_current_cli_output():
     fixture = ROOT / "docs" / "release" / "checklist.json"
 
