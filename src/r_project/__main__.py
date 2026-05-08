@@ -171,6 +171,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/automation-index.md does not link every standalone automation docs surface.",
     )
     parser.add_argument(
+        "--check-automation-index-commands",
+        action="store_true",
+        help="Exit nonzero when docs/automation-index.md documents r-project commands missing from docker-compose.yml.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -321,6 +326,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_release_example_fixtures(Path(args.root))
     if args.check_automation_index_links:
         return _check_automation_index_links(Path(args.root))
+    if args.check_automation_index_commands:
+        return _check_automation_index_commands(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -703,6 +710,26 @@ def _check_automation_index_links(root: Path) -> int:
     return 0
 
 
+def _check_automation_index_commands(root: Path) -> int:
+    automation_index = root / "docs" / "automation-index.md"
+    compose = root / "docker-compose.yml"
+    index_text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    documented_commands = _automation_index_r_project_commands(index_text)
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if not documented_commands:
+        print("Automation index does not document any r-project verification commands.", file=sys.stderr)
+        return 1
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing automation index command: {command}", file=sys.stderr)
+        return 1
+    print("Automation index commands match Docker harness commands.")
+    return 0
+
+
 def _standalone_automation_surface_paths() -> tuple[str, ...]:
     return (
         "docs/dashboard-index.md",
@@ -718,6 +745,22 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
 
 def _automation_index_href(docs_path: str) -> str:
     return docs_path.removeprefix("docs/")
+
+
+def _automation_index_r_project_commands(index_text: str) -> list[str]:
+    commands: list[str] = []
+    in_bash_fence = False
+    for line in index_text.splitlines():
+        stripped = line.strip()
+        if stripped == "```bash":
+            in_bash_fence = True
+            continue
+        if in_bash_fence and stripped == "```":
+            in_bash_fence = False
+            continue
+        if in_bash_fence and stripped.startswith(("r-project ", "python -m r_project ")):
+            commands.append(stripped)
+    return commands
 
 
 def _release_example_fixture_index_commands(index_text: str) -> list[str]:
