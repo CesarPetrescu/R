@@ -72,3 +72,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a README report example writer/checker path override if dashboard-ready usage examples move into standalone docs.
 - [x] Add a standalone usage-example document backed by README report example checks for dashboard consumers.
 - [x] Add a standalone dashboard schema document backed by README schema example checks for dashboard consumers.
+- [x] Add a dashboard release/readiness index document backed by report and schema drift checks for dashboard consumers.

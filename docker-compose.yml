@@ -14,6 +14,8 @@ services:
       && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
       && python -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
       && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
       && python -m r_project --root . --write-readme-examples
       && python -m r_project --memory-threshold-demo
       && python -m r_project --memory-threshold-demo --json
