@@ -1358,6 +1358,60 @@ def test_automation_index_release_example_matches_current_cli_output():
     assert result.stderr == ""
 
 
+def test_automation_index_release_writer_smoke_fixture_preserves_other_embedded_examples(tmp_path):
+    fixture = Path("tests/fixtures/automation-index-release-smoke.md")
+    automation_index = tmp_path / "docs" / "automation-index.md"
+    write(automation_index, fixture.read_text(encoding="utf-8"))
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    original_text = automation_index.read_text(encoding="utf-8")
+    readiness_fence = original_text.split("## Embedded readiness report example", 1)[1].split(
+        "## Memory overlap demo JSON Schemas", 1
+    )[0]
+    schema_fence = original_text.split("## Embedded memory-overlap schema example", 1)[1].split(
+        "## Release automation", 1
+    )[0]
+    stale_release_fence = original_text.split("## Embedded release checklist example", 1)[1].split(
+        "## Full clean verification", 1
+    )[0]
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-examples",
+            "--dry-run-release-examples",
+            "--release-examples-path",
+            "docs/automation-index.md",
+            "--release-examples-section",
+            "Embedded release checklist example",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert readiness_fence in result.stdout
+    assert schema_fence in result.stdout
+    assert stale_release_fence not in result.stdout
+    assert '"tag": "v0.1.0"' in result.stdout
+    assert '"ready": true' in result.stdout
+    assert automation_index.read_text(encoding="utf-8") == original_text
+
+
 def test_standalone_dashboard_index_document_matches_report_and_schema_outputs():
     dashboard_index = Path("docs/dashboard-index.md")
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}

@@ -81,3 +81,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add embedded automation-index readiness and schema examples backed by alternate README-style drift checks for combined dashboard/release automation consumers.
 - [x] Add an embedded automation-index release checklist example backed by a scoped README-style release drift check for combined automation consumers.
 - [x] Add a scoped release-example writer smoke test for `docs/automation-index.md` so Docker verification previews in-place release snippet refreshes for combined automation docs.
+- [x] Add a release-docs smoke fixture that verifies the scoped automation-index writer output preserves surrounding readiness/schema examples unchanged.
