@@ -100,6 +100,8 @@ PYTHONPATH=src python3 -m r_project --root . --generate-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path README.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
@@ -261,6 +263,8 @@ r-project --root . --generate-readme-examples
 r-project --root . --write-readme-examples --dry-run-readme-examples
 r-project --root . --check-readme-examples --readme-examples-path README.md
 r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
+r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
+r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --write-readme-examples
 r-project --memory-threshold-demo
 r-project --memory-threshold-demo --json
@@ -294,7 +298,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 60, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 23, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 61, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 24, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -306,7 +310,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 60 |
+| Completed backlog items | 61 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -316,7 +320,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 23 | 0 | None |
+| P2 | 24 | 0 | None |
 
 ## Next backlog item
 
@@ -336,6 +340,11 @@ root-relative path to the same checker or writer, for example:
 r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --write-readme-examples --readme-examples-path docs/usage-examples.md
 ```
+
+The repository also keeps those examples in
+[`docs/usage-examples.md`](docs/usage-examples.md), which is checked in host
+tests and the Docker verification harness so external dashboard docs can depend
+on a stable standalone Markdown surface.
 
 ## Memory overlap demo JSON Schemas
 
@@ -400,6 +409,8 @@ PYTHONPATH=src python3 -m r_project --root . --generate-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path README.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
