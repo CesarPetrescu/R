@@ -6,7 +6,7 @@ This page indexes the executable Markdown smoke fixtures that protect release-ex
 
 | Fixture | Purpose | Docker verification command |
 | --- | --- | --- |
-| `tests/fixtures/automation-index-release-smoke.md` | Proves the scoped `docs/automation-index.md` release-example writer refreshes only the embedded release checklist section while preserving surrounding readiness and memory-overlap schema examples. | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
+| `tests/fixtures/automation-index-release-smoke.md` | Proves the scoped `docs/automation-index.md` release-example writer refreshes only the embedded release checklist section while preserving surrounding readiness and memory-overlap schema examples. | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'` |
 | `tests/fixtures/release-examples-future-version-smoke.md` | Proves future-version preview output can target a compact current-version release checklist fixture without mutating checked current-version docs. | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md` |
 
 ## Acceptance checklist for new fixtures

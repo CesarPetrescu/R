@@ -90,6 +90,7 @@ def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
     assert "--release-examples-version 0.2.0" in text
+    assert "--release-examples-path tests/fixtures/automation-index-release-smoke.md" in text
     assert "docker compose run --build --rm test" in text
 
 
@@ -103,7 +104,7 @@ def test_release_example_fixture_index_links_each_fixture_and_docker_command():
     assert "tests/fixtures/automation-index-release-smoke.md" in text
     assert "tests/fixtures/release-examples-future-version-smoke.md" in text
     assert (
-        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'"
         in text
     )
     assert (
