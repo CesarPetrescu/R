@@ -27,6 +27,7 @@ Last updated: 2026-05-08
 - Add `--readme-examples-path docs/usage-examples.md` to README JSON/Markdown example drift checks and writer/dry-run modes when dashboard-ready report examples live in a standalone README-style Markdown file under `--root`; absolute paths and `..` escapes are rejected before writer modes can modify files outside `--root`.
 - `docs/usage-examples.md` stores standalone dashboard-ready JSON and Markdown report examples that are kept in sync by host tests and the Docker harness via `--readme-examples-path docs/usage-examples.md`.
 - `docs/dashboard-index.md` stores a standalone dashboard landing page with checked readiness report fences and checked compact memory-overlap schema fences, linking `docs/usage-examples.md` and `docs/dashboard-schema.md` for consumers that need one entry point.
+- Add `--readme-examples-section` to report example checks and writers, or `--readme-schema-section` to compact schema checks and writers, when a dashboard Markdown file contains multiple independently named readiness/schema snippets and only one section should be checked or refreshed.
 - `python3 -m r_project.lint --root <path>` and installed `r-project-lint --root <path>` run a lightweight Python syntax lint over `src/` and `tests/`.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently; invalid negative values, zero element sizes/alignments, non-power-of-two element alignments, and optional `max_total_size` overflows raise `ValueError`.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned; invalid field sizes/alignments, non-power-of-two field alignments, and optional `max_total_size` overflows raise `ValueError`.
@@ -104,7 +105,9 @@ PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-r
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo

@@ -104,7 +104,9 @@ PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-r
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
@@ -287,7 +289,9 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
 r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
 r-project --root . --write-readme-examples
@@ -339,7 +343,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 81, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 44, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 82, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 45, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -351,7 +355,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 81 |
+| Completed backlog items | 82 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -361,7 +365,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 44 | 0 | None |
+| P2 | 45 | 0 | None |
 
 ## Next backlog item
 
@@ -385,7 +389,9 @@ r-project --root . --write-readme-examples --readme-examples-path docs/usage-exa
 The repository also keeps those examples in
 [`docs/usage-examples.md`](docs/usage-examples.md), which is checked in host
 tests and the Docker verification harness so external dashboard docs can depend
-on a stable standalone Markdown surface. [`docs/dashboard-index.md`](docs/dashboard-index.md)
+on a stable standalone Markdown surface. When a Markdown dashboard page contains
+multiple readiness snippets, add `--readme-examples-section 'Heading text'` to
+check or refresh only the named section's JSON and Markdown fences. [`docs/dashboard-index.md`](docs/dashboard-index.md)
 links those readiness examples with the checked schema examples and is also
 verified by host tests and Docker as a dashboard landing page. [`docs/dashboard-example-fixtures.md`](docs/dashboard-example-fixtures.md)
 indexes those dashboard example guard commands against Docker coverage so future
@@ -443,6 +449,10 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
 r-project --root . --write-readme-schema-examples --readme-schema-path docs/dashboard-schema.md
 ```
 
+When one dashboard Markdown file contains multiple schema snippets, add
+`--readme-schema-section 'Heading text'` so the checker or writer targets only
+the first JSON fence under that named heading.
+
 The repository also keeps those compact schema examples in
 [`docs/dashboard-schema.md`](docs/dashboard-schema.md), which is checked in host
 tests and the Docker verification harness so external dashboard docs can depend
@@ -468,7 +478,9 @@ PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-r
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples

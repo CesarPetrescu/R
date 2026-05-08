@@ -55,6 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="README-style Markdown path, relative to --root, whose JSON/Markdown report examples are checked or written.",
     )
     parser.add_argument(
+        "--readme-examples-section",
+        help=(
+            "With --check-readme-examples or --write-readme-examples, check or replace the first JSON and "
+            "Markdown fences after this Markdown heading instead of the first matching fences in the document."
+        ),
+    )
+    parser.add_argument(
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
@@ -78,6 +85,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--readme-schema-path",
         default="README.md",
         help="README-style Markdown path, relative to --root, whose compact memory-overlap schema example is checked or written.",
+    )
+    parser.add_argument(
+        "--readme-schema-section",
+        help=(
+            "With --check-readme-schema-examples or --write-readme-schema-examples, check or replace the first "
+            "JSON fence after this Markdown heading instead of the default memory-overlap schema section."
+        ),
     )
     parser.add_argument(
         "--check-changelog-version",
@@ -284,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as error:
             parser.error(str(error))
         label = _readme_schema_path_label(readme_schema_path)
-        if _readme_schema_example_mismatch(root, readme_schema_path):
+        if _readme_schema_example_mismatch(root, readme_schema_path, section=args.readme_schema_section):
             print(f"{label} memory-overlap schema example is out of date.", file=sys.stderr)
             return 1
         print(f"{label} memory-overlap schema example matches current CLI output.")
@@ -295,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
             readme_schema_path = _readme_schema_path_under_root(root, Path(args.readme_schema_path))
         except ValueError as error:
             parser.error(str(error))
-        updated = _updated_readme_schema_example_block(root, readme_schema_path)
+        updated = _updated_readme_schema_example_block(root, readme_schema_path, section=args.readme_schema_section)
         if args.dry_run_readme_schema_examples:
             print(updated, end="")
         else:
@@ -446,15 +460,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.write_readme_examples:
         if args.dry_run_readme_examples:
-            print(_updated_readme_example_blocks(root, report, readme_examples_path), end="")
+            print(
+                _updated_readme_example_blocks(
+                    root, report, readme_examples_path, section=args.readme_examples_section
+                ),
+                end="",
+            )
         else:
-            _write_readme_example_blocks(root, report, readme_examples_path)
+            _write_readme_example_blocks(root, report, readme_examples_path, section=args.readme_examples_section)
             print(
                 f"Updated {_readme_examples_path_label(readme_examples_path)} JSON and Markdown example fences."
             )
         return 0
     if args.check_readme_examples:
-        mismatches = _readme_example_mismatches(root, report, readme_examples_path)
+        mismatches = _readme_example_mismatches(
+            root, report, readme_examples_path, section=args.readme_examples_section
+        )
         if mismatches:
             label = _readme_examples_path_label(readme_examples_path)
             for language in mismatches:
@@ -955,14 +976,16 @@ def _release_example_command_suffix(command: str) -> str:
     return command
 
 
-def _readme_example_mismatches(root: Path, report, readme_examples_path: Path = Path("README.md")) -> list[str]:
+def _readme_example_mismatches(
+    root: Path, report, readme_examples_path: Path = Path("README.md"), *, section: str | None = None
+) -> list[str]:
     readme = root / readme_examples_path
     text = readme.read_text(encoding="utf-8") if readme.exists() else ""
     expected = {
         "json": json.dumps(report.to_dict(), sort_keys=True),
         "markdown": report.to_markdown(),
     }
-    return [language for language, output in expected.items() if _fenced_block(text, language) != output]
+    return [language for language, output in expected.items() if _fenced_block_in_section(text, language, section) != output]
 
 
 def _readme_example_blocks(report) -> str:
@@ -974,12 +997,16 @@ def _readme_example_blocks(report) -> str:
     )
 
 
-def _write_readme_example_blocks(root: Path, report, readme_examples_path: Path = Path("README.md")) -> None:
+def _write_readme_example_blocks(
+    root: Path, report, readme_examples_path: Path = Path("README.md"), *, section: str | None = None
+) -> None:
     readme = root / readme_examples_path
-    readme.write_text(_updated_readme_example_blocks(root, report, readme_examples_path), encoding="utf-8")
+    readme.write_text(_updated_readme_example_blocks(root, report, readme_examples_path, section=section), encoding="utf-8")
 
 
-def _updated_readme_example_blocks(root: Path, report, readme_examples_path: Path = Path("README.md")) -> str:
+def _updated_readme_example_blocks(
+    root: Path, report, readme_examples_path: Path = Path("README.md"), *, section: str | None = None
+) -> str:
     readme = root / readme_examples_path
     text = readme.read_text(encoding="utf-8")
     replacements = {
@@ -987,7 +1014,7 @@ def _updated_readme_example_blocks(root: Path, report, readme_examples_path: Pat
         "markdown": report.to_markdown(),
     }
     for language, output in replacements.items():
-        text = _replace_fenced_block(text, language, output)
+        text = _replace_fenced_block_in_section(text, language, output, section)
     return text
 
 
@@ -1068,12 +1095,20 @@ def _markdown_section_start(text: str, section: str) -> int:
 
 
 def _next_markdown_section_start(text: str, start: int) -> int:
-    positions = [
-        position
-        for marker in ("\n# ", "\n## ", "\n### ", "\n#### ", "\n##### ", "\n###### ")
-        if (position := text.find(marker, start)) != -1
-    ]
-    return min(positions) if positions else -1
+    in_fence = False
+    line_start = 0
+    while line_start < len(text):
+        line_end = text.find("\n", line_start)
+        if line_end == -1:
+            line_end = len(text)
+        line = text[line_start:line_end]
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+        if line_start >= start and not in_fence and line.startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")):
+            return line_start
+        line_start = line_end + 1
+    return -1
 
 
 def _replace_fenced_block(text: str, language: str, output: str) -> str:
@@ -1088,15 +1123,21 @@ def _replace_fenced_block(text: str, language: str, output: str) -> str:
     return f"{text[:content_start]}{output}{text[end:]}"
 
 
-def _readme_schema_example_mismatch(root: Path, readme_schema_path: Path = Path("README.md")) -> bool:
+def _readme_schema_example_mismatch(
+    root: Path, readme_schema_path: Path = Path("README.md"), *, section: str | None = None
+) -> bool:
     readme = root / readme_schema_path
     text = readme.read_text(encoding="utf-8") if readme.exists() else ""
-    return _memory_overlap_schema_fenced_block(text) != _compact_memory_overlap_demo_schema_output()
+    return _memory_overlap_schema_fenced_block(text, section=section) != _compact_memory_overlap_demo_schema_output()
 
 
-def _updated_readme_schema_example_block(root: Path, readme_schema_path: Path = Path("README.md")) -> str:
+def _updated_readme_schema_example_block(
+    root: Path, readme_schema_path: Path = Path("README.md"), *, section: str | None = None
+) -> str:
     readme = root / readme_schema_path
     text = readme.read_text(encoding="utf-8")
+    if section is not None:
+        return _replace_fenced_block_in_section(text, "json", _compact_memory_overlap_demo_schema_output(), section)
     heading = "## Memory overlap demo JSON Schemas"
     heading_start = text.find(heading)
     if heading_start == -1:
@@ -1122,7 +1163,9 @@ def _readme_schema_path_under_root(root: Path, readme_schema_path: Path) -> Path
         raise ValueError("--readme-schema-path must stay under --root") from error
 
 
-def _memory_overlap_schema_fenced_block(text: str) -> str | None:
+def _memory_overlap_schema_fenced_block(text: str, *, section: str | None = None) -> str | None:
+    if section is not None:
+        return _fenced_block_in_section(text, "json", section)
     heading = "## Memory overlap demo JSON Schemas"
     heading_start = text.find(heading)
     if heading_start == -1:

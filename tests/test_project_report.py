@@ -553,6 +553,164 @@ old report
     assert result.stderr == ""
 
 
+def test_cli_writes_readme_examples_to_named_markdown_section(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-matrix.md"
+    write(
+        docs_readme,
+        """# Dashboard Matrix
+
+## Archived readiness report
+
+```json
+{"stale": true}
+```
+
+```markdown
+stale report
+```
+
+## Live readiness report
+
+```json
+{}
+```
+
+```markdown
+old live report
+```
+""",
+    )
+    write(tmp_path / "README.md", "# Matrix Demo\n")
+    write(tmp_path / "status" / "missing-features.md", "- [x] Build report.\n- [ ] Write section examples.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--readme-examples-path",
+            "docs/dashboard-matrix.md",
+            "--readme-examples-section",
+            "Live readiness report",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    json_output = json.dumps(analyze_project(tmp_path).to_dict(), sort_keys=True)
+    markdown_output = analyze_project(tmp_path).to_markdown()
+    assert result.returncode == 0
+    assert result.stdout == "Updated docs/dashboard-matrix.md JSON and Markdown example fences.\n"
+    assert result.stderr == ""
+    assert docs_readme.read_text(encoding="utf-8") == f"""# Dashboard Matrix
+
+## Archived readiness report
+
+```json
+{{"stale": true}}
+```
+
+```markdown
+stale report
+```
+
+## Live readiness report
+
+```json
+{json_output}
+```
+
+```markdown
+{markdown_output}
+```
+"""
+
+
+def test_cli_checks_readme_examples_in_named_markdown_section(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-matrix.md"
+    write(
+        docs_readme,
+        """# Dashboard Matrix
+
+## Archived readiness report
+
+```json
+{"stale": true}
+```
+
+```markdown
+stale report
+```
+
+## Live readiness report
+
+```json
+{}
+```
+
+```markdown
+old live report
+```
+""",
+    )
+    write(tmp_path / "README.md", "# Matrix Demo\n")
+    write(tmp_path / "status" / "missing-features.md", "- [x] Build report.\n- [ ] Check section examples.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    write_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--readme-examples-path",
+            "docs/dashboard-matrix.md",
+            "--readme-examples-section",
+            "Live readiness report",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    check_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-examples",
+            "--readme-examples-path",
+            "docs/dashboard-matrix.md",
+            "--readme-examples-section",
+            "Live readiness report",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert write_result.returncode == 0
+    assert check_result.returncode == 0
+    assert check_result.stdout == "docs/dashboard-matrix.md examples match current CLI output.\n"
+    assert check_result.stderr == ""
+
+
 def test_cli_rejects_readme_examples_path_that_escapes_root(tmp_path):
     outside = tmp_path.parent / "outside-readme-examples.md"
     write(
@@ -1243,6 +1401,121 @@ def test_cli_checks_readme_schema_example_at_alternate_docs_path(tmp_path):
     assert write_result.returncode == 0
     assert check_result.returncode == 0
     assert check_result.stdout == "docs/dashboard-schema.md memory-overlap schema example matches current CLI output.\n"
+    assert check_result.stderr == ""
+
+
+def test_cli_writes_readme_schema_example_to_named_markdown_section(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-schema-matrix.md"
+    write(
+        docs_readme,
+        """# Dashboard Schema Matrix
+
+## Archived schema example
+
+```json
+{"stale": true}
+```
+
+## Live schema example
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema-matrix.md",
+            "--readme-schema-section",
+            "Live schema example",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Updated docs/dashboard-schema-matrix.md memory-overlap schema example fence.\n"
+    assert result.stderr == ""
+    text = docs_readme.read_text(encoding="utf-8")
+    assert '## Archived schema example\n\n```json\n{"stale": true}\n```' in text
+    assert '## Live schema example\n\n```json\n{"$schema": "https://json-schema.org/draft/2020-12/schema"' in text
+
+
+def test_cli_checks_readme_schema_example_in_named_markdown_section(tmp_path):
+    docs_readme = tmp_path / "docs" / "dashboard-schema-matrix.md"
+    write(
+        docs_readme,
+        """# Dashboard Schema Matrix
+
+## Archived schema example
+
+```json
+{"stale": true}
+```
+
+## Live schema example
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    write_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema-matrix.md",
+            "--readme-schema-section",
+            "Live schema example",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    check_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            "docs/dashboard-schema-matrix.md",
+            "--readme-schema-section",
+            "Live schema example",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert write_result.returncode == 0
+    assert check_result.returncode == 0
+    assert check_result.stdout == "docs/dashboard-schema-matrix.md memory-overlap schema example matches current CLI output.\n"
     assert check_result.stderr == ""
 
 
