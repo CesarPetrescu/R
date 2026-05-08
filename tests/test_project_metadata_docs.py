@@ -85,11 +85,38 @@ def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
     assert "# Automation Index" in text
     assert "[dashboard readiness/schema index](dashboard-index.md)" in text
     assert "[release readiness index](release-index.md)" in text
+    assert "[release example fixture index](release-example-fixtures.md)" in text
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
     assert "--release-examples-version 0.2.0" in text
     assert "docker compose run --build --rm test" in text
+
+
+def test_release_example_fixture_index_links_each_fixture_and_docker_command():
+    index_doc = ROOT / "docs" / "release-example-fixtures.md"
+    compose_text = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+
+    assert index_doc.exists()
+    text = index_doc.read_text(encoding="utf-8")
+    assert "# Release Example Fixture Index" in text
+    assert "tests/fixtures/automation-index-release-smoke.md" in text
+    assert "tests/fixtures/release-examples-future-version-smoke.md" in text
+    assert (
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        in text
+    )
+    assert (
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md"
+        in text
+    )
+    assert "docker compose run --build --rm test" in text
+    for fixture in (
+        "tests/fixtures/automation-index-release-smoke.md",
+        "tests/fixtures/release-examples-future-version-smoke.md",
+    ):
+        assert fixture in text
+        assert fixture in compose_text
 
 
 def test_readme_links_combined_automation_index():
