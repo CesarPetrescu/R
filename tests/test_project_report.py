@@ -1419,6 +1419,82 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
     assert result.stderr == "Automation index is missing link to docs/release-example-fixtures.md.\n"
 
 
+def test_automation_index_command_guard_succeeds_when_commands_are_in_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-automation-index-commands",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Automation index commands match Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_automation_index_command_guard_reports_missing_docker_coverage(tmp_path):
+    write(
+        tmp_path / "docs" / "automation-index.md",
+        """# Automation Index
+
+Verify release docs and guards with:
+
+```bash
+r-project --root . --check-changelog-version
+r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
+```
+
+```bash
+docker compose run --build --rm test
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-changelog-version"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-automation-index-commands",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing automation index command: "
+        "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md\n"
+    )
+
+
 def test_automation_index_release_writer_smoke_fixture_preserves_other_embedded_examples(tmp_path):
     fixture = Path("tests/fixtures/automation-index-release-smoke.md")
     automation_index = tmp_path / "docs" / "automation-index.md"
