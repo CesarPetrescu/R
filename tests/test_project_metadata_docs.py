@@ -135,6 +135,8 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
     assert "r-project --root . --check-automation-command-fixtures" in text
     assert "docker compose run --build --rm test" in text
     for command in (
+        "--check-readme-examples --readme-examples-path docs/dashboard-index.md",
+        "--check-readme-schema-examples --readme-schema-path docs/dashboard-index.md",
         "--check-readme-examples --readme-examples-path docs/automation-index.md",
         "--check-readme-schema-examples --readme-schema-path docs/automation-index.md",
         "--check-release-example-fixtures",
