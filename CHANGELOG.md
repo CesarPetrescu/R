@@ -24,3 +24,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added `--check-release-tag-fixture` and `tests/fixtures/release-tag-checklist.json` so release automation can detect frozen checklist JSON drift.
 - Added `--write-release-tag-fixture` and `--dry-run-release-tag-fixture` so release automation can refresh or preview frozen release checklist JSON fixtures without manual copying.
 - Added `docs/release-index.md` as a release readiness entry point linking fixture docs, checked JSON, and version/tag guard commands.
+- Added `--check-release-examples`/`--write-release-examples` plus `docs/release-examples.md` so release dashboards can verify and refresh README-style release checklist JSON snippets.

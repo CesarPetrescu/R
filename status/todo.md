@@ -5,8 +5,8 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-2. Add dashboard-specific release automation examples if consumers need checked release checklist snippets embedded alongside the readiness/schema index.
-3. Add an alternate-path drift check/writer for the combined automation index if future consumers need generated examples embedded directly in `docs/automation-index.md`.
+2. Add an alternate-path drift check/writer for the combined automation index if future consumers need generated examples embedded directly in `docs/automation-index.md`.
+3. Add a release checklist example future-version flag if release docs need to preview a non-current tag in Markdown before `pyproject.toml` changes.
 
 ## Every-run checklist
 
