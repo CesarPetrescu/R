@@ -2527,6 +2527,23 @@ version = "0.1.0"
     assert result.stderr == ""
 
 
+def test_cli_check_release_examples_path_safety_audits_rejected_paths():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--root", ".", "--check-release-examples-path-safety"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Release examples path safety audit passed.\n"
+    assert result.stderr == ""
+
+
 def test_cli_write_release_examples_rejects_path_that_escapes_root(tmp_path):
     write(
         tmp_path / "pyproject.toml",
