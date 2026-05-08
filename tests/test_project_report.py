@@ -1412,6 +1412,49 @@ version = "0.1.0"
     assert automation_index.read_text(encoding="utf-8") == original_text
 
 
+def test_future_release_example_dry_run_smoke_fixture_keeps_current_docs_unchanged(tmp_path):
+    fixture = Path("tests/fixtures/release-examples-future-version-smoke.md")
+    release_examples = tmp_path / "docs" / "release-examples.md"
+    write(release_examples, fixture.read_text(encoding="utf-8"))
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    original_text = release_examples.read_text(encoding="utf-8")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-examples",
+            "--dry-run-release-examples",
+            "--release-examples-version",
+            "0.2.0",
+            "--release-examples-path",
+            "docs/release-examples.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert '"tag": "v0.2.0"' in result.stdout
+    assert '"version": "0.2.0"' in result.stdout
+    assert '"tag": "v0.1.0"' in original_text
+    assert release_examples.read_text(encoding="utf-8") == original_text
+
+
 def test_standalone_dashboard_index_document_matches_report_and_schema_outputs():
     dashboard_index = Path("docs/dashboard-index.md")
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}

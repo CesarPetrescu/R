@@ -93,3 +93,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
         in compose_text
     )
+    assert (
+        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md"
+        in compose_text
+    )

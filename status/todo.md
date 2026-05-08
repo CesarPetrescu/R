@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a release examples fixture path safety audit if future writer modes gain more Markdown block types.
-3. Add a compact smoke fixture for future-version release example dry-runs that proves `--release-examples-version` leaves current-version docs unchanged when used in preview mode.
+3. Add a standalone release-example fixture index if more release example smoke fixtures are added, with acceptance tests proving each fixture is referenced by Docker verification.
 
 ## Every-run checklist
 
