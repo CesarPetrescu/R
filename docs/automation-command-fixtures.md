@@ -25,6 +25,7 @@ docker compose run --build --rm test
 | [Automation index](automation-index.md) | Future-version release example docs preview | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md` |
 | [Automation index](automation-index.md) | Fixture-backed future-version release example preview | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md` |
 | [Automation index](automation-index.md) | Release example fixture index guard | `r-project --root . --check-release-example-fixtures` |
+| [Automation index](automation-index.md) | Release example section registry guard | `r-project --root . --check-release-example-sections` |
 | [Automation index](automation-index.md) | Release examples path safety audit | `r-project --root . --check-release-examples-path-safety` |
 | [Automation index](automation-index.md) | Automation index standalone-link guard | `r-project --root . --check-automation-index-links` |
 | [Automation index](automation-index.md) | Automation index command coverage guard | `r-project --root . --check-automation-index-commands` |
