@@ -1417,6 +1417,7 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
     assert result.returncode == 1
     assert result.stdout == ""
     assert result.stderr == (
+        "Automation index is missing link to docs/dashboard-example-fixtures.md.\n"
         "Automation index is missing link to docs/release-example-fixtures.md.\n"
         "Automation index is missing link to docs/release-example-sections.md.\n"
         "Automation index is missing link to docs/automation-command-fixtures.md.\n"
@@ -1496,6 +1497,132 @@ docker compose run --build --rm test
     assert result.stderr == (
         "Docker harness is missing automation index command: "
         "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md\n"
+    )
+
+
+def test_dashboard_example_fixture_registry_guard_matches_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-dashboard-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Dashboard example fixture registry matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_dashboard_example_fixture_registry_guard_reports_missing_docker_command(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/usage-examples.md` | Readiness report examples | `r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md` |
+| `docs/dashboard-schema.md` | Memory-overlap schema examples | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-schema.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing dashboard example fixture command: "
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-schema.md\n"
+    )
+
+
+def test_dashboard_example_fixture_registry_guard_reports_missing_registry_command_from_dashboard_index(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-index.md",
+        """# Dashboard Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/dashboard-index.md` | Readiness report examples | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Dashboard example fixture registry is missing dashboard-index command: "
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
     )
 
 

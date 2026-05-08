@@ -57,4 +57,5 @@ services:
       && python -m r_project --root . --check-automation-index-links
       && python -m r_project --root . --check-automation-index-commands
       && python -m r_project --root . --check-automation-command-fixtures
+      && python -m r_project --root . --check-dashboard-example-fixtures
       && python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0"

@@ -90,3 +90,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release examples path safety audit guard so Markdown release example path override checks stay enforced in host and Docker verification.
 - [x] Add an automation command fixture index so future split automation command docs stay auditable against Docker verification.
 - [x] Add a release example section registry so future release docs can embed multiple independently named checklist snippets in one Markdown file.
+- [x] Add a dashboard automation fixture registry so future dashboard docs split readiness/schema examples across multiple independently checked Markdown sections.
