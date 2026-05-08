@@ -1557,6 +1557,163 @@ version = "0.1.0"
     assert result.stderr == ""
 
 
+def test_cli_write_release_tag_fixture_supports_root_relative_path_override(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    fixture = tmp_path / "docs" / "release" / "checklist.json"
+    write(fixture, "{}\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-tag-fixture",
+            "--release-tag-fixture-path",
+            "docs/release/checklist.json",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Updated docs/release/checklist.json release tag checklist fixture.\n"
+    assert result.stderr == ""
+    assert json.loads(fixture.read_text(encoding="utf-8"))["tag"] == "v0.1.0"
+    assert not (tmp_path / "tests" / "fixtures" / "release-tag-checklist.json").exists()
+
+
+def test_cli_check_release_tag_fixture_supports_root_relative_path_override(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    write(
+        tmp_path / "docs" / "release" / "checklist.json",
+        json.dumps(
+            {
+                "checks": {
+                    "docker_verified": True,
+                    "git_clean": "skipped",
+                    "tag_matches_version": True,
+                },
+                "expected_tag": "v0.1.0",
+                "ready": True,
+                "tag": "v0.1.0",
+                "version": "0.1.0",
+            },
+            sort_keys=True,
+        )
+        + "\n",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-tag-fixture",
+            "--release-tag-fixture-path",
+            "docs/release/checklist.json",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/release/checklist.json release tag checklist fixture matches current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_cli_write_release_tag_fixture_rejects_path_that_escapes_root(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    outside_fixture = tmp_path.parent / "outside-release-tag-checklist.json"
+    outside_fixture.write_text("do not touch\n", encoding="utf-8")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-tag-fixture",
+            "--release-tag-fixture-path",
+            "../outside-release-tag-checklist.json",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert "--release-tag-fixture-path must stay under --root" in result.stderr
+    assert outside_fixture.read_text(encoding="utf-8") == "do not touch\n"
+
+
+def test_cli_check_release_tag_fixture_rejects_absolute_path(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    outside_fixture = tmp_path.parent / "outside-release-tag-checklist.json"
+    outside_fixture.write_text("{}\n", encoding="utf-8")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-tag-fixture",
+            "--release-tag-fixture-path",
+            str(outside_fixture),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert "--release-tag-fixture-path must be relative to --root" in result.stderr
+
+
 def test_cli_check_release_tag_reports_mismatched_tag_name():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

@@ -26,7 +26,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - optional nonzero exit status when active blockers are present
 - README-style path overrides for compact memory-overlap JSON Schema drift checks and writers when dashboard docs move out of the main README
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
-- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands for the machine-readable checklist JSON
+- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands with root-relative path overrides for the machine-readable checklist JSON
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
@@ -122,6 +122,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0
+PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -280,13 +281,14 @@ r-project --root . --check-release-tag-fixture
 r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture
 r-project --root . --write-release-tag-fixture
 r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0
+r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 58, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 21, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 59, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 22, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -298,7 +300,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 58 |
+| Completed backlog items | 59 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -308,7 +310,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 21 | 0 | None |
+| P2 | 22 | 0 | None |
 
 ## Next backlog item
 
@@ -408,6 +410,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0
+PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -425,7 +428,7 @@ The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic
 - increment the minor version for backward-compatible CLI/report/helper additions;
 - reserve major version changes for incompatible report schema, CLI, or helper API changes.
 
-Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing. If automation relies on the frozen checklist fixture, run `r-project --root . --check-release-tag-fixture` to confirm `tests/fixtures/release-tag-checklist.json` still matches current CLI output, or `r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture` to preview a refreshed fixture before writing it with `r-project --root . --write-release-tag-fixture`. Add `--release-tag-fixture-version X.Y.Z` to either fixture command when preparing or validating a future-version checklist before `pyproject.toml` is bumped.
+Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing. If automation relies on the frozen checklist fixture, run `r-project --root . --check-release-tag-fixture` to confirm `tests/fixtures/release-tag-checklist.json` still matches current CLI output, or `r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture` to preview a refreshed fixture before writing it with `r-project --root . --write-release-tag-fixture`. Add `--release-tag-fixture-version X.Y.Z` to either fixture command when preparing or validating a future-version checklist before `pyproject.toml` is bumped. Add `--release-tag-fixture-path docs/release/checklist.json` when external release automation stores its frozen checklist under another root-relative path.
 
 ## License
 

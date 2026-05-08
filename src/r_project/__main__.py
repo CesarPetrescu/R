@@ -108,6 +108,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--release-tag-fixture-path",
+        default="tests/fixtures/release-tag-checklist.json",
+        help=(
+            "Release checklist JSON fixture path, relative to --root, checked or written by "
+            "--check-release-tag-fixture and --write-release-tag-fixture."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -214,10 +222,29 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_changelog_version:
         return _check_changelog_version(Path(args.root))
     if args.check_release_tag_fixture:
-        return _check_release_tag_fixture(Path(args.root), version=args.release_tag_fixture_version)
+        root = Path(args.root)
+        try:
+            release_tag_fixture_path = _release_tag_fixture_path_under_root(
+                root, Path(args.release_tag_fixture_path)
+            )
+        except ValueError as error:
+            parser.error(str(error))
+        return _check_release_tag_fixture(
+            root, version=args.release_tag_fixture_version, fixture_path=release_tag_fixture_path
+        )
     if args.write_release_tag_fixture:
+        root = Path(args.root)
+        try:
+            release_tag_fixture_path = _release_tag_fixture_path_under_root(
+                root, Path(args.release_tag_fixture_path)
+            )
+        except ValueError as error:
+            parser.error(str(error))
         return _write_release_tag_fixture(
-            Path(args.root), dry_run=args.dry_run_release_tag_fixture, version=args.release_tag_fixture_version
+            root,
+            dry_run=args.dry_run_release_tag_fixture,
+            version=args.release_tag_fixture_version,
+            fixture_path=release_tag_fixture_path,
         )
     if args.check_release_tag:
         return _check_release_tag(
@@ -458,27 +485,57 @@ def _release_tag_checklist_for_version(version: str) -> dict:
     }
 
 
-def _check_release_tag_fixture(root: Path, *, version: str | None = None) -> int:
+def _check_release_tag_fixture(root: Path, *, version: str | None = None, fixture_path: Path | None = None) -> int:
     expected = _release_tag_checklist_fixture_output(root, version=version)
-    fixture = root / "tests" / "fixtures" / "release-tag-checklist.json"
+    fixture_path = Path("tests/fixtures/release-tag-checklist.json") if fixture_path is None else fixture_path
+    fixture = root / fixture_path
     actual = fixture.read_text(encoding="utf-8") if fixture.exists() else ""
+    label = _release_tag_fixture_path_label(fixture_path)
     if actual != expected:
-        print("Release tag checklist fixture is out of date.", file=sys.stderr)
+        print(f"{label} is out of date.", file=sys.stderr)
         return 1
-    print("Release tag checklist fixture matches current CLI output.")
+    print(f"{label} matches current CLI output.")
     return 0
 
 
-def _write_release_tag_fixture(root: Path, *, dry_run: bool, version: str | None = None) -> int:
+def _write_release_tag_fixture(
+    root: Path, *, dry_run: bool, version: str | None = None, fixture_path: Path | None = None
+) -> int:
     output = _release_tag_checklist_fixture_output(root, version=version)
     if dry_run:
         print(output, end="")
         return 0
-    fixture = root / "tests" / "fixtures" / "release-tag-checklist.json"
+    fixture_path = Path("tests/fixtures/release-tag-checklist.json") if fixture_path is None else fixture_path
+    fixture = root / fixture_path
     fixture.parent.mkdir(parents=True, exist_ok=True)
     fixture.write_text(output, encoding="utf-8")
-    print("Updated release tag checklist fixture.")
+    print(f"Updated {_release_tag_fixture_update_label(fixture_path)}.")
     return 0
+
+
+def _release_tag_fixture_path_label(fixture_path: Path) -> str:
+    path_text = fixture_path.as_posix()
+    if path_text == "tests/fixtures/release-tag-checklist.json":
+        return "Release tag checklist fixture"
+    return f"{path_text} release tag checklist fixture"
+
+
+def _release_tag_fixture_update_label(fixture_path: Path) -> str:
+    path_text = fixture_path.as_posix()
+    if path_text == "tests/fixtures/release-tag-checklist.json":
+        return "release tag checklist fixture"
+    return f"{path_text} release tag checklist fixture"
+
+
+def _release_tag_fixture_path_under_root(root: Path, fixture_path: Path) -> Path:
+    if fixture_path.is_absolute():
+        raise ValueError("--release-tag-fixture-path must be relative to --root")
+    root_resolved = root.resolve()
+    target_resolved = (root / fixture_path).resolve()
+    try:
+        return target_resolved.relative_to(root_resolved)
+    except ValueError as error:
+        raise ValueError("--release-tag-fixture-path must stay under --root") from error
 
 
 def _readme_example_mismatches(root: Path, report) -> list[str]:
