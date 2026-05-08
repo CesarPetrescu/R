@@ -1246,6 +1246,34 @@ def test_cli_checks_readme_schema_example_at_alternate_docs_path(tmp_path):
     assert check_result.stderr == ""
 
 
+def test_standalone_dashboard_schema_document_matches_current_schema_output():
+    dashboard_schema = Path("docs/dashboard-schema.md")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            str(dashboard_schema),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert dashboard_schema.exists()
+    assert result.returncode == 0
+    assert result.stdout == "docs/dashboard-schema.md memory-overlap schema example matches current CLI output.\n"
+    assert result.stderr == ""
+
+
 def test_cli_rejects_readme_schema_path_that_escapes_root(tmp_path):
     outside = tmp_path.parent / "outside-dashboard-schema.md"
     write(

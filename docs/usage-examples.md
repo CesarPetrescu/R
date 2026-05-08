@@ -10,7 +10,7 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 ## JSON readiness report
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 61, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 24, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 62, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 25, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ## Markdown readiness report
@@ -20,7 +20,7 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 61 |
+| Completed backlog items | 62 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -30,7 +30,7 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 24 | 0 | None |
+| P2 | 25 | 0 | None |
 
 ## Next backlog item
 
