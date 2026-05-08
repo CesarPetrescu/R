@@ -181,6 +181,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/automation-index.md documents r-project commands missing from docker-compose.yml.",
     )
     parser.add_argument(
+        "--check-automation-command-fixtures",
+        action="store_true",
+        help="Exit nonzero when docs/automation-command-fixtures.md lists commands missing from docker-compose.yml.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -335,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_index_links(Path(args.root))
     if args.check_automation_index_commands:
         return _check_automation_index_commands(Path(args.root))
+    if args.check_automation_command_fixtures:
+        return _check_automation_command_fixtures(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -759,6 +766,26 @@ def _check_automation_index_commands(root: Path) -> int:
     return 0
 
 
+def _check_automation_command_fixtures(root: Path) -> int:
+    fixture_index = root / "docs" / "automation-command-fixtures.md"
+    compose = root / "docker-compose.yml"
+    index_text = fixture_index.read_text(encoding="utf-8") if fixture_index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    documented_commands = _automation_command_fixture_index_commands(index_text)
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if not documented_commands:
+        print("Automation command fixture index does not document any r-project commands.", file=sys.stderr)
+        return 1
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing automation command fixture: {command}", file=sys.stderr)
+        return 1
+    print("Automation command fixture index matches Docker harness commands.")
+    return 0
+
+
 def _standalone_automation_surface_paths() -> tuple[str, ...]:
     return (
         "docs/dashboard-index.md",
@@ -769,6 +796,7 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
         "docs/release/checklist.json",
         "docs/release-examples.md",
         "docs/release-example-fixtures.md",
+        "docs/automation-command-fixtures.md",
     )
 
 
@@ -793,6 +821,14 @@ def _automation_index_r_project_commands(index_text: str) -> list[str]:
 
 
 def _release_example_fixture_index_commands(index_text: str) -> list[str]:
+    return _markdown_table_code_span_commands(index_text)
+
+
+def _automation_command_fixture_index_commands(index_text: str) -> list[str]:
+    return _markdown_table_code_span_commands(index_text)
+
+
+def _markdown_table_code_span_commands(index_text: str) -> list[str]:
     commands: list[str] = []
     for line in index_text.splitlines():
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]

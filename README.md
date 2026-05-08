@@ -29,7 +29,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - README-style path overrides for compact memory-overlap JSON Schema drift checks and writers when dashboard docs move out of the main README, plus a standalone checked `docs/dashboard-schema.md` schema surface for dashboard consumers
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
 - an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands with root-relative path overrides for the machine-readable checklist JSON
-- a standalone release-example fixture index that can be audited against Docker coverage, a release examples path-safety audit guard for Markdown path override modes, and an automation command index guard for combined docs
+- a standalone release-example fixture index that can be audited against Docker coverage, a release examples path-safety audit guard for Markdown path override modes, an automation command index guard for combined docs, and an automation command fixture index guard for split-doc command coverage
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
@@ -147,6 +147,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safety
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
+PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -327,13 +328,14 @@ r-project --root . --check-release-example-fixtures
 r-project --root . --check-release-examples-path-safety
 r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands
+r-project --root . --check-automation-command-fixtures
 r-project-lint --root .
 ```
 
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 78, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 41, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 79, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 42, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -345,7 +347,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 78 |
+| Completed backlog items | 79 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -355,7 +357,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 41 | 0 | None |
+| P2 | 42 | 0 | None |
 
 ## Next backlog item
 
@@ -383,7 +385,9 @@ on a stable standalone Markdown surface. [`docs/dashboard-index.md`](docs/dashbo
 links those readiness examples with the checked schema examples and is also
 verified by host tests and Docker as a dashboard landing page. [`docs/automation-index.md`](docs/automation-index.md)
 embeds checked readiness and compact schema examples while linking the dashboard
-and release automation surfaces from one combined index.
+and release automation surfaces from one combined index. [`docs/automation-command-fixtures.md`](docs/automation-command-fixtures.md)
+indexes the combined automation commands and Docker harness coverage so future
+split-doc command lists stay auditable.
 
 ## Memory overlap demo JSON Schemas
 
@@ -501,6 +505,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safety
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
+PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
 PYTHONPATH=src python3 -m r_project.lint --root .
 ```
 
@@ -520,7 +525,7 @@ The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic
 
 Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing. If automation relies on the frozen checklist fixture, run `r-project --root . --check-release-tag-fixture` to confirm `tests/fixtures/release-tag-checklist.json` still matches current CLI output, or `r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture` to preview a refreshed fixture before writing it with `r-project --root . --write-release-tag-fixture`. Add `--release-tag-fixture-version X.Y.Z` to either fixture command when preparing or validating a future-version checklist before `pyproject.toml` is bumped. Add `--release-tag-fixture-path docs/release/checklist.json` when external release automation stores its frozen checklist under another root-relative path.
 
-The standalone [`docs/release-checklist.md`](docs/release-checklist.md) page documents that external fixture-path workflow and the checked [`docs/release/checklist.json`](docs/release/checklist.json) fixture for release automation consumers. [`docs/release-examples.md`](docs/release-examples.md) keeps a checked README-style release checklist JSON fence for dashboards that need embedded snippets. Add `--release-examples-version X.Y.Z` to the release example checker or writer when release docs need to preview a non-current tag before `pyproject.toml` changes. [`docs/release-example-fixtures.md`](docs/release-example-fixtures.md) indexes the release-example smoke fixtures and Docker commands that exercise them; run `r-project --root . --check-release-example-fixtures` to verify every indexed fixture command has matching Docker harness coverage. Run `r-project --root . --check-automation-index-links` to verify [`docs/automation-index.md`](docs/automation-index.md) links every standalone dashboard and release automation surface before publishing combined automation docs. [`docs/release-index.md`](docs/release-index.md) links those release fixture docs with the version/tag guard commands as a single release readiness entry point. [`docs/automation-index.md`](docs/automation-index.md) combines the dashboard readiness/schema docs and release readiness docs as one automation navigation page.
+The standalone [`docs/release-checklist.md`](docs/release-checklist.md) page documents that external fixture-path workflow and the checked [`docs/release/checklist.json`](docs/release/checklist.json) fixture for release automation consumers. [`docs/release-examples.md`](docs/release-examples.md) keeps a checked README-style release checklist JSON fence for dashboards that need embedded snippets. Add `--release-examples-version X.Y.Z` to the release example checker or writer when release docs need to preview a non-current tag before `pyproject.toml` changes. [`docs/release-example-fixtures.md`](docs/release-example-fixtures.md) indexes the release-example smoke fixtures and Docker commands that exercise them; run `r-project --root . --check-release-example-fixtures` to verify every indexed fixture command has matching Docker harness coverage. Run `r-project --root . --check-automation-index-links` to verify [`docs/automation-index.md`](docs/automation-index.md) links every standalone dashboard and release automation surface before publishing combined automation docs. Run `r-project --root . --check-automation-command-fixtures` to verify [`docs/automation-command-fixtures.md`](docs/automation-command-fixtures.md) keeps split-doc automation commands covered by Docker. [`docs/release-index.md`](docs/release-index.md) links those release fixture docs with the version/tag guard commands as a single release readiness entry point. [`docs/automation-index.md`](docs/automation-index.md) combines the dashboard readiness/schema docs and release readiness docs as one automation navigation page.
 
 ## License
 
