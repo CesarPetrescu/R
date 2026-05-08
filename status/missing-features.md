@@ -73,3 +73,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a standalone usage-example document backed by README report example checks for dashboard consumers.
 - [x] Add a standalone dashboard schema document backed by README schema example checks for dashboard consumers.
 - [x] Add a dashboard release/readiness index document backed by report and schema drift checks for dashboard consumers.
+- [x] Add standalone release checklist fixture docs backed by a checked external fixture path for release automation consumers.
