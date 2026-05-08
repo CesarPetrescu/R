@@ -78,3 +78,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a combined dashboard/release automation index so consumers have one docs entry point across readiness reports, schema examples, and release fixtures.
 - [x] Add standalone release checklist examples backed by a README-style drift guard for release automation consumers.
 - [x] Add a release checklist example future-version flag so Markdown release docs can preview a non-current tag before `pyproject.toml` changes.
+- [x] Add embedded automation-index readiness and schema examples backed by alternate README-style drift checks for combined dashboard/release automation consumers.

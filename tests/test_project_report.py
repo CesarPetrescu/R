@@ -1274,6 +1274,59 @@ def test_standalone_dashboard_schema_document_matches_current_schema_output():
     assert result.stderr == ""
 
 
+def test_automation_index_document_matches_report_and_schema_outputs():
+    automation_index = Path("docs/automation-index.md")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    report_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-examples",
+            "--readme-examples-path",
+            str(automation_index),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    schema_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            str(automation_index),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
+
+    assert automation_index.exists()
+    assert "## Embedded readiness report example" in text
+    assert "## Embedded memory-overlap schema example" in text
+    assert "r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in text
+    assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md" in text
+    assert report_result.returncode == 0
+    assert report_result.stdout == "docs/automation-index.md examples match current CLI output.\n"
+    assert report_result.stderr == ""
+    assert schema_result.returncode == 0
+    assert schema_result.stdout == "docs/automation-index.md memory-overlap schema example matches current CLI output.\n"
+    assert schema_result.stderr == ""
+
+
 def test_standalone_dashboard_index_document_matches_report_and_schema_outputs():
     dashboard_index = Path("docs/dashboard-index.md")
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
