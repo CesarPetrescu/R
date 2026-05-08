@@ -1317,14 +1317,45 @@ def test_automation_index_document_matches_report_and_schema_outputs():
     assert automation_index.exists()
     assert "## Embedded readiness report example" in text
     assert "## Embedded memory-overlap schema example" in text
+    assert "## Embedded release checklist example" in text
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in text
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md" in text
+    assert "r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'" in text
     assert report_result.returncode == 0
     assert report_result.stdout == "docs/automation-index.md examples match current CLI output.\n"
     assert report_result.stderr == ""
     assert schema_result.returncode == 0
     assert schema_result.stdout == "docs/automation-index.md memory-overlap schema example matches current CLI output.\n"
     assert schema_result.stderr == ""
+
+
+def test_automation_index_release_example_matches_current_cli_output():
+    automation_index = Path("docs/automation-index.md")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-examples",
+            "--release-examples-path",
+            str(automation_index),
+            "--release-examples-section",
+            "Embedded release checklist example",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/automation-index.md release checklist example matches current CLI output.\n"
+    assert result.stderr == ""
 
 
 def test_standalone_dashboard_index_document_matches_report_and_schema_outputs():
