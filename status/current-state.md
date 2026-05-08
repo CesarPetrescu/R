@@ -8,7 +8,7 @@ Last updated: 2026-05-07
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, on-demand schema fixture and README schema example drift checks/writing with README-style path overrides for dashboard docs, release/versioning notes, a release tag checklist guard with JSON summary output, release tag checklist fixture drift checks/writing with optional future-version targeting and root-relative fixture path overrides, and AGPL-3.0-or-later licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing with README-style path overrides for standalone report docs, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, on-demand schema fixture and README schema example drift checks/writing with README-style path overrides for dashboard docs, release/versioning notes, a release tag checklist guard with JSON summary output, release tag checklist fixture drift checks/writing with optional future-version targeting and root-relative fixture path overrides, and AGPL-3.0-or-later licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -24,6 +24,7 @@ Last updated: 2026-05-07
 - `python3 -m r_project --root <path> --generate-readme-examples` emits copy-paste-ready JSON and Markdown fenced blocks from the current analyzer output so README examples can be refreshed without hand-copying multiple commands.
 - `python3 -m r_project --root <path> --write-readme-examples` rewrites the README JSON and Markdown example fences in place from current analyzer output so agents can refresh documented examples without manual copying.
 - `python3 -m r_project --root <path> --write-readme-examples --dry-run-readme-examples` prints the README content that would be written by the README example writer without modifying `README.md`, so agents can preview regenerated JSON/Markdown fences before side effects.
+- Add `--readme-examples-path docs/usage-examples.md` to README JSON/Markdown example drift checks and writer/dry-run modes when dashboard-ready report examples live in a standalone README-style Markdown file under `--root`; absolute paths and `..` escapes are rejected before writer modes can modify files outside `--root`.
 - `python3 -m r_project.lint --root <path>` and installed `r-project-lint --root <path>` run a lightweight Python syntax lint over `src/` and `tests/`.
 - `r_project.vector_layout(...)` calculates aligned vector payload offsets, stride, and total size so header and trailing padding are represented consistently; invalid negative values, zero element sizes/alignments, non-power-of-two element alignments, and optional `max_total_size` overflows raise `ValueError`.
 - `r_project.memory.struct_layout(fields)` computes C-like structure offsets with per-field alignment and tail padding so arrays of structures remain aligned; invalid field sizes/alignments, non-power-of-two field alignments, and optional `max_total_size` overflows raise `ValueError`.
@@ -78,6 +79,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --generate-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path README.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6

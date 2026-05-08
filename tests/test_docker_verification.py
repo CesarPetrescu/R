@@ -22,6 +22,11 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python -m r_project --root . --generate-readme-examples" in compose_text
     assert "python -m r_project --root . --write-readme-examples" in compose_text
     assert "python -m r_project --root . --write-readme-examples --dry-run-readme-examples" in compose_text
+    assert "python -m r_project --root . --check-readme-examples --readme-examples-path README.md" in compose_text
+    assert (
+        "python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md"
+        in compose_text
+    )
     assert "python -m r_project --memory-threshold-demo" in compose_text
     assert "python -m r_project --memory-threshold-demo --json" in compose_text
     assert "python -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6" in compose_text

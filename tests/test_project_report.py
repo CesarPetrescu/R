@@ -426,6 +426,215 @@ Tail stays.
     assert (tmp_path / "README.md").read_text(encoding="utf-8") == original_readme
 
 
+def test_cli_writes_readme_examples_to_alternate_docs_path(tmp_path):
+    write(tmp_path / "README.md", "# Root README\n\nUntouched.\n")
+    docs_readme = tmp_path / "docs" / "usage-examples.md"
+    write(
+        docs_readme,
+        """# Usage Examples
+
+```json
+{}
+```
+
+```markdown
+old report
+```
+""",
+    )
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+## P1
+- [x] Build report.
+- [ ] Write alternate docs examples.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--readme-examples-path",
+            "docs/usage-examples.md",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    json_output = json.dumps(analyze_project(tmp_path).to_dict(), sort_keys=True)
+    markdown_output = analyze_project(tmp_path).to_markdown()
+    assert result.stdout == "Updated docs/usage-examples.md JSON and Markdown example fences.\n"
+    assert result.stderr == ""
+    assert docs_readme.read_text(encoding="utf-8") == f"""# Usage Examples
+
+```json
+{json_output}
+```
+
+```markdown
+{markdown_output}
+```
+"""
+    assert (tmp_path / "README.md").read_text(encoding="utf-8") == "# Root README\n\nUntouched.\n"
+
+
+def test_cli_checks_readme_examples_at_alternate_docs_path(tmp_path):
+    docs_readme = tmp_path / "docs" / "usage-examples.md"
+    write(
+        docs_readme,
+        """# Usage Examples
+
+```json
+{}
+```
+
+```markdown
+old report
+```
+""",
+    )
+    write(
+        tmp_path / "status" / "missing-features.md",
+        """# Missing Features
+## P1
+- [x] Build report.
+- [ ] Check alternate docs examples.
+""",
+    )
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--readme-examples-path",
+            "docs/usage-examples.md",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-examples",
+            "--readme-examples-path",
+            "docs/usage-examples.md",
+        ],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.stdout == "docs/usage-examples.md examples match current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_cli_rejects_readme_examples_path_that_escapes_root(tmp_path):
+    outside = tmp_path.parent / "outside-readme-examples.md"
+    write(
+        outside,
+        """# Outside Examples
+
+```json
+{}
+```
+
+```markdown
+old report
+```
+""",
+    )
+    write(tmp_path / "README.md", "# Safe Root\n")
+    write(tmp_path / "status" / "missing-features.md", "- [ ] Keep writer in root.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-readme-examples",
+            "--readme-examples-path",
+            "../outside-readme-examples.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-examples-path must stay under --root" in result.stderr
+    assert outside.read_text(encoding="utf-8") == """# Outside Examples
+
+```json
+{}
+```
+
+```markdown
+old report
+```
+"""
+
+
+def test_cli_check_rejects_absolute_readme_examples_path(tmp_path):
+    write(tmp_path / "README.md", "# Safe Root\n")
+    write(tmp_path / "status" / "missing-features.md", "- [ ] Keep checker in root.\n")
+    write(tmp_path / "status" / "stuck.md", "## Active blockers\n- None.\n")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-readme-examples",
+            "--readme-examples-path",
+            str(tmp_path / "README.md"),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--readme-examples-path must be relative to --root" in result.stderr
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations.md").read_text(encoding="utf-8")
