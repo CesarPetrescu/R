@@ -24,7 +24,7 @@ r-project --root . --check-dashboard-example-fixtures
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 82, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 45, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 83, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 46, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -32,7 +32,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 82 |
+| Completed backlog items | 83 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -42,7 +42,7 @@ The combined index also embeds the checked readiness report examples directly so
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 45 | 0 | None |
+| P2 | 46 | 0 | None |
 
 ## Next backlog item
 
@@ -71,6 +71,7 @@ The compact schema fence below is checked with the same alternate README-style p
 - [checked release checklist examples](release-examples.md) provides a README-style fenced JSON snippet for dashboard docs.
 - [release example fixture index](release-example-fixtures.md) lists every release-example smoke fixture and the Docker command that exercises it.
 - [release example section registry](release-example-sections.md) lists independently checked Markdown release checklist sections and the Docker command that exercises each section.
+- [release section writer matrix](release-section-writer-matrix.md) lists current-version and future-version writer dry-runs for every registered release checklist section.
 - [automation command fixture index](automation-command-fixtures.md) maps the combined automation index commands to Docker harness coverage so future split command docs remain auditable.
 
 Verify release docs and guards with:
@@ -82,11 +83,13 @@ r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/r
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
 r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
 r-project --root . --check-release-example-fixtures
 r-project --root . --check-release-example-sections
+r-project --root . --check-release-section-writer-matrix
 r-project --root . --check-release-examples-path-safety
 r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands

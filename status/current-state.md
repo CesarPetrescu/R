@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 ## Repository
 
@@ -74,6 +74,7 @@ Last updated: 2026-05-08
 - `tests/fixtures/release-examples-future-version-smoke.md` is an executable current-version release checklist snippet used by host tests and Docker to prove `--release-examples-version` dry-runs can preview future tags without mutating current-version docs.
 - `python3 -m r_project --root <path> --check-release-example-fixtures` audits `docs/release-example-fixtures.md` and exits nonzero when a listed release-example smoke fixture command is missing equivalent `docker-compose.yml` harness coverage.
 - `python3 -m r_project --root <path> --check-release-example-sections` audits `docs/release-example-sections.md` and exits nonzero when a registered Markdown release checklist section command is missing equivalent `docker-compose.yml` harness coverage.
+- `python3 -m r_project --root <path> --check-release-section-writer-matrix` audits `docs/release-section-writer-matrix.md` and exits nonzero when a registered release checklist section is missing current-version or future-version writer dry-run coverage, or when a matrix command is missing equivalent `docker-compose.yml` harness coverage.
 - `python3 -m r_project --root <path> --check-automation-index-links` audits `docs/automation-index.md` and exits nonzero when the combined automation navigation page omits a standalone dashboard or release automation surface link.
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-automation-command-fixtures` audits `docs/automation-command-fixtures.md` table rows and exits nonzero when any indexed split-doc automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
@@ -146,6 +147,7 @@ PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
 PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-release-example-sections
+PYTHONPATH=src python3 -m r_project --root . --check-release-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safety
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands

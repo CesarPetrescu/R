@@ -102,6 +102,10 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert (
+        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'"
         in compose_text
     )
@@ -111,6 +115,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     )
     assert "python -m r_project --root . --check-release-example-fixtures" in compose_text
     assert "python -m r_project --root . --check-release-example-sections" in compose_text
+    assert "python -m r_project --root . --check-release-section-writer-matrix" in compose_text
     assert "python -m r_project --root . --check-release-examples-path-safety" in compose_text
     assert "python -m r_project --root . --check-automation-index-links" in compose_text
     assert "python -m r_project --root . --check-automation-index-commands" in compose_text
