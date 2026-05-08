@@ -5,8 +5,8 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-2. Add an automation docs command index fixture page if future automation docs split command lists across multiple Markdown files.
-3. Add a release example section registry if future release docs embed multiple independently named checklist snippets in one Markdown file.
+2. Add a release example section registry if future release docs embed multiple independently named checklist snippets in one Markdown file.
+3. Add a dashboard automation fixture registry if future dashboard docs split readiness/schema examples across multiple independently checked Markdown sections.
 
 ## Every-run checklist
 

@@ -1416,7 +1416,10 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
 
     assert result.returncode == 1
     assert result.stdout == ""
-    assert result.stderr == "Automation index is missing link to docs/release-example-fixtures.md.\n"
+    assert result.stderr == (
+        "Automation index is missing link to docs/release-example-fixtures.md.\n"
+        "Automation index is missing link to docs/automation-command-fixtures.md.\n"
+    )
 
 
 def test_automation_index_command_guard_succeeds_when_commands_are_in_docker_harness():
@@ -1492,6 +1495,132 @@ docker compose run --build --rm test
     assert result.stderr == (
         "Docker harness is missing automation index command: "
         "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md\n"
+    )
+
+
+def test_automation_command_fixture_guard_succeeds_when_index_matches_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-automation-command-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Automation command fixture index matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_automation_command_fixture_guard_reports_missing_docker_coverage(tmp_path):
+    write(
+        tmp_path / "docs" / "automation-command-fixtures.md",
+        """# Automation Command Fixture Index
+
+| Source docs | Purpose | Docker-covered command |
+| --- | --- | --- |
+| [Automation index](automation-index.md) | Release guard | `r-project --root . --check-changelog-version` |
+| [Automation index](automation-index.md) | Release examples | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-changelog-version"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-automation-command-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing automation command fixture: "
+        "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md\n"
+    )
+
+
+def test_automation_command_fixture_guard_reports_missing_index_command(tmp_path):
+    write(
+        tmp_path / "docs" / "automation-index.md",
+        """# Automation Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    write(
+        tmp_path / "docs" / "automation-command-fixtures.md",
+        """# Automation Command Fixture Index
+
+| Source docs | Purpose | Docker-covered command |
+| --- | --- | --- |
+| [Automation index](automation-index.md) | Dashboard readiness examples | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-automation-command-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Automation command fixture index is missing automation-index command: "
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
     )
 
 

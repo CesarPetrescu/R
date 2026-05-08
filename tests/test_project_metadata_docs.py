@@ -86,6 +86,7 @@ def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
     assert "[dashboard readiness/schema index](dashboard-index.md)" in text
     assert "[release readiness index](release-index.md)" in text
     assert "[release example fixture index](release-example-fixtures.md)" in text
+    assert "[automation command fixture index](automation-command-fixtures.md)" in text
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
@@ -119,6 +120,30 @@ def test_release_example_fixture_index_links_each_fixture_and_docker_command():
     ):
         assert fixture in text
         assert fixture in compose_text
+
+
+def test_automation_command_fixture_index_lists_index_commands_and_docker_coverage():
+    index_doc = ROOT / "docs" / "automation-command-fixtures.md"
+    compose_text = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+
+    assert index_doc.exists()
+    text = index_doc.read_text(encoding="utf-8")
+    assert "# Automation Command Fixture Index" in text
+    assert "[Automation index](automation-index.md)" in text
+    assert "r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in text
+    assert "r-project --root . --check-release-example-fixtures" in text
+    assert "r-project --root . --check-automation-command-fixtures" in text
+    assert "docker compose run --build --rm test" in text
+    for command in (
+        "--check-readme-examples --readme-examples-path docs/dashboard-index.md",
+        "--check-readme-schema-examples --readme-schema-path docs/dashboard-index.md",
+        "--check-readme-examples --readme-examples-path docs/automation-index.md",
+        "--check-readme-schema-examples --readme-schema-path docs/automation-index.md",
+        "--check-release-example-fixtures",
+        "--check-automation-index-commands",
+    ):
+        assert command in text
+        assert command in compose_text
 
 
 def test_readme_links_combined_automation_index():
