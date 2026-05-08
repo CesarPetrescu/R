@@ -143,6 +143,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--release-examples-version",
+        metavar="VERSION",
+        help=(
+            "With --check-release-examples or --write-release-examples, generate the README-style release "
+            "checklist example for a future package version without editing pyproject.toml."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -279,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
             release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
         except ValueError as error:
             parser.error(str(error))
-        if _release_examples_mismatch(root, release_examples_path, version=args.release_tag_fixture_version):
+        if _release_examples_mismatch(root, release_examples_path, version=args.release_examples_version):
             print(f"{release_examples_path.as_posix()} release checklist example is out of date.", file=sys.stderr)
             return 1
         print(f"{release_examples_path.as_posix()} release checklist example matches current CLI output.")
@@ -290,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
             release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
         except ValueError as error:
             parser.error(str(error))
-        updated = _updated_release_examples(root, release_examples_path, version=args.release_tag_fixture_version)
+        updated = _updated_release_examples(root, release_examples_path, version=args.release_examples_version)
         if args.dry_run_release_examples:
             print(updated, end="")
         else:

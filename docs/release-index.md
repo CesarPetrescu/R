@@ -18,7 +18,11 @@ r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 ```
+
+Use the `--release-examples-version X.Y.Z` form when preparing Markdown release
+docs for a future tag before changing `pyproject.toml`.
 
 Run the full clean-container verification before trusting the release dashboard bundle:
 

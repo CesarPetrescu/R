@@ -7,7 +7,12 @@ Generate or verify this example from current CLI output with:
 ```bash
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 ```
+
+Use `--release-examples-version X.Y.Z` with the checker or writer to preview a
+future release checklist tag in this README-style Markdown snippet before the
+package version changes in `pyproject.toml`.
 
 Current checked release checklist example:
 

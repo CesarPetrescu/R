@@ -25,3 +25,4 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 - Added `--write-release-tag-fixture` and `--dry-run-release-tag-fixture` so release automation can refresh or preview frozen release checklist JSON fixtures without manual copying.
 - Added `docs/release-index.md` as a release readiness entry point linking fixture docs, checked JSON, and version/tag guard commands.
 - Added `--check-release-examples`/`--write-release-examples` plus `docs/release-examples.md` so release dashboards can verify and refresh README-style release checklist JSON snippets.
+- Added `--release-examples-version` so release docs can preview future README-style checklist snippets before `pyproject.toml` changes.
