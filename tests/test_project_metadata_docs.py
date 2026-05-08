@@ -103,7 +103,7 @@ def test_release_example_fixture_index_links_each_fixture_and_docker_command():
     assert "tests/fixtures/automation-index-release-smoke.md" in text
     assert "tests/fixtures/release-examples-future-version-smoke.md" in text
     assert (
-        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'"
         in text
     )
     assert (
