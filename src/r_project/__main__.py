@@ -194,6 +194,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/automation-command-fixtures.md lists commands missing from docker-compose.yml.",
     )
     parser.add_argument(
+        "--check-dashboard-example-fixtures",
+        action="store_true",
+        help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -352,6 +357,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_index_commands(Path(args.root))
     if args.check_automation_command_fixtures:
         return _check_automation_command_fixtures(Path(args.root))
+    if args.check_dashboard_example_fixtures:
+        return _check_dashboard_example_fixtures(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -825,11 +832,41 @@ def _check_automation_command_fixtures(root: Path) -> int:
     return 0
 
 
+def _check_dashboard_example_fixtures(root: Path) -> int:
+    fixture_index = root / "docs" / "dashboard-example-fixtures.md"
+    dashboard_index = root / "docs" / "dashboard-index.md"
+    compose = root / "docker-compose.yml"
+    index_text = fixture_index.read_text(encoding="utf-8") if fixture_index.exists() else ""
+    dashboard_index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    documented_commands = _dashboard_example_fixture_registry_commands(index_text)
+    missing_index_commands = [
+        command for command in _dashboard_index_r_project_commands(dashboard_index_text) if command not in documented_commands
+    ]
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if not documented_commands:
+        print("Dashboard example fixture registry does not document any r-project commands.", file=sys.stderr)
+        return 1
+    if missing_index_commands:
+        for command in missing_index_commands:
+            print(f"Dashboard example fixture registry is missing dashboard-index command: {command}", file=sys.stderr)
+        return 1
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing dashboard example fixture command: {command}", file=sys.stderr)
+        return 1
+    print("Dashboard example fixture registry matches Docker harness commands.")
+    return 0
+
+
 def _standalone_automation_surface_paths() -> tuple[str, ...]:
     return (
         "docs/dashboard-index.md",
         "docs/usage-examples.md",
         "docs/dashboard-schema.md",
+        "docs/dashboard-example-fixtures.md",
         "docs/release-index.md",
         "docs/release-checklist.md",
         "docs/release/checklist.json",
@@ -845,6 +882,14 @@ def _automation_index_href(docs_path: str) -> str:
 
 
 def _automation_index_r_project_commands(index_text: str) -> list[str]:
+    return _r_project_commands_in_bash_fences(index_text)
+
+
+def _dashboard_index_r_project_commands(index_text: str) -> list[str]:
+    return _r_project_commands_in_bash_fences(index_text)
+
+
+def _r_project_commands_in_bash_fences(index_text: str) -> list[str]:
     commands: list[str] = []
     in_bash_fence = False
     for line in index_text.splitlines():
@@ -869,6 +914,10 @@ def _release_example_section_registry_commands(index_text: str) -> list[str]:
 
 
 def _automation_command_fixture_index_commands(index_text: str) -> list[str]:
+    return _markdown_table_code_span_commands(index_text)
+
+
+def _dashboard_example_fixture_registry_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
 
 

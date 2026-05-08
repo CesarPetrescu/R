@@ -76,6 +76,7 @@ Last updated: 2026-05-08
 - `python3 -m r_project --root <path> --check-automation-index-links` audits `docs/automation-index.md` and exits nonzero when the combined automation navigation page omits a standalone dashboard or release automation surface link.
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-automation-command-fixtures` audits `docs/automation-command-fixtures.md` table rows and exits nonzero when any indexed split-doc automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
+- `python3 -m r_project --root <path> --check-dashboard-example-fixtures` audits `docs/dashboard-example-fixtures.md` table rows and exits nonzero when any indexed dashboard readiness/schema command is missing equivalent `docker-compose.yml` clean-container harness coverage or when the registry omits a dashboard-index command.
 - `python3 -m r_project --root <path> --check-release-examples-path-safety` audits release example Markdown path override safety by proving absolute paths and `..` escapes are rejected before future checker/writer modes can touch files outside `--root`.
 - `docs/release-example-fixtures.md` indexes release-example smoke fixtures and the Docker commands that exercise them so future release-doc fixture additions remain auditable from one page.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
@@ -146,6 +147,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safet
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```
