@@ -40,6 +40,7 @@ def test_release_readiness_index_links_release_docs_and_guard_commands():
     assert "r-project --root . --check-release-tag v0.1.0 --docker-verified" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
     assert "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md" in text
+    assert "--release-examples-version 0.2.0" in text
     assert "docker compose run --build --rm test" in text
 
 
@@ -50,6 +51,7 @@ def test_release_examples_document_fixture_matches_current_cli_output():
     text = examples_doc.read_text(encoding="utf-8")
     assert "# Release Checklist Examples" in text
     assert "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md" in text
+    assert "--release-examples-version 0.2.0" in text
     assert '"tag": "v0.1.0"' in text
     env = os.environ | {"PYTHONPATH": str(ROOT / "src")}
     result = subprocess.run(
@@ -86,6 +88,7 @@ def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
+    assert "--release-examples-version 0.2.0" in text
     assert "docker compose run --build --rm test" in text
 
 

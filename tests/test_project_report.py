@@ -2049,6 +2049,98 @@ version = "0.1.0"
     assert examples.read_text(encoding="utf-8") == original
 
 
+def test_cli_write_release_examples_accepts_future_version_without_fixture_mode(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    examples = tmp_path / "docs" / "release-examples.md"
+    write(
+        examples,
+        """# Release Examples
+
+```json
+{}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-examples",
+            "--dry-run-release-examples",
+            "--release-examples-version",
+            "0.2.0",
+            "--release-examples-path",
+            "docs/release-examples.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert '"version": "0.2.0"' in result.stdout
+    assert '"tag": "v0.2.0"' in result.stdout
+    assert '"expected_tag": "v0.2.0"' in result.stdout
+    assert result.stderr == ""
+
+
+def test_cli_check_release_examples_accepts_future_version_without_fixture_mode(tmp_path):
+    write(
+        tmp_path / "pyproject.toml",
+        """[project]
+name = "r-project"
+version = "0.1.0"
+""",
+    )
+    write(
+        tmp_path / "docs" / "release-examples.md",
+        """# Release Examples
+
+```json
+{"checks": {"docker_verified": true, "git_clean": "skipped", "tag_matches_version": true}, "expected_tag": "v0.2.0", "ready": true, "tag": "v0.2.0", "version": "0.2.0"}
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-examples",
+            "--release-examples-version",
+            "0.2.0",
+            "--release-examples-path",
+            "docs/release-examples.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/release-examples.md release checklist example matches current CLI output.\n"
+    assert result.stderr == ""
+
+
 def test_cli_write_release_examples_rejects_path_that_escapes_root(tmp_path):
     write(
         tmp_path / "pyproject.toml",
