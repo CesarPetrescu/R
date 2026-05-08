@@ -8,7 +8,7 @@ Last updated: 2026-05-07
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, on-demand schema fixture and README schema example drift checks/writing with README-style path overrides for dashboard docs, release/versioning notes, a release tag checklist guard with JSON summary output, release tag checklist fixture drift checks/writing with optional future-version targeting, and AGPL-3.0-or-later licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority backlog summaries, README example drift checks/generation/writing, vector and struct memory-layout helpers, nested layout renderers, byte-span flattening/filtering/leaf helpers, overlap detectors, grouped overlap reports/totals/threshold helpers, fixture-backed Markdown and JSON CLI demos, JSON Schema definitions, compact README schema docs/examples, on-demand schema fixture and README schema example drift checks/writing with README-style path overrides for dashboard docs, release/versioning notes, a release tag checklist guard with JSON summary output, release tag checklist fixture drift checks/writing with optional future-version targeting and root-relative fixture path overrides, and AGPL-3.0-or-later licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -57,6 +57,7 @@ Last updated: 2026-05-07
 - `python3 -m r_project --root <path> --check-release-tag-fixture` compares the stored release checklist JSON fixture against current generated checklist output and exits with status 1 plus drift diagnostics when they differ.
 - `python3 -m r_project --root <path> --write-release-tag-fixture` rewrites the release checklist JSON fixture from current generated checklist output; add `--dry-run-release-tag-fixture` to print the refreshed fixture without modifying files.
 - Add `--release-tag-fixture-version X.Y.Z` to `--check-release-tag-fixture` or `--write-release-tag-fixture` to verify or preview a frozen release checklist fixture for a future package version without editing `pyproject.toml` first.
+- Add `--release-tag-fixture-path docs/release/checklist.json` to `--check-release-tag-fixture` or `--write-release-tag-fixture` when external release automation stores a frozen checklist JSON file under another root-relative path; absolute paths and `..` escapes are rejected before writer modes can modify files outside `--root`.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
 - `r_project.memory.render_grouped_byte_span_overlap_totals(spans, ...)` formats compact grouped overlap totals as stable Markdown tables for PR comments, trace logs, and dashboards.
 - `r_project.memory.render_grouped_byte_span_overlaps(spans, ...)` formats those grouped intersections as stable Markdown sections for PR comments, trace logs, and status reports.
@@ -101,6 +102,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0
+PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```

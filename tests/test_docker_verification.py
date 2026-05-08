@@ -47,6 +47,10 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python -m r_project --root . --check-release-tag-fixture" in compose_text
     assert "python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture" in compose_text
     assert (
+        "python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0"
         in compose_text
     )
