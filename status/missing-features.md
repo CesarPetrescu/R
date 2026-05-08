@@ -80,3 +80,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release checklist example future-version flag so Markdown release docs can preview a non-current tag before `pyproject.toml` changes.
 - [x] Add embedded automation-index readiness and schema examples backed by alternate README-style drift checks for combined dashboard/release automation consumers.
 - [x] Add an embedded automation-index release checklist example backed by a scoped README-style release drift check for combined automation consumers.
+- [x] Add a scoped release-example writer smoke test for `docs/automation-index.md` so Docker verification previews in-place release snippet refreshes for combined automation docs.
