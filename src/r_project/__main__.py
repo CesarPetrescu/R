@@ -166,6 +166,11 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-release-examples-path-safety",
+        action="store_true",
+        help="Exit nonzero when release example path override safety checks do not reject unsafe paths.",
+    )
+    parser.add_argument(
         "--check-automation-index-links",
         action="store_true",
         help="Exit nonzero when docs/automation-index.md does not link every standalone automation docs surface.",
@@ -324,6 +329,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_release_example_fixtures:
         return _check_release_example_fixtures(Path(args.root))
+    if args.check_release_examples_path_safety:
+        return _check_release_examples_path_safety(Path(args.root))
     if args.check_automation_index_links:
         return _check_automation_index_links(Path(args.root))
     if args.check_automation_index_commands:
@@ -691,6 +698,28 @@ def _check_release_example_fixtures(root: Path) -> int:
             print(f"Docker harness is missing release example fixture command: {command}", file=sys.stderr)
         return 1
     print("Release example fixture index matches Docker harness commands.")
+    return 0
+
+
+def _check_release_examples_path_safety(root: Path) -> int:
+    unsafe_cases = (
+        (Path("../outside-release-examples.md"), "--release-examples-path must stay under --root"),
+        (root.resolve() / "absolute-release-examples.md", "--release-examples-path must be relative to --root"),
+    )
+    failures: list[str] = []
+    for unsafe_path, expected_message in unsafe_cases:
+        try:
+            _release_examples_path_under_root(root, unsafe_path)
+        except ValueError as error:
+            if str(error) != expected_message:
+                failures.append(f"{unsafe_path}: expected {expected_message!r}, got {str(error)!r}")
+        else:
+            failures.append(f"{unsafe_path}: accepted unsafe release examples path")
+    if failures:
+        for failure in failures:
+            print(f"Release examples path safety audit failed: {failure}", file=sys.stderr)
+        return 1
+    print("Release examples path safety audit passed.")
     return 0
 
 

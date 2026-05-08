@@ -87,3 +87,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release-example fixture index guard so Docker coverage drift is caught automatically when fixture rows change.
 - [x] Add a release automation docs guard that validates `docs/automation-index.md` links every standalone dashboard and release automation surface.
 - [x] Add an automation docs command index guard that verifies every `r-project` command documented in `docs/automation-index.md` is represented in Docker verification.
+- [x] Add a release examples path safety audit guard so Markdown release example path override checks stay enforced in host and Docker verification.

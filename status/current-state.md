@@ -74,6 +74,7 @@ Last updated: 2026-05-08
 - `python3 -m r_project --root <path> --check-release-example-fixtures` audits `docs/release-example-fixtures.md` and exits nonzero when a listed release-example smoke fixture command is missing equivalent `docker-compose.yml` harness coverage.
 - `python3 -m r_project --root <path> --check-automation-index-links` audits `docs/automation-index.md` and exits nonzero when the combined automation navigation page omits a standalone dashboard or release automation surface link.
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
+- `python3 -m r_project --root <path> --check-release-examples-path-safety` audits release example Markdown path override safety by proving absolute paths and `..` escapes are rejected before future checker/writer modes can touch files outside `--root`.
 - `docs/release-example-fixtures.md` indexes release-example smoke fixtures and the Docker commands that exercise them so future release-doc fixture additions remain auditable from one page.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
 - `r_project.memory.render_grouped_byte_span_overlap_totals(spans, ...)` formats compact grouped overlap totals as stable Markdown tables for PR comments, trace logs, and dashboards.
@@ -138,6 +139,7 @@ PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
 PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safety
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project.lint --root .
