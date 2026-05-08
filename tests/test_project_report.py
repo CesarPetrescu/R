@@ -1412,6 +1412,74 @@ version = "0.1.0"
     assert automation_index.read_text(encoding="utf-8") == original_text
 
 
+def test_release_example_fixture_index_guard_matches_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Release example fixture index matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_release_example_fixture_index_guard_reports_missing_docker_command(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-fixtures.md",
+        """# Release Example Fixture Index
+
+| Fixture | Purpose | Docker verification command |
+| --- | --- | --- |
+| `tests/fixtures/missing-release-smoke.md` | Proves a future release writer behavior. | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/missing-release-smoke.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert (
+        "Docker harness is missing release example fixture command: r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/missing-release-smoke.md\n"
+        in result.stderr
+    )
+
+
 def test_future_release_example_dry_run_smoke_fixture_keeps_current_docs_unchanged(tmp_path):
     fixture = Path("tests/fixtures/release-examples-future-version-smoke.md")
     release_examples = tmp_path / "docs" / "release-examples.md"
