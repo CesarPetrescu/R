@@ -85,3 +85,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a compact future-version release example dry-run smoke fixture so preview mode proves current-version docs stay unchanged.
 - [x] Add a standalone release-example fixture index so release smoke fixtures and Docker coverage can be audited from one page.
 - [x] Add a release-example fixture index guard so Docker coverage drift is caught automatically when fixture rows change.
+- [x] Add a release automation docs guard that validates `docs/automation-index.md` links every standalone dashboard and release automation surface.

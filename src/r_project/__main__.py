@@ -166,6 +166,11 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-automation-index-links",
+        action="store_true",
+        help="Exit nonzero when docs/automation-index.md does not link every standalone automation docs surface.",
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -314,6 +319,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_release_example_fixtures:
         return _check_release_example_fixtures(Path(args.root))
+    if args.check_automation_index_links:
+        return _check_automation_index_links(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -678,6 +685,39 @@ def _check_release_example_fixtures(root: Path) -> int:
         return 1
     print("Release example fixture index matches Docker harness commands.")
     return 0
+
+
+def _check_automation_index_links(root: Path) -> int:
+    automation_index = root / "docs" / "automation-index.md"
+    text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
+    missing = [
+        docs_path
+        for docs_path in _standalone_automation_surface_paths()
+        if f"({_automation_index_href(docs_path)})" not in text
+    ]
+    if missing:
+        for docs_path in missing:
+            print(f"Automation index is missing link to {docs_path}.", file=sys.stderr)
+        return 1
+    print("Automation index links every standalone automation surface.")
+    return 0
+
+
+def _standalone_automation_surface_paths() -> tuple[str, ...]:
+    return (
+        "docs/dashboard-index.md",
+        "docs/usage-examples.md",
+        "docs/dashboard-schema.md",
+        "docs/release-index.md",
+        "docs/release-checklist.md",
+        "docs/release/checklist.json",
+        "docs/release-examples.md",
+        "docs/release-example-fixtures.md",
+    )
+
+
+def _automation_index_href(docs_path: str) -> str:
+    return docs_path.removeprefix("docs/")
 
 
 def _release_example_fixture_index_commands(index_text: str) -> list[str]:

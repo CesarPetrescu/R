@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a release examples fixture path safety audit if future writer modes gain more Markdown block types.
-3. Add a release automation docs guard that validates `docs/automation-index.md` links every standalone dashboard and release automation surface.
+3. Add an automation docs command index guard that verifies every command documented in `docs/automation-index.md` is represented in Docker verification.
 
 ## Every-run checklist
 

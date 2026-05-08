@@ -1358,6 +1358,67 @@ def test_automation_index_release_example_matches_current_cli_output():
     assert result.stderr == ""
 
 
+def test_automation_index_link_guard_succeeds_when_all_standalone_surfaces_are_linked():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-automation-index-links",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Automation index links every standalone automation surface.\n"
+    assert result.stderr == ""
+
+
+def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp_path):
+    write(
+        tmp_path / "docs" / "automation-index.md",
+        """# Automation Index
+
+- [dashboard readiness/schema index](dashboard-index.md)
+- [readiness report examples](usage-examples.md)
+- [memory overlap schema examples](dashboard-schema.md)
+- [release readiness index](release-index.md)
+- [release checklist fixture workflow](release-checklist.md)
+- [checked release checklist JSON](release/checklist.json)
+- [checked release checklist examples](release-examples.md)
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-automation-index-links",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Automation index is missing link to docs/release-example-fixtures.md.\n"
+
+
 def test_automation_index_release_writer_smoke_fixture_preserves_other_embedded_examples(tmp_path):
     fixture = Path("tests/fixtures/automation-index-release-smoke.md")
     automation_index = tmp_path / "docs" / "automation-index.md"

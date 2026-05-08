@@ -72,6 +72,7 @@ Last updated: 2026-05-08
 - `tests/fixtures/automation-index-release-smoke.md` is an executable smoke fixture for the scoped automation-index release writer; host tests prove dry-run refreshes replace only the release checklist fence while preserving the surrounding embedded readiness and memory-overlap schema examples.
 - `tests/fixtures/release-examples-future-version-smoke.md` is an executable current-version release checklist snippet used by host tests and Docker to prove `--release-examples-version` dry-runs can preview future tags without mutating current-version docs.
 - `python3 -m r_project --root <path> --check-release-example-fixtures` audits `docs/release-example-fixtures.md` and exits nonzero when a listed release-example smoke fixture command is missing equivalent `docker-compose.yml` harness coverage.
+- `python3 -m r_project --root <path> --check-automation-index-links` audits `docs/automation-index.md` and exits nonzero when the combined automation navigation page omits a standalone dashboard or release automation surface link.
 - `docs/release-example-fixtures.md` indexes release-example smoke fixtures and the Docker commands that exercise them so future release-doc fixture additions remain auditable from one page.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
 - `r_project.memory.render_grouped_byte_span_overlap_totals(spans, ...)` formats compact grouped overlap totals as stable Markdown tables for PR comments, trace logs, and dashboards.
@@ -136,6 +137,7 @@ PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
 PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```
