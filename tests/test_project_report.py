@@ -1418,6 +1418,7 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
     assert result.stdout == ""
     assert result.stderr == (
         "Automation index is missing link to docs/release-example-fixtures.md.\n"
+        "Automation index is missing link to docs/release-example-sections.md.\n"
         "Automation index is missing link to docs/automation-command-fixtures.md.\n"
     )
 
@@ -1700,6 +1701,76 @@ def test_release_example_fixture_index_guard_matches_docker_harness():
     assert result.returncode == 0
     assert result.stdout == "Release example fixture index matches Docker harness commands.\n"
     assert result.stderr == ""
+
+
+def test_release_example_section_registry_guard_matches_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-example-sections",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Release example section registry matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_release_example_section_registry_guard_reports_missing_docker_command(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+| `docs/automation-index.md` | Embedded release checklist example | `r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-release-examples --release-examples-path docs/release-examples.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-example-sections",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing release example section command: "
+        "r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'\n"
+    )
 
 
 def test_release_example_fixture_index_guard_reports_missing_docker_command(tmp_path):

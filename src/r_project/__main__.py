@@ -166,6 +166,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-release-example-sections",
+        action="store_true",
+        help=(
+            "Exit nonzero when docs/release-example-sections.md lists named release checklist sections "
+            "that are not exercised by docker-compose.yml."
+        ),
+    )
+    parser.add_argument(
         "--check-release-examples-path-safety",
         action="store_true",
         help="Exit nonzero when release example path override safety checks do not reject unsafe paths.",
@@ -334,6 +342,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check_release_example_fixtures:
         return _check_release_example_fixtures(Path(args.root))
+    if args.check_release_example_sections:
+        return _check_release_example_sections(Path(args.root))
     if args.check_release_examples_path_safety:
         return _check_release_examples_path_safety(Path(args.root))
     if args.check_automation_index_links:
@@ -708,6 +718,26 @@ def _check_release_example_fixtures(root: Path) -> int:
     return 0
 
 
+def _check_release_example_sections(root: Path) -> int:
+    index = root / "docs" / "release-example-sections.md"
+    compose = root / "docker-compose.yml"
+    index_text = index.read_text(encoding="utf-8") if index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    documented_commands = _release_example_section_registry_commands(index_text)
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if not documented_commands:
+        print("Release example section registry does not list any Docker verification commands.", file=sys.stderr)
+        return 1
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing release example section command: {command}", file=sys.stderr)
+        return 1
+    print("Release example section registry matches Docker harness commands.")
+    return 0
+
+
 def _check_release_examples_path_safety(root: Path) -> int:
     unsafe_cases = (
         (Path("../outside-release-examples.md"), "--release-examples-path must stay under --root"),
@@ -805,6 +835,7 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
         "docs/release/checklist.json",
         "docs/release-examples.md",
         "docs/release-example-fixtures.md",
+        "docs/release-example-sections.md",
         "docs/automation-command-fixtures.md",
     )
 
@@ -830,6 +861,10 @@ def _automation_index_r_project_commands(index_text: str) -> list[str]:
 
 
 def _release_example_fixture_index_commands(index_text: str) -> list[str]:
+    return _markdown_table_code_span_commands(index_text)
+
+
+def _release_example_section_registry_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
 
 
