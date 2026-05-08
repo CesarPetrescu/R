@@ -33,7 +33,15 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert "python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in compose_text
+    assert (
+        "python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'"
+        in compose_text
+    )
     assert "python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in compose_text
+    assert (
+        "python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'"
+        in compose_text
+    )
     assert "python -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in compose_text
     assert "python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md" in compose_text
     assert "python -m r_project --memory-threshold-demo" in compose_text

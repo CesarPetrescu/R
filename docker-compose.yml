@@ -15,7 +15,9 @@ services:
       && python -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
       && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
       && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
       && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+      && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
       && python -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
       && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
       && python -m r_project --root . --write-readme-examples
