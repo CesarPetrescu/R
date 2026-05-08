@@ -50,6 +50,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="With --write-readme-examples, print the updated README content without modifying README.md.",
     )
     parser.add_argument(
+        "--readme-examples-path",
+        default="README.md",
+        help="README-style Markdown path, relative to --root, whose JSON/Markdown report examples are checked or written.",
+    )
+    parser.add_argument(
         "--check-memory-overlap-demo-schema",
         action="store_true",
         help="Exit nonzero when the memory overlap demo schema fixture drifts from current CLI output.",
@@ -306,23 +311,30 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     root = Path(args.root)
     report = analyze_project(root)
+    try:
+        readme_examples_path = _readme_examples_path_under_root(root, Path(args.readme_examples_path))
+    except ValueError as error:
+        parser.error(str(error))
     if args.generate_readme_examples:
         print(_readme_example_blocks(report))
         return 0
     if args.write_readme_examples:
         if args.dry_run_readme_examples:
-            print(_updated_readme_example_blocks(root, report), end="")
+            print(_updated_readme_example_blocks(root, report, readme_examples_path), end="")
         else:
-            _write_readme_example_blocks(root, report)
-            print("Updated README JSON and Markdown example fences.")
+            _write_readme_example_blocks(root, report, readme_examples_path)
+            print(
+                f"Updated {_readme_examples_path_label(readme_examples_path)} JSON and Markdown example fences."
+            )
         return 0
     if args.check_readme_examples:
-        mismatches = _readme_example_mismatches(root, report)
+        mismatches = _readme_example_mismatches(root, report, readme_examples_path)
         if mismatches:
+            label = _readme_examples_path_label(readme_examples_path)
             for language in mismatches:
-                print(f"README {language} example is out of date.", file=sys.stderr)
+                print(f"{label} {language} example is out of date.", file=sys.stderr)
             return 1
-        print("README examples match current CLI output.")
+        print(f"{_readme_examples_path_label(readme_examples_path)} examples match current CLI output.")
         return 0
     if args.json:
         print(json.dumps(report.to_dict(), sort_keys=True))
@@ -538,8 +550,8 @@ def _release_tag_fixture_path_under_root(root: Path, fixture_path: Path) -> Path
         raise ValueError("--release-tag-fixture-path must stay under --root") from error
 
 
-def _readme_example_mismatches(root: Path, report) -> list[str]:
-    readme = root / "README.md"
+def _readme_example_mismatches(root: Path, report, readme_examples_path: Path = Path("README.md")) -> list[str]:
+    readme = root / readme_examples_path
     text = readme.read_text(encoding="utf-8") if readme.exists() else ""
     expected = {
         "json": json.dumps(report.to_dict(), sort_keys=True),
@@ -557,13 +569,13 @@ def _readme_example_blocks(report) -> str:
     )
 
 
-def _write_readme_example_blocks(root: Path, report) -> None:
-    readme = root / "README.md"
-    readme.write_text(_updated_readme_example_blocks(root, report), encoding="utf-8")
+def _write_readme_example_blocks(root: Path, report, readme_examples_path: Path = Path("README.md")) -> None:
+    readme = root / readme_examples_path
+    readme.write_text(_updated_readme_example_blocks(root, report, readme_examples_path), encoding="utf-8")
 
 
-def _updated_readme_example_blocks(root: Path, report) -> str:
-    readme = root / "README.md"
+def _updated_readme_example_blocks(root: Path, report, readme_examples_path: Path = Path("README.md")) -> str:
+    readme = root / readme_examples_path
     text = readme.read_text(encoding="utf-8")
     replacements = {
         "json": json.dumps(report.to_dict(), sort_keys=True),
@@ -572,6 +584,22 @@ def _updated_readme_example_blocks(root: Path, report) -> str:
     for language, output in replacements.items():
         text = _replace_fenced_block(text, language, output)
     return text
+
+
+def _readme_examples_path_label(readme_examples_path: Path) -> str:
+    path_text = readme_examples_path.as_posix()
+    return "README" if path_text == "README.md" else path_text
+
+
+def _readme_examples_path_under_root(root: Path, readme_examples_path: Path) -> Path:
+    if readme_examples_path.is_absolute():
+        raise ValueError("--readme-examples-path must be relative to --root")
+    root_resolved = root.resolve()
+    target_resolved = (root / readme_examples_path).resolve()
+    try:
+        return target_resolved.relative_to(root_resolved)
+    except ValueError as error:
+        raise ValueError("--readme-examples-path must stay under --root") from error
 
 
 def _fenced_block(text: str, language: str) -> str | None:

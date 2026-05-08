@@ -5,8 +5,8 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-2. Add a README report example writer path override if dashboard-ready usage examples move into standalone docs.
-3. Add a release checklist fixture check-only path override example to external release docs if release automation starts validating multiple frozen checklist locations.
+2. Add a release checklist fixture check-only path override example to external release docs if release automation starts validating multiple frozen checklist locations.
+3. Add a dedicated standalone usage-example document if external dashboard docs begin consuming report examples outside `README.md`.
 
 ## Every-run checklist
 
