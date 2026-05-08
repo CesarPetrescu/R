@@ -158,6 +158,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-release-example-fixtures",
+        action="store_true",
+        help=(
+            "Exit nonzero when docs/release-example-fixtures.md lists release-example smoke fixture commands "
+            "that are not exercised by docker-compose.yml."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -304,6 +312,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"{release_examples_path.as_posix()} release checklist example matches current CLI output.")
         return 0
+    if args.check_release_example_fixtures:
+        return _check_release_example_fixtures(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -648,6 +658,60 @@ def _release_examples_path_under_root(root: Path, examples_path: Path) -> Path:
         return target_resolved.relative_to(root_resolved)
     except ValueError as error:
         raise ValueError("--release-examples-path must stay under --root") from error
+
+
+def _check_release_example_fixtures(root: Path) -> int:
+    index = root / "docs" / "release-example-fixtures.md"
+    compose = root / "docker-compose.yml"
+    index_text = index.read_text(encoding="utf-8") if index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    documented_commands = _release_example_fixture_index_commands(index_text)
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if not documented_commands:
+        print("Release example fixture index does not list any Docker verification commands.", file=sys.stderr)
+        return 1
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing release example fixture command: {command}", file=sys.stderr)
+        return 1
+    print("Release example fixture index matches Docker harness commands.")
+    return 0
+
+
+def _release_example_fixture_index_commands(index_text: str) -> list[str]:
+    commands: list[str] = []
+    for line in index_text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 3 or cells[0] in {"Fixture", "---"}:
+            continue
+        command = _single_code_span(cells[-1])
+        if command is not None:
+            commands.append(command)
+    return commands
+
+
+def _single_code_span(text: str) -> str | None:
+    start = text.find("`")
+    if start == -1:
+        return None
+    end = text.find("`", start + 1)
+    if end == -1:
+        return None
+    return text[start + 1 : end]
+
+
+def _docker_harness_contains_equivalent_command(compose_text: str, documented_command: str) -> bool:
+    documented_suffix = _release_example_command_suffix(documented_command)
+    return documented_suffix in compose_text
+
+
+def _release_example_command_suffix(command: str) -> str:
+    for prefix in ("r-project ", "python -m r_project "):
+        if command.startswith(prefix):
+            return command[len(prefix) :]
+    return command
 
 
 def _readme_example_mismatches(root: Path, report, readme_examples_path: Path = Path("README.md")) -> list[str]:

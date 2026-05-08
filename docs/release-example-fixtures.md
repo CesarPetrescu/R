@@ -18,6 +18,12 @@ This page indexes the executable Markdown smoke fixtures that protect release-ex
 
 ## Full clean verification
 
+Run the index guard directly after adding or editing fixture rows so it proves every listed Docker command has equivalent clean-container coverage:
+
+```bash
+r-project --root . --check-release-example-fixtures
+```
+
 Run the full clean-container harness before publishing release-example fixture changes:
 
 ```bash

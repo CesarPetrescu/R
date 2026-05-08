@@ -111,6 +111,7 @@ def test_release_example_fixture_index_links_each_fixture_and_docker_command():
         "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md"
         in text
     )
+    assert "r-project --root . --check-release-example-fixtures" in text
     assert "docker compose run --build --rm test" in text
     for fixture in (
         "tests/fixtures/automation-index-release-smoke.md",
