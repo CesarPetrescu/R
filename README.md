@@ -102,6 +102,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-ex
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
@@ -266,6 +268,8 @@ r-project --root . --check-readme-examples --readme-examples-path README.md
 r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
 r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
 r-project --root . --write-readme-examples
 r-project --memory-threshold-demo
 r-project --memory-threshold-demo --json
@@ -300,7 +304,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 62, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 25, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 63, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 26, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -312,7 +316,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 62 |
+| Completed backlog items | 63 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -322,7 +326,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 25 | 0 | None |
+| P2 | 26 | 0 | None |
 
 ## Next backlog item
 
@@ -346,7 +350,9 @@ r-project --root . --write-readme-examples --readme-examples-path docs/usage-exa
 The repository also keeps those examples in
 [`docs/usage-examples.md`](docs/usage-examples.md), which is checked in host
 tests and the Docker verification harness so external dashboard docs can depend
-on a stable standalone Markdown surface.
+on a stable standalone Markdown surface. [`docs/dashboard-index.md`](docs/dashboard-index.md)
+links those readiness examples with the checked schema examples and is also
+verified by host tests and Docker as a dashboard landing page.
 
 ## Memory overlap demo JSON Schemas
 
@@ -399,7 +405,9 @@ r-project --root . --write-readme-schema-examples --readme-schema-path docs/dash
 The repository also keeps those compact schema examples in
 [`docs/dashboard-schema.md`](docs/dashboard-schema.md), which is checked in host
 tests and the Docker verification harness so external dashboard docs can depend
-on a stable standalone schema surface.
+on a stable standalone schema surface. [`docs/dashboard-index.md`](docs/dashboard-index.md)
+combines the checked readiness report fences and compact schema fence in one
+landing page for dashboard consumers.
 
 ## Development
 
@@ -418,6 +426,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-ex
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path README.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json

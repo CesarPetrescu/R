@@ -1274,6 +1274,59 @@ def test_standalone_dashboard_schema_document_matches_current_schema_output():
     assert result.stderr == ""
 
 
+def test_standalone_dashboard_index_document_matches_report_and_schema_outputs():
+    dashboard_index = Path("docs/dashboard-index.md")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    report_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-examples",
+            "--readme-examples-path",
+            str(dashboard_index),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    schema_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-schema-examples",
+            "--readme-schema-path",
+            str(dashboard_index),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+    text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
+
+    assert dashboard_index.exists()
+    assert "[Readiness report examples](usage-examples.md)" in text
+    assert "[Memory overlap schema examples](dashboard-schema.md)" in text
+    assert "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in text
+    assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
+    assert report_result.returncode == 0
+    assert report_result.stdout == "docs/dashboard-index.md examples match current CLI output.\n"
+    assert report_result.stderr == ""
+    assert schema_result.returncode == 0
+    assert schema_result.stdout == "docs/dashboard-index.md memory-overlap schema example matches current CLI output.\n"
+    assert schema_result.stderr == ""
+
+
 def test_cli_rejects_readme_schema_path_that_escapes_root(tmp_path):
     outside = tmp_path.parent / "outside-dashboard-schema.md"
     write(

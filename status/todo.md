@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a release checklist fixture check-only path override example to external release docs if release automation starts validating multiple frozen checklist locations.
-3. Add dashboard-specific release/readiness index docs if external consumers need one landing page for `docs/usage-examples.md` and `docs/dashboard-schema.md`.
+3. Add dashboard-specific release automation examples if consumers need checked release checklist snippets alongside the readiness/schema index.
 
 ## Every-run checklist
 
