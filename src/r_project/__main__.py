@@ -151,6 +151,13 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--release-examples-section",
+        help=(
+            "With --check-release-examples or --write-release-examples, check or replace the first JSON fence "
+            "after this Markdown heading instead of the first JSON fence in the document."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -287,7 +294,12 @@ def main(argv: list[str] | None = None) -> int:
             release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
         except ValueError as error:
             parser.error(str(error))
-        if _release_examples_mismatch(root, release_examples_path, version=args.release_examples_version):
+        if _release_examples_mismatch(
+            root,
+            release_examples_path,
+            version=args.release_examples_version,
+            section=args.release_examples_section,
+        ):
             print(f"{release_examples_path.as_posix()} release checklist example is out of date.", file=sys.stderr)
             return 1
         print(f"{release_examples_path.as_posix()} release checklist example matches current CLI output.")
@@ -298,7 +310,12 @@ def main(argv: list[str] | None = None) -> int:
             release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
         except ValueError as error:
             parser.error(str(error))
-        updated = _updated_release_examples(root, release_examples_path, version=args.release_examples_version)
+        updated = _updated_release_examples(
+            root,
+            release_examples_path,
+            version=args.release_examples_version,
+            section=args.release_examples_section,
+        )
         if args.dry_run_release_examples:
             print(updated, end="")
         else:
@@ -604,18 +621,22 @@ def _release_tag_fixture_path_under_root(root: Path, fixture_path: Path) -> Path
         raise ValueError("--release-tag-fixture-path must stay under --root") from error
 
 
-def _release_examples_mismatch(root: Path, examples_path: Path, *, version: str | None = None) -> bool:
+def _release_examples_mismatch(
+    root: Path, examples_path: Path, *, version: str | None = None, section: str | None = None
+) -> bool:
     examples = root / examples_path
     text = examples.read_text(encoding="utf-8") if examples.exists() else ""
     expected = _release_tag_checklist_fixture_output(root, version=version).rstrip("\n")
-    return _fenced_block(text, "json") != expected
+    return _fenced_block_in_section(text, "json", section) != expected
 
 
-def _updated_release_examples(root: Path, examples_path: Path, *, version: str | None = None) -> str:
+def _updated_release_examples(
+    root: Path, examples_path: Path, *, version: str | None = None, section: str | None = None
+) -> str:
     examples = root / examples_path
     text = examples.read_text(encoding="utf-8")
     output = _release_tag_checklist_fixture_output(root, version=version).rstrip("\n")
-    return _replace_fenced_block(text, "json", output)
+    return _replace_fenced_block_in_section(text, "json", output, section)
 
 
 def _release_examples_path_under_root(root: Path, examples_path: Path) -> Path:
@@ -691,6 +712,63 @@ def _fenced_block(text: str, language: str) -> str | None:
     if end == -1:
         return None
     return text[content_start:end]
+
+
+def _fenced_block_in_section(text: str, language: str, section: str | None) -> str | None:
+    if section is None:
+        return _fenced_block(text, language)
+    section_text = _markdown_section_text(text, section)
+    if section_text is None:
+        return None
+    return _fenced_block(section_text, language)
+
+
+def _replace_fenced_block_in_section(text: str, language: str, output: str, section: str | None) -> str:
+    if section is None:
+        return _replace_fenced_block(text, language, output)
+    section_start = _markdown_section_start(text, section)
+    if section_start == -1:
+        raise ValueError(f"README is missing a {section} section")
+    marker = f"```{language}\n"
+    start = text.find(marker, section_start)
+    if start == -1:
+        raise ValueError(f"README section {section} is missing a {language} fenced block")
+    next_section = _next_markdown_section_start(text, section_start + 1)
+    if next_section != -1 and start > next_section:
+        raise ValueError(f"README section {section} is missing a {language} fenced block")
+    content_start = start + len(marker)
+    end = text.find("\n```", content_start)
+    if end == -1 or (next_section != -1 and end > next_section):
+        raise ValueError(f"README section {section} has an unterminated {language} fenced block")
+    return f"{text[:content_start]}{output}{text[end:]}"
+
+
+def _markdown_section_text(text: str, section: str) -> str | None:
+    section_start = _markdown_section_start(text, section)
+    if section_start == -1:
+        return None
+    next_section = _next_markdown_section_start(text, section_start + 1)
+    if next_section == -1:
+        return text[section_start:]
+    return text[section_start:next_section]
+
+
+def _markdown_section_start(text: str, section: str) -> int:
+    for prefix in ("#", "##", "###", "####", "#####", "######"):
+        marker = f"{prefix} {section}\n"
+        start = text.find(marker)
+        if start != -1:
+            return start
+    return -1
+
+
+def _next_markdown_section_start(text: str, start: int) -> int:
+    positions = [
+        position
+        for marker in ("\n# ", "\n## ", "\n### ", "\n#### ", "\n##### ", "\n###### ")
+        if (position := text.find(marker, start)) != -1
+    ]
+    return min(positions) if positions else -1
 
 
 def _replace_fenced_block(text: str, language: str, output: str) -> str:
