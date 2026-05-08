@@ -635,6 +635,34 @@ def test_cli_check_rejects_absolute_readme_examples_path(tmp_path):
     assert "--readme-examples-path must be relative to --root" in result.stderr
 
 
+def test_standalone_usage_examples_document_matches_current_cli_output():
+    usage_examples = Path("docs/usage-examples.md")
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-readme-examples",
+            "--readme-examples-path",
+            str(usage_examples),
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert usage_examples.exists()
+    assert result.returncode == 0
+    assert result.stdout == "docs/usage-examples.md examples match current CLI output.\n"
+    assert result.stderr == ""
+
+
 def test_cli_outputs_fixture_backed_memory_threshold_demo():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
     expected = Path("tests/fixtures/memory-threshold-violations.md").read_text(encoding="utf-8")

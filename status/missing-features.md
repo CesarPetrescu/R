@@ -70,3 +70,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a schema writer verification mode that can refresh alternate README paths if dashboard docs move out of the main README.
 - [x] Add a release checklist fixture writer path override if external release automation stores frozen summaries outside `tests/fixtures/`.
 - [x] Add a README report example writer/checker path override if dashboard-ready usage examples move into standalone docs.
+- [x] Add a standalone usage-example document backed by README report example checks for dashboard consumers.
