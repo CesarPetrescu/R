@@ -75,3 +75,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a dashboard release/readiness index document backed by report and schema drift checks for dashboard consumers.
 - [x] Add standalone release checklist fixture docs backed by a checked external fixture path for release automation consumers.
 - [x] Add a release readiness index that links release checklist fixture docs with version/tag guard commands for release automation consumers.
+- [x] Add a combined dashboard/release automation index so consumers have one docs entry point across readiness reports, schema examples, and release fixtures.
