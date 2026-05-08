@@ -86,6 +86,7 @@ def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
     assert "[dashboard readiness/schema index](dashboard-index.md)" in text
     assert "[release readiness index](release-index.md)" in text
     assert "[release example fixture index](release-example-fixtures.md)" in text
+    assert "[release section writer matrix](release-section-writer-matrix.md)" in text
     assert "[automation command fixture index](automation-command-fixtures.md)" in text
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in text
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in text
@@ -132,6 +133,7 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
     assert "[Automation index](automation-index.md)" in text
     assert "r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in text
     assert "r-project --root . --check-release-example-fixtures" in text
+    assert "r-project --root . --check-release-section-writer-matrix" in text
     assert "r-project --root . --check-automation-command-fixtures" in text
     assert "docker compose run --build --rm test" in text
     for command in (
@@ -140,6 +142,7 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
         "--check-readme-examples --readme-examples-path docs/automation-index.md",
         "--check-readme-schema-examples --readme-schema-path docs/automation-index.md",
         "--check-release-example-fixtures",
+        "--check-release-section-writer-matrix",
         "--check-automation-index-commands",
     ):
         assert command in text
