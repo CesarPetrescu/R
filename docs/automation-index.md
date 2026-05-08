@@ -20,6 +20,7 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
 - [release readiness index](release-index.md) links release checklist fixture docs with version/tag guard commands.
 - [release checklist fixture workflow](release-checklist.md) documents the external release checklist path.
 - [checked release checklist JSON](release/checklist.json) is the docs-path fixture for release automation consumers.
+- [checked release checklist examples](release-examples.md) provides a README-style fenced JSON snippet for dashboard docs.
 
 Verify release docs and guards with:
 
@@ -27,6 +28,7 @@ Verify release docs and guards with:
 r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
+r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
 ```
 
 ## Full clean verification

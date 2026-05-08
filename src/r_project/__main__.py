@@ -121,6 +121,28 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-release-examples",
+        action="store_true",
+        help="Exit nonzero when a README-style release checklist JSON example drifts from current CLI output.",
+    )
+    parser.add_argument(
+        "--write-release-examples",
+        action="store_true",
+        help="Patch a README-style release checklist JSON example fence in place with current generated output.",
+    )
+    parser.add_argument(
+        "--dry-run-release-examples",
+        action="store_true",
+        help="With --write-release-examples, print the updated Markdown content without modifying it.",
+    )
+    parser.add_argument(
+        "--release-examples-path",
+        default="docs/release-examples.md",
+        help=(
+            "README-style Markdown path, relative to --root, whose release checklist JSON example is checked or written."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -251,6 +273,30 @@ def main(argv: list[str] | None = None) -> int:
             version=args.release_tag_fixture_version,
             fixture_path=release_tag_fixture_path,
         )
+    if args.check_release_examples:
+        root = Path(args.root)
+        try:
+            release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
+        except ValueError as error:
+            parser.error(str(error))
+        if _release_examples_mismatch(root, release_examples_path, version=args.release_tag_fixture_version):
+            print(f"{release_examples_path.as_posix()} release checklist example is out of date.", file=sys.stderr)
+            return 1
+        print(f"{release_examples_path.as_posix()} release checklist example matches current CLI output.")
+        return 0
+    if args.write_release_examples:
+        root = Path(args.root)
+        try:
+            release_examples_path = _release_examples_path_under_root(root, Path(args.release_examples_path))
+        except ValueError as error:
+            parser.error(str(error))
+        updated = _updated_release_examples(root, release_examples_path, version=args.release_tag_fixture_version)
+        if args.dry_run_release_examples:
+            print(updated, end="")
+        else:
+            (root / release_examples_path).write_text(updated, encoding="utf-8")
+            print(f"Updated {release_examples_path.as_posix()} release checklist example fence.")
+        return 0
     if args.check_release_tag:
         return _check_release_tag(
             Path(args.root),
@@ -548,6 +594,31 @@ def _release_tag_fixture_path_under_root(root: Path, fixture_path: Path) -> Path
         return target_resolved.relative_to(root_resolved)
     except ValueError as error:
         raise ValueError("--release-tag-fixture-path must stay under --root") from error
+
+
+def _release_examples_mismatch(root: Path, examples_path: Path, *, version: str | None = None) -> bool:
+    examples = root / examples_path
+    text = examples.read_text(encoding="utf-8") if examples.exists() else ""
+    expected = _release_tag_checklist_fixture_output(root, version=version).rstrip("\n")
+    return _fenced_block(text, "json") != expected
+
+
+def _updated_release_examples(root: Path, examples_path: Path, *, version: str | None = None) -> str:
+    examples = root / examples_path
+    text = examples.read_text(encoding="utf-8")
+    output = _release_tag_checklist_fixture_output(root, version=version).rstrip("\n")
+    return _replace_fenced_block(text, "json", output)
+
+
+def _release_examples_path_under_root(root: Path, examples_path: Path) -> Path:
+    if examples_path.is_absolute():
+        raise ValueError("--release-examples-path must be relative to --root")
+    root_resolved = root.resolve()
+    target_resolved = (root / examples_path).resolve()
+    try:
+        return target_resolved.relative_to(root_resolved)
+    except ValueError as error:
+        raise ValueError("--release-examples-path must stay under --root") from error
 
 
 def _readme_example_mismatches(root: Path, report, readme_examples_path: Path = Path("README.md")) -> list[str]:

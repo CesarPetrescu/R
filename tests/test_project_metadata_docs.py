@@ -35,10 +35,44 @@ def test_release_readiness_index_links_release_docs_and_guard_commands():
     assert "# Release Readiness Index" in text
     assert "[release checklist fixture workflow](release-checklist.md)" in text
     assert "[checked release checklist JSON](release/checklist.json)" in text
+    assert "[checked release checklist examples](release-examples.md)" in text
     assert "r-project --root . --check-changelog-version" in text
     assert "r-project --root . --check-release-tag v0.1.0 --docker-verified" in text
     assert "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json" in text
+    assert "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md" in text
     assert "docker compose run --build --rm test" in text
+
+
+def test_release_examples_document_fixture_matches_current_cli_output():
+    examples_doc = ROOT / "docs" / "release-examples.md"
+
+    assert examples_doc.exists()
+    text = examples_doc.read_text(encoding="utf-8")
+    assert "# Release Checklist Examples" in text
+    assert "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md" in text
+    assert '"tag": "v0.1.0"' in text
+    env = os.environ | {"PYTHONPATH": str(ROOT / "src")}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(ROOT),
+            "--check-release-examples",
+            "--release-examples-path",
+            "docs/release-examples.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/release-examples.md release checklist example matches current CLI output.\n"
+    assert result.stderr == ""
 
 
 def test_autonomous_automation_index_links_dashboard_and_release_surfaces():
