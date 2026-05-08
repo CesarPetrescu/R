@@ -83,3 +83,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a scoped release-example writer smoke test for `docs/automation-index.md` so Docker verification previews in-place release snippet refreshes for combined automation docs.
 - [x] Add a release-docs smoke fixture that verifies the scoped automation-index writer output preserves surrounding readiness/schema examples unchanged.
 - [x] Add a compact future-version release example dry-run smoke fixture so preview mode proves current-version docs stay unchanged.
+- [x] Add a standalone release-example fixture index so release smoke fixtures and Docker coverage can be audited from one page.
