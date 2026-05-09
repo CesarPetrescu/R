@@ -179,18 +179,38 @@ static void parse_let_statement(struct Parser *parser) {
 }
 
 static long parse_program(struct Parser *parser) {
+    long value = 0;
+    int saw_statement = 0;
+
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
-        if (!cursor_starts_keyword(parser, "let")) {
-            break;
+        if (*parser->cursor == '\0') {
+            if (!saw_statement) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+            }
+            return value;
         }
-        parse_let_statement(parser);
+
+        if (cursor_starts_keyword(parser, "let")) {
+            parse_let_statement(parser);
+            saw_statement = 1;
+            continue;
+        }
+
+        value = parse_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+        saw_statement = 1;
+
+        skip_spaces(parser);
+        if (*parser->cursor != ';') {
+            return value;
+        }
+        parser->cursor++;
     }
 
-    if (parser->status != RUSTIC_OK) {
-        return 0;
-    }
-    return parse_expression(parser);
+    return value;
 }
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value) {

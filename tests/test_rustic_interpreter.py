@@ -86,3 +86,32 @@ def test_c_hosted_rustic_interpreter_reports_undefined_identifiers(tmp_path):
     assert result.returncode == 2
     assert result.stdout == ""
     assert "undefined identifier" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_sequences_expression_statements(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "1 + 2; 3 * 4; 5 + 6"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "1 + 2; 3 * 4; 5 + 6 => 11\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "   "],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected integer" in result.stderr
