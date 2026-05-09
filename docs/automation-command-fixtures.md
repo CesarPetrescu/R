@@ -19,6 +19,7 @@ docker compose run --build --rm test
 | [Automation index](automation-index.md) | Dashboard section writer matrix guard | `r-project --root . --check-dashboard-section-writer-matrix` |
 | [Automation index](automation-index.md) | Dashboard section writer matrix variant preview guard | `r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact` |
 | [Automation index](automation-index.md) | Dashboard section writer matrix variant row generator | `r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact` |
+| [Automation index](automation-index.md) | Dashboard section writer matrix variant row writer dry-run | `r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact` |
 | [Automation index](automation-index.md) | Release version documentation guard | `r-project --root . --check-changelog-version` |
 | [Automation index](automation-index.md) | Release tag readiness guard | `r-project --root . --check-release-tag v0.1.0 --docker-verified` |
 | [Automation index](automation-index.md) | Docs-path release checklist fixture guard | `r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json` |

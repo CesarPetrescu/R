@@ -19,6 +19,7 @@ Run the matrix guard after adding dashboard readiness/schema sections or writer 
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 ```
 
-The generator emits Markdown table rows derived from `docs/dashboard-example-fixtures.md` so variant-specific docs can preview the exact writer dry-run rows before appending them to this matrix.
+The generator emits Markdown table rows derived from `docs/dashboard-example-fixtures.md` so variant-specific docs can preview the exact writer dry-run rows before appending them to this matrix. The writer command appends any missing generated variant rows to this matrix; use its dry-run mode first to preview the in-place update without mutating docs.

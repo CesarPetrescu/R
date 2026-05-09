@@ -134,3 +134,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         "python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact"
         in compose_text
     )
+    assert (
+        "python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact"
+        in compose_text
+    )

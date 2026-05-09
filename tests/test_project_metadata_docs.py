@@ -146,6 +146,7 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
         "--check-release-section-writer-matrix",
         "--check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
         "--check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
+        "--write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
         "--check-automation-index-commands",
     ):
         assert command in text
