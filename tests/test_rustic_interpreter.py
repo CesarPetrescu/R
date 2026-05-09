@@ -131,6 +131,35 @@ def test_c_hosted_rustic_interpreter_rejects_assignment_to_undefined_name(tmp_pa
     assert "undefined identifier" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_honors_parenthesized_expression_precedence(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "(1 + 2) * 3"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "(1 + 2) * 3 => 9\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_unmatched_parentheses(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "(1 + 2"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected closing parenthesis" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

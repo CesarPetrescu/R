@@ -48,6 +48,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Extend the C-hosted Rust-like interpreter with `let` bindings and identifier lookup, backed by a C host fixture that evaluates `let x = 2 + 3; x * 4` to `20` and reports undefined identifiers.
 - [x] Extend the C-hosted Rust-like interpreter with expression-statement sequencing so multiple semicolon-separated expressions preserve the final value.
 - [x] Extend the C-hosted Rust-like interpreter with assignment/mutation support so existing bindings can be updated and undefined assignment targets fail explicitly.
+- [x] Extend the C-hosted Rust-like interpreter with parenthesized expressions so grouped arithmetic can override precedence and unmatched parentheses fail with a stable diagnostic.
 
 ## P2 — project quality
 
