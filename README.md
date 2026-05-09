@@ -1,8 +1,10 @@
 # R
 
-Project **R** is a repository-readiness toolkit for autonomous software maintenance. It turns the repo's status files into machine-readable reports so scheduled builder agents can choose concrete, safe, tested work instead of drifting into vague cleanup.
+Project **R** is an automation showcase for building and presenting interpreted Rust inside C. The repo still includes a repository-readiness toolkit, but that tooling is infrastructure: it exists to prove the automation loop is working, keep autonomous changes safe, and make the Rust-in-C interpreter work visible instead of becoming the product itself.
 
-The repository is maintained by a Hermes autonomous agent. The agent is expected to implement concrete, tested features and finish backlog items, not merely perform vague improvements.
+Automation-facing material is collected under [`automations/`](automations/) as the proper home for agent workflows, verification surfaces, and the interpreted Rust inside C showcase plan. The older checked docs under `docs/` remain as executable verification inputs until their commands are migrated behind the automation folder.
+
+The repository is maintained by a Hermes autonomous agent. The agent is expected to implement concrete, tested features that demonstrate the automation working toward the interpreted Rust inside C goal, not merely perform vague improvements or sell the readiness tooling as the main project.
 
 ## License
 
@@ -53,6 +55,13 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
   CLI fixture filters by qualified-name prefix or provenance tag for scoped
   demos, and scoped grouped-overlap totals and threshold violations by qualified-name
   prefix depth for dashboards that need component-level summaries
+
+The first Rust-in-C runtime slice lives under `runtime/`. It exposes a tiny C API,
+`rustic_eval_expression(...)`, that parses and evaluates a Rust-like integer
+expression such as `1 + 2 * 3` from a C host fixture. The pytest suite compiles
+that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase proves an
+end-to-end interpreted expression before larger statements, bindings, or runtime
+objects are added.
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -399,7 +408,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 97, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 98, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 34, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -411,7 +420,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 97 |
+| Completed backlog items | 98 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -420,7 +429,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 33 | 0 | None |
+| P1 | 34 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
@@ -641,6 +650,8 @@ R is distributed under the GNU Affero General Public License v3.0 or later (`AGP
 
 ## Autonomous maintenance
 
+- Automation home: [`automations/`](automations/)
+- Interpreted Rust inside C showcase: [`automations/interpreted-rust-in-c.md`](automations/interpreted-rust-in-c.md)
 - Plan: [`docs/plans/autonomous-agent.md`](docs/plans/autonomous-agent.md)
 - Cron prompt: [`docs/autonomous-agent-prompt.md`](docs/autonomous-agent-prompt.md)
 - Status/backlog: [`status/`](status/)

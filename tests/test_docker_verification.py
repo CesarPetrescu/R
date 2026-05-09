@@ -12,6 +12,9 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     compose_text = compose_file.read_text(encoding="utf-8")
 
     assert "python:3.11-slim" in dockerfile_text
+    assert "apt-get install" in dockerfile_text
+    assert "build-essential" in dockerfile_text
+    assert "COPY runtime ./runtime" in dockerfile_text
     assert "pip install -e ." in dockerfile_text
     assert "python -m pytest -q" in compose_text
     assert "python -m r_project.lint --root ." in compose_text

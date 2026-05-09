@@ -7,13 +7,14 @@ Last updated: 2026-05-09
 - Path: `/root/hermes-workspace/R`
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
-- Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority readiness reports, README/example/schema drift guards and writers, dashboard and release automation docs with Docker-covered guards, release automation index link/command row generation and writer dry-runs with configurable preview-version command generation plus named profile-section guards, dashboard automation index link/command row generation and writer dry-runs with configurable preview-variant command generation, dashboard example fixture row generation and writer dry-runs derived from `docs/dashboard-index.md`, release section writer matrix row generation/writing, memory-layout helpers with overlap diagnostics/demos/schemas, release checklist guards/fixtures, lightweight linting, Docker verification, and AGPL-3.0-or-later licensing.
+- Product direction: automation showcase for building and presenting interpreted Rust inside C; repository-readiness tooling remains support infrastructure for proving the autonomous loop works safely.
+- Current implementation: tiny C-hosted Rust-like expression interpreter under `runtime/`, tested by a compiled C host fixture, plus a Python `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority readiness reports, README/example/schema drift guards and writers, dashboard and release automation docs with Docker-covered guards, release automation index link/command row generation and writer dry-runs with configurable preview-version command generation plus named profile-section guards, dashboard automation index link/command row generation and writer dry-runs with configurable preview-variant command generation, dashboard example fixture row generation and writer dry-runs derived from `docs/dashboard-index.md`, release section writer matrix row generation/writing, memory-layout helpers with overlap diagnostics/demos/schemas, release checklist guards/fixtures, lightweight linting, Docker verification, and AGPL-3.0-or-later licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
 
+- `runtime/include/rustic.h` and `runtime/rustic.c` expose `rustic_eval_expression(...)`, a C-hosted Rust-like integer expression evaluator with whitespace skipping, `+`, `*`, multiplication precedence, and stable parse-error status messages; `tests/fixtures/rustic_expression_driver.c` demonstrates the API end to end.
 - `r_project.report.analyze_project(root)` reads a checkout and returns backlog counts, per-priority backlog groups, the next unchecked item, and active blocker status.
 - `ProjectReport.to_markdown()` formats readiness data as GitHub-flavored Markdown for human status pages.
 - `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.

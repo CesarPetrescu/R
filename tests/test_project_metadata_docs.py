@@ -175,6 +175,22 @@ def test_readme_links_combined_automation_index():
     assert "[`docs/automation-index.md`](docs/automation-index.md)" in readme
 
 
+def test_project_goal_and_automation_folder_document_rust_in_c_showcase():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    automations_readme = ROOT / "automations" / "README.md"
+    showcase = ROOT / "automations" / "interpreted-rust-in-c.md"
+
+    assert "interpreted Rust inside C" in readme
+    assert "automation showcase" in readme
+    assert "[`automations/`](automations/)" in readme
+    assert automations_readme.exists()
+    assert showcase.exists()
+    assert "# Automations" in automations_readme.read_text(encoding="utf-8")
+    showcase_text = showcase.read_text(encoding="utf-8")
+    assert "interpreted Rust inside C" in showcase_text
+    assert "main goal" in showcase_text
+
+
 def test_release_checklist_document_fixture_matches_current_cli_output():
     fixture = ROOT / "docs" / "release" / "checklist.json"
 
