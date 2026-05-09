@@ -6,12 +6,22 @@
 #include <string.h>
 
 #define RUSTIC_MAX_BINDINGS 16
+#define RUSTIC_MAX_FUNCTIONS 8
 #define RUSTIC_MAX_IDENTIFIER_LENGTH 31
+#define RUSTIC_MAX_PARAMETERS 8
 
 struct Binding {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     long value;
     size_t scope_depth;
+};
+
+struct Function {
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    char parameters[RUSTIC_MAX_PARAMETERS][RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    size_t parameter_count;
+    const char *body_start;
+    const char *body_end;
 };
 
 struct Parser {
@@ -20,6 +30,8 @@ struct Parser {
     struct Binding bindings[RUSTIC_MAX_BINDINGS];
     size_t binding_count;
     size_t scope_depth;
+    struct Function functions[RUSTIC_MAX_FUNCTIONS];
+    size_t function_count;
 };
 
 static void skip_spaces(struct Parser *parser) {
@@ -101,6 +113,18 @@ static void add_binding(struct Parser *parser, const char *name, long value) {
     parser->bindings[parser->binding_count].value = value;
     parser->bindings[parser->binding_count].scope_depth = parser->scope_depth;
     parser->binding_count++;
+}
+
+static struct Function *lookup_function(struct Parser *parser, const char *name) {
+    size_t index;
+
+    for (index = parser->function_count; index > 0; index--) {
+        struct Function *function = &parser->functions[index - 1];
+        if (strcmp(function->name, name) == 0) {
+            return function;
+        }
+    }
+    return NULL;
 }
 
 static void push_scope(struct Parser *parser) {
@@ -244,8 +268,13 @@ static long parse_while_statement(struct Parser *parser) {
 
 static long parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    long arguments[RUSTIC_MAX_PARAMETERS + 1];
+    size_t argument_count;
+    size_t index;
     long value;
     char *end = NULL;
+    struct Function *function;
+    const char *call_return;
 
     skip_spaces(parser);
     if (*parser->cursor == '{') {
@@ -280,6 +309,74 @@ static long parse_factor(struct Parser *parser) {
     if (is_identifier_start(*parser->cursor)) {
         if (!parse_identifier(parser, name, sizeof(name))) {
             return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor == '(') {
+            parser->cursor++;
+            argument_count = 0;
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                while (parser->status == RUSTIC_OK) {
+                    if (argument_count >= RUSTIC_MAX_PARAMETERS) {
+                        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                        return 0;
+                    }
+                    arguments[argument_count] = parse_expression(parser);
+                    argument_count++;
+                    if (parser->status != RUSTIC_OK) {
+                        return 0;
+                    }
+                    skip_spaces(parser);
+                    if (*parser->cursor != ',') {
+                        break;
+                    }
+                    parser->cursor++;
+                }
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return 0;
+            }
+            parser->cursor++;
+
+            function = lookup_function(parser, name);
+            if (function == NULL) {
+                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                return 0;
+            }
+            if (argument_count != function->parameter_count) {
+                parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                return 0;
+            }
+
+            call_return = parser->cursor;
+            parser->cursor = function->body_start;
+            push_scope(parser);
+            for (index = 0; index < argument_count; index++) {
+                add_binding(parser, function->parameters[index], arguments[index]);
+                if (parser->status != RUSTIC_OK) {
+                    pop_scope(parser);
+                    parser->cursor = call_return;
+                    return 0;
+                }
+            }
+            value = parse_statement_sequence(parser, '}');
+            if (parser->status != RUSTIC_OK) {
+                pop_scope(parser);
+                parser->cursor = call_return;
+                return 0;
+            }
+            skip_spaces(parser);
+            if (parser->cursor != function->body_end) {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+                pop_scope(parser);
+                parser->cursor = call_return;
+                return 0;
+            }
+            pop_scope(parser);
+            parser->cursor = call_return;
+            return value;
         }
         if (!lookup_binding(parser, name, &value)) {
             parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
@@ -396,6 +493,77 @@ static void parse_let_statement(struct Parser *parser) {
     add_binding(parser, name, value);
 }
 
+static void parse_function_declaration(struct Parser *parser) {
+    struct Function *function;
+    const char *block_start;
+
+    if (parser->function_count >= RUSTIC_MAX_FUNCTIONS) {
+        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+        return;
+    }
+
+    function = &parser->functions[parser->function_count];
+    parser->cursor += 2;
+    if (!parse_identifier(parser, function->name, sizeof(function->name))) {
+        return;
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != '(') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+        return;
+    }
+    parser->cursor++;
+    function->parameter_count = 0;
+    skip_spaces(parser);
+    if (*parser->cursor != ')') {
+        while (parser->status == RUSTIC_OK) {
+            if (function->parameter_count >= RUSTIC_MAX_PARAMETERS) {
+                parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                return;
+            }
+            if (!parse_identifier(
+                    parser,
+                    function->parameters[function->parameter_count],
+                    sizeof(function->parameters[function->parameter_count]))) {
+                return;
+            }
+            function->parameter_count++;
+            skip_spaces(parser);
+            if (*parser->cursor != ',') {
+                break;
+            }
+            parser->cursor++;
+        }
+    }
+    skip_spaces(parser);
+    if (*parser->cursor != ')') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+        return;
+    }
+    parser->cursor++;
+
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return;
+    }
+    block_start = parser->cursor;
+    function->body_start = block_start + 1;
+    if (!skip_block(parser)) {
+        return;
+    }
+    function->body_end = parser->cursor - 1;
+    parser->function_count++;
+
+    skip_spaces(parser);
+    if (*parser->cursor != ';') {
+        parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+        return;
+    }
+    parser->cursor++;
+}
+
 static int parse_assignment_statement(struct Parser *parser, long *out_value) {
     const char *statement_start = parser->cursor;
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
@@ -462,6 +630,12 @@ static long parse_statement_sequence(struct Parser *parser, char terminator) {
             continue;
         }
 
+        if (cursor_starts_keyword(parser, "fn")) {
+            parse_function_declaration(parser);
+            saw_statement = 1;
+            continue;
+        }
+
         if (cursor_starts_keyword(parser, "while")) {
             value = parse_while_statement(parser);
             if (parser->status != RUSTIC_OK) {
@@ -523,6 +697,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.status = RUSTIC_OK;
     parser.binding_count = 0;
     parser.scope_depth = 0;
+    parser.function_count = 0;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
@@ -561,6 +736,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "expected closing parenthesis";
     case RUSTIC_ERR_EXPECTED_CLOSING_BRACE:
         return "expected closing brace";
+    case RUSTIC_ERR_WRONG_ARGUMENT_COUNT:
+        return "wrong argument count";
     default:
         return "unknown rustic interpreter error";
     }

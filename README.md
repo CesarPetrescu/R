@@ -62,8 +62,9 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `let x = 2 + 3; x * 4`,
 `1 + 2; 3 * 4; 5 + 6`, `let x = 1; x = x + 2; x`,
 `let x = 3; x == 3`, `let x = 3; x != 4`, `1 + 2 < 2 * 2`,
 `{ let x = 2; x + 1 }`,
-`if 1 < 2 { let x = 3; x + 4 } else { missing }`, and
-`let i = 0; let total = 0; while i < 4 { total = total + i; i = i + 1; }; total` from a C
+`if 1 < 2 { let x = 3; x + 4 } else { missing }`,
+`let i = 0; let total = 0; while i < 4 { total = total + i; i = i + 1; }; total`,
+and `fn add(a, b) { a + b }; add(2, 3)` from a C
 host fixture. The evaluator supports `+`, `*`,
 multiplication precedence, parenthesized expressions, `let` bindings, identifier lookup,
 semicolon-separated expression-statement sequencing that returns the final
@@ -71,11 +72,13 @@ expression value, assignment/mutation of existing bindings, equality and orderin
 (`==`, `!=`, `<`, `<=`, `>`, `>=`) that return `1` for true and `0` for false, block expressions with
 nested lexical scopes, conditional `if`/`else` expressions that evaluate only the selected branch,
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
-and stable undefined-identifier, malformed-comparison, unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
+`fn`-like named function declarations/calls with call-local parameter bindings,
+and stable undefined-identifier, malformed-comparison, wrong-argument-count,
+unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
 boolean comparison results, scoped block evaluation, conditional branch selection,
-and loop-driven mutation before larger statement forms or runtime objects are added.
+loop-driven mutation, and named function call/argument binding before larger statement forms or runtime objects are added.
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -422,7 +425,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 107, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 43, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 108, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 44, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -434,7 +437,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 107 |
+| Completed backlog items | 108 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -443,7 +446,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 43 | 0 | None |
+| P1 | 44 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item

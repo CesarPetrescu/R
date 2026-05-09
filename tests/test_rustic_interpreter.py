@@ -385,6 +385,69 @@ def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn add(a, b) { a + b }; add(2, 3)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_function_parameters_scoped(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn id(value) { value }; id(4); value"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_rejects_unknown_function_calls(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "missing(1)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_rejects_function_argument_count_mismatch(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn one(x) { x }; one(1, 2)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "wrong argument count" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
