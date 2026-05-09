@@ -196,6 +196,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--release-section-writer-matrix-version",
+        default="0.2.0",
+        metavar="VERSION",
+        help=(
+            "With --check-release-section-writer-matrix, require future-version writer dry-runs for "
+            "this package version instead of the default 0.2.0 preview target."
+        ),
+    )
+    parser.add_argument(
         "--check-release-examples-path-safety",
         action="store_true",
         help="Exit nonzero when release example path override safety checks do not reject unsafe paths.",
@@ -372,7 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_release_example_sections:
         return _check_release_example_sections(Path(args.root))
     if args.check_release_section_writer_matrix:
-        return _check_release_section_writer_matrix(Path(args.root))
+        return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_examples_path_safety:
         return _check_release_examples_path_safety(Path(args.root))
     if args.check_automation_index_links:
@@ -776,7 +785,7 @@ def _check_release_example_sections(root: Path) -> int:
     return 0
 
 
-def _check_release_section_writer_matrix(root: Path) -> int:
+def _check_release_section_writer_matrix(root: Path, future_version: str = "0.2.0") -> int:
     matrix = root / "docs" / "release-section-writer-matrix.md"
     registry = root / "docs" / "release-example-sections.md"
     compose = root / "docker-compose.yml"
@@ -787,7 +796,7 @@ def _check_release_section_writer_matrix(root: Path) -> int:
     required_current_commands = [
         _release_section_writer_command(command) for command in _release_example_section_registry_commands(registry_text)
     ]
-    required_future_commands = [_future_release_section_writer_command(command) for command in required_current_commands]
+    required_future_commands = [_future_release_section_writer_command(command, future_version) for command in required_current_commands]
 
     if not matrix_commands:
         print("Release section writer matrix does not list any writer commands.", file=sys.stderr)
@@ -827,11 +836,11 @@ def _release_section_writer_command(check_command: str) -> str:
     return check_command.replace("--check-release-examples", "--write-release-examples --dry-run-release-examples", 1)
 
 
-def _future_release_section_writer_command(writer_command: str) -> str:
+def _future_release_section_writer_command(writer_command: str, version: str = "0.2.0") -> str:
     marker = " --release-examples-path "
     if marker in writer_command:
-        return writer_command.replace(marker, " --release-examples-version 0.2.0 --release-examples-path ", 1)
-    return f"{writer_command} --release-examples-version 0.2.0"
+        return writer_command.replace(marker, f" --release-examples-version {version} --release-examples-path ", 1)
+    return f"{writer_command} --release-examples-version {version}"
 
 
 def _check_release_examples_path_safety(root: Path) -> int:

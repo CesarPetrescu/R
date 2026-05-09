@@ -2258,6 +2258,65 @@ def test_release_section_writer_matrix_guard_reports_missing_future_version_writ
     )
 
 
+def test_release_section_writer_matrix_guard_uses_configurable_future_version(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+""",
+    )
+    write(
+        tmp_path / "docs" / "release-section-writer-matrix.md",
+        """# Release Section Writer Matrix
+
+| Markdown path | Section | Version target | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | Current package version | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md` |
+| `docs/release-examples.md` | First JSON fence | Future package version `0.2.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-section-writer-matrix",
+            "--release-section-writer-matrix-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Release section writer matrix is missing future-version writer command for release section: "
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md\n"
+    )
+
+
+
 def test_release_section_writer_matrix_guard_reports_missing_docker_command(tmp_path):
     write(
         tmp_path / "docs" / "release-example-sections.md",

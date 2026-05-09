@@ -24,7 +24,7 @@ r-project --root . --check-dashboard-example-fixtures
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 83, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 46, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 84, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 47, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -32,7 +32,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 83 |
+| Completed backlog items | 84 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -42,7 +42,7 @@ The combined index also embeds the checked readiness report examples directly so
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 46 | 0 | None |
+| P2 | 47 | 0 | None |
 
 ## Next backlog item
 
@@ -90,6 +90,7 @@ r-project --root . --write-release-examples --dry-run-release-examples --release
 r-project --root . --check-release-example-fixtures
 r-project --root . --check-release-example-sections
 r-project --root . --check-release-section-writer-matrix
+r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 r-project --root . --check-release-examples-path-safety
 r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands

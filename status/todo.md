@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a dashboard section registry guard if future dashboard docs add a standalone multi-section registry beyond `docs/dashboard-example-fixtures.md`.
-3. Add a release-section version matrix option if future release docs need a configurable preview version other than the current fixed `0.2.0` smoke target.
+3. Add a dashboard-section writer matrix if future dashboard docs need independent writer dry-run coverage beyond the checked fixture registry.
 
 ## Every-run checklist
 
