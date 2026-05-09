@@ -246,6 +246,21 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--write-dashboard-section-writer-matrix",
+        action="store_true",
+        help=(
+            "Append missing variant-labeled dashboard section writer matrix rows derived from "
+            "docs/dashboard-example-fixtures.md."
+        ),
+    )
+    parser.add_argument(
+        "--dry-run-dashboard-section-writer-matrix",
+        action="store_true",
+        help=(
+            "With --write-dashboard-section-writer-matrix, print the updated matrix document without modifying it."
+        ),
+    )
+    parser.add_argument(
         "--dashboard-section-writer-matrix-variant",
         metavar="LABEL",
         help=(
@@ -417,6 +432,16 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
+    if args.write_dashboard_section_writer_matrix:
+        if not args.dashboard_section_writer_matrix_variant:
+            parser.error(
+                "--write-dashboard-section-writer-matrix requires --dashboard-section-writer-matrix-variant"
+            )
+        return _write_dashboard_section_writer_matrix(
+            Path(args.root),
+            args.dashboard_section_writer_matrix_variant,
+            dry_run=args.dry_run_dashboard_section_writer_matrix,
+        )
     if args.generate_dashboard_section_writer_matrix:
         return _generate_dashboard_section_writer_matrix(Path(args.root), args.dashboard_section_writer_matrix_variant)
     if args.check_dashboard_section_writer_matrix:
@@ -1014,6 +1039,48 @@ def _generate_dashboard_section_writer_matrix(root: Path, variant: str | None = 
     for row in rows:
         print(row)
     return 0
+
+
+def _write_dashboard_section_writer_matrix(root: Path, variant: str, *, dry_run: bool = False) -> int:
+    rows = _dashboard_section_writer_matrix_rows(root, variant)
+    if not rows:
+        print("Dashboard example fixture registry does not document any r-project commands.", file=sys.stderr)
+        return 1
+
+    matrix_path = root / "docs" / "dashboard-section-writer-matrix.md"
+    matrix_text = matrix_path.read_text(encoding="utf-8") if matrix_path.exists() else ""
+    existing_variant_commands = set(_dashboard_section_writer_matrix_variant_commands(matrix_text, variant))
+    missing_rows = [
+        row
+        for row in rows
+        if (_single_code_span(row.split("|")[-2]) or "") not in existing_variant_commands
+    ]
+    if not missing_rows:
+        print(f"docs/dashboard-section-writer-matrix.md already contains dashboard variant {variant} writer rows.")
+        return 0
+
+    updated = _append_dashboard_section_writer_matrix_rows(matrix_text, missing_rows)
+    if dry_run:
+        print(updated, end="")
+    else:
+        matrix_path.write_text(updated, encoding="utf-8")
+        row_label = "row" if len(missing_rows) == 1 else "rows"
+        print(
+            f"Updated docs/dashboard-section-writer-matrix.md with {len(missing_rows)} "
+            f"dashboard variant {variant} writer {row_label}."
+        )
+    return 0
+
+
+def _append_dashboard_section_writer_matrix_rows(matrix_text: str, rows: list[str]) -> str:
+    lines = matrix_text.splitlines()
+    insertion_index = 0
+    for index, line in enumerate(lines):
+        if line.startswith("|"):
+            insertion_index = index + 1
+    updated_lines = lines[:insertion_index] + rows + lines[insertion_index:]
+    trailing_newline = "\n" if matrix_text.endswith("\n") or matrix_text else ""
+    return "\n".join(updated_lines) + trailing_newline
 
 
 def _check_dashboard_section_writer_matrix(root: Path, variant: str | None = None) -> int:

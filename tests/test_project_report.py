@@ -2106,6 +2106,171 @@ def test_cli_generates_dashboard_section_writer_matrix_variant_rows_from_registr
     )
 
 
+def test_cli_dry_runs_dashboard_section_writer_matrix_variant_append(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/usage-examples.md` | Standalone readiness report JSON and Markdown examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "dashboard-section-writer-matrix.md"
+    original_matrix = """# Dashboard Section Writer Matrix
+
+| Markdown path | Section | Example type | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/usage-examples.md` | First JSON and Markdown fences | Standalone readiness report JSON and Markdown examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |
+
+Run the matrix guard after adding dashboard readiness/schema sections or writer dry-runs:
+"""
+    write(matrix_path, original_matrix)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-dashboard-section-writer-matrix",
+            "--dry-run-dashboard-section-writer-matrix",
+            "--dashboard-section-writer-matrix-variant",
+            "preview",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert matrix_path.read_text(encoding="utf-8") == original_matrix
+    assert (
+        "| `docs/usage-examples.md` | Variant `preview` first JSON and Markdown fences | Variant `preview` standalone readiness report JSON and Markdown examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |"
+        in result.stdout
+    )
+
+
+def test_cli_writes_dashboard_section_writer_matrix_variant_rows_once(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/usage-examples.md` | Standalone readiness report JSON and Markdown examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "dashboard-section-writer-matrix.md"
+    write(
+        matrix_path,
+        """# Dashboard Section Writer Matrix
+
+| Markdown path | Section | Example type | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/usage-examples.md` | First JSON and Markdown fences | Standalone readiness report JSON and Markdown examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |
+
+Run the matrix guard after adding dashboard readiness/schema sections or writer dry-runs:
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    command = [
+        sys.executable,
+        "-m",
+        "r_project",
+        "--root",
+        str(tmp_path),
+        "--write-dashboard-section-writer-matrix",
+        "--dashboard-section-writer-matrix-variant",
+        "preview",
+    ]
+
+    first = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    second = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+
+    assert first.returncode == 0
+    assert first.stdout == "Updated docs/dashboard-section-writer-matrix.md with 1 dashboard variant preview writer row.\n"
+    assert first.stderr == ""
+    assert second.returncode == 0
+    assert second.stdout == "docs/dashboard-section-writer-matrix.md already contains dashboard variant preview writer rows.\n"
+    assert second.stderr == ""
+    assert matrix_path.read_text(encoding="utf-8").count("Variant `preview` first JSON and Markdown fences") == 1
+
+
+def test_dashboard_section_writer_matrix_writer_does_not_duplicate_existing_variant_command(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/usage-examples.md` | Standalone readiness report JSON and Markdown examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "dashboard-section-writer-matrix.md"
+    matrix = """# Dashboard Section Writer Matrix
+
+| Markdown path | Section | Example type | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/usage-examples.md` | First JSON and Markdown fences | Standalone readiness report examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |
+| `docs/usage-examples.md` | Variant `preview` first JSON and Markdown fences | Variant `preview` standalone readiness report examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |
+"""
+    write(matrix_path, matrix)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-dashboard-section-writer-matrix",
+            "--dashboard-section-writer-matrix-variant",
+            "preview",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/dashboard-section-writer-matrix.md already contains dashboard variant preview writer rows.\n"
+    assert result.stderr == ""
+    assert matrix_path.read_text(encoding="utf-8") == matrix
+
+
+def test_dashboard_section_writer_matrix_writer_requires_variant(tmp_path):
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-dashboard-section-writer-matrix",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "--write-dashboard-section-writer-matrix requires --dashboard-section-writer-matrix-variant" in result.stderr
+
+
 def test_dashboard_section_writer_matrix_guard_reports_missing_docker_command(tmp_path):
     write(
         tmp_path / "docs" / "dashboard-example-fixtures.md",

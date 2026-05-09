@@ -69,4 +69,5 @@ services:
       && python -m r_project --root . --check-dashboard-section-writer-matrix
       && python -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
       && python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+      && python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
       && python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0"
