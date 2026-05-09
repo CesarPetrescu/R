@@ -1845,6 +1845,68 @@ def test_dashboard_automation_index_guard_reports_missing_dashboard_surface_link
     )
 
 
+def test_dashboard_automation_index_guard_reports_missing_named_variant_command(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-automation-index.md",
+        """# Dashboard Automation Index
+
+- [dashboard readiness/schema index](dashboard-index.md)
+- [readiness report examples](usage-examples.md)
+- [memory-overlap schema examples](dashboard-schema.md)
+- [dashboard example fixture registry](dashboard-example-fixtures.md)
+- [dashboard section writer matrix](dashboard-section-writer-matrix.md)
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+r-project --root . --generate-dashboard-example-fixtures
+r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
+r-project --root . --check-dashboard-example-fixtures
+r-project --root . --check-dashboard-section-writer-matrix
+r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+r-project --root . --generate-dashboard-automation-index --dashboard-automation-index-variant expanded
+r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index --dashboard-automation-index-variant expanded
+r-project --root . --check-dashboard-automation-index --dashboard-automation-index-variant expanded
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-automation-index",
+            "--dashboard-automation-index-variant",
+            "expanded",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Dashboard automation index is missing variant command: "
+        "r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded\n"
+    )
+
+
 def test_dashboard_automation_index_guard_reports_missing_docker_coverage(tmp_path):
     write(
         tmp_path / "docs" / "dashboard-automation-index.md",
@@ -1859,6 +1921,16 @@ def test_dashboard_automation_index_guard_reports_missing_docker_coverage(tmp_pa
 ```bash
 r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+r-project --root . --generate-dashboard-example-fixtures
+r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
+r-project --root . --check-dashboard-example-fixtures
+r-project --root . --check-dashboard-section-writer-matrix
+r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --generate-dashboard-automation-index
+r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index
+r-project --root . --check-dashboard-automation-index
 ```
 """,
     )
@@ -1868,7 +1940,17 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
   test:
     command: >
       sh -c "python -m pytest -q
-      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md"
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --generate-dashboard-example-fixtures
+      && python -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
+      && python -m r_project --root . --check-dashboard-example-fixtures
+      && python -m r_project --root . --check-dashboard-section-writer-matrix
+      && python -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+      && python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+      && python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+      && python -m r_project --root . --generate-dashboard-automation-index
+      && python -m r_project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index
+      && python -m r_project --root . --check-dashboard-automation-index"
 """,
     )
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
@@ -1921,6 +2003,107 @@ def test_generate_dashboard_automation_index_emits_required_links_and_commands()
     assert "- [dashboard section writer matrix](dashboard-section-writer-matrix.md)" in result.stdout
     assert "r-project --root . --check-dashboard-automation-index" in result.stdout
     assert "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index" in result.stdout
+    assert result.stderr == ""
+
+
+def test_generate_dashboard_automation_index_uses_named_variant_commands():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--generate-dashboard-automation-index",
+            "--dashboard-automation-index-variant",
+            "expanded",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded" in result.stdout
+    assert "r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded" in result.stdout
+    assert "r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded" in result.stdout
+    assert "--dashboard-section-writer-matrix-variant compact" not in result.stdout
+    assert result.stderr == ""
+
+
+def test_dashboard_automation_index_guard_accepts_named_variant_commands(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-automation-index.md",
+        """# Dashboard Automation Index
+
+- [dashboard readiness/schema index](dashboard-index.md)
+- [readiness report examples](usage-examples.md)
+- [memory-overlap schema examples](dashboard-schema.md)
+- [dashboard example fixture registry](dashboard-example-fixtures.md)
+- [dashboard section writer matrix](dashboard-section-writer-matrix.md)
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+r-project --root . --generate-dashboard-example-fixtures
+r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
+r-project --root . --check-dashboard-example-fixtures
+r-project --root . --check-dashboard-section-writer-matrix
+r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+r-project --root . --generate-dashboard-automation-index --dashboard-automation-index-variant expanded
+r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index --dashboard-automation-index-variant expanded
+r-project --root . --check-dashboard-automation-index --dashboard-automation-index-variant expanded
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+      && python -m r_project --root . --generate-dashboard-example-fixtures
+      && python -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
+      && python -m r_project --root . --check-dashboard-example-fixtures
+      && python -m r_project --root . --check-dashboard-section-writer-matrix
+      && python -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+      && python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+      && python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded
+      && python -m r_project --root . --generate-dashboard-automation-index --dashboard-automation-index-variant expanded
+      && python -m r_project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index --dashboard-automation-index-variant expanded
+      && python -m r_project --root . --check-dashboard-automation-index --dashboard-automation-index-variant expanded"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-automation-index",
+            "--dashboard-automation-index-variant",
+            "expanded",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Dashboard automation index links dashboard surfaces and matches Docker harness commands.\n"
     assert result.stderr == ""
 
 

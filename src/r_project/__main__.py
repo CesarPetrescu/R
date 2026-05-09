@@ -299,6 +299,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="With --write-dashboard-automation-index, print the updated dashboard automation index without modifying it.",
     )
     parser.add_argument(
+        "--dashboard-automation-index-variant",
+        metavar="LABEL",
+        help=(
+            "With --check-dashboard-automation-index, require dashboard automation index commands for this "
+            "section-writer preview variant; with --generate-dashboard-automation-index or "
+            "--write-dashboard-automation-index, emit commands for this variant instead of compact."
+        ),
+    )
+    parser.add_argument(
         "--check-dashboard-example-fixtures",
         action="store_true",
         help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
@@ -538,13 +547,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_automation_command_fixtures:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_automation_index:
-        return _check_dashboard_automation_index(Path(args.root))
+        return _check_dashboard_automation_index(Path(args.root), args.dashboard_automation_index_variant)
     if args.generate_dashboard_automation_index:
-        return _generate_dashboard_automation_index(Path(args.root))
+        return _generate_dashboard_automation_index(Path(args.root), args.dashboard_automation_index_variant)
     if args.write_dashboard_automation_index:
         return _write_dashboard_automation_index(
             Path(args.root),
             dry_run=args.dry_run_dashboard_automation_index,
+            variant=args.dashboard_automation_index_variant,
         )
     if args.generate_dashboard_example_fixtures:
         return _generate_dashboard_example_fixtures(Path(args.root))
@@ -1307,7 +1317,7 @@ def _release_automation_index_required_commands(version: str = "0.2.0") -> list[
     ]
 
 
-def _check_dashboard_automation_index(root: Path) -> int:
+def _check_dashboard_automation_index(root: Path, variant: str | None = None) -> int:
     dashboard_index = root / "docs" / "dashboard-automation-index.md"
     compose = root / "docker-compose.yml"
     index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
@@ -1328,6 +1338,14 @@ def _check_dashboard_automation_index(root: Path) -> int:
         print("Dashboard automation index does not document any r-project verification commands.", file=sys.stderr)
         return 1
 
+    required_commands = _dashboard_automation_index_required_commands(variant)
+    missing_required_commands = [command for command in required_commands if command not in documented_commands]
+    if missing_required_commands:
+        for command in missing_required_commands:
+            label = "variant command" if variant else "command"
+            print(f"Dashboard automation index is missing {label}: {command}", file=sys.stderr)
+        return 1
+
     missing_commands = [
         command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
     ]
@@ -1340,22 +1358,22 @@ def _check_dashboard_automation_index(root: Path) -> int:
     return 0
 
 
-def _generate_dashboard_automation_index(root: Path) -> int:
+def _generate_dashboard_automation_index(root: Path, variant: str | None = None) -> int:
     del root
     for row in _dashboard_automation_index_surface_rows():
         print(row)
     print()
     print("```bash")
-    for command in _dashboard_automation_index_required_commands():
+    for command in _dashboard_automation_index_required_commands(variant):
         print(command)
     print("```")
     return 0
 
 
-def _write_dashboard_automation_index(root: Path, *, dry_run: bool = False) -> int:
+def _write_dashboard_automation_index(root: Path, *, dry_run: bool = False, variant: str | None = None) -> int:
     dashboard_index = root / "docs" / "dashboard-automation-index.md"
     index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else _dashboard_automation_index_skeleton()
-    updated = _updated_dashboard_automation_index(index_text)
+    updated = _updated_dashboard_automation_index(index_text, variant)
     if updated == index_text:
         print("docs/dashboard-automation-index.md already contains dashboard automation links and commands.")
         return 0
@@ -1368,7 +1386,7 @@ def _write_dashboard_automation_index(root: Path, *, dry_run: bool = False) -> i
     return 0
 
 
-def _updated_dashboard_automation_index(index_text: str) -> str:
+def _updated_dashboard_automation_index(index_text: str, variant: str | None = None) -> str:
     text = index_text if index_text else _dashboard_automation_index_skeleton()
     existing_links = {
         docs_path
@@ -1382,7 +1400,7 @@ def _updated_dashboard_automation_index(index_text: str) -> str:
     ]
     existing_commands = set(_dashboard_automation_index_r_project_commands(text))
     missing_commands = [
-        command for command in _dashboard_automation_index_required_commands() if command not in existing_commands
+        command for command in _dashboard_automation_index_required_commands(variant) if command not in existing_commands
     ]
     if missing_link_rows:
         text = _append_markdown_list_rows_to_section(text, "Dashboard surfaces", missing_link_rows)
@@ -1421,7 +1439,9 @@ def _dashboard_automation_surface_label(docs_path: str) -> str:
     return labels[docs_path]
 
 
-def _dashboard_automation_index_required_commands() -> list[str]:
+def _dashboard_automation_index_required_commands(variant: str | None = None) -> list[str]:
+    section_writer_variant = variant or "compact"
+    automation_variant_suffix = f" --dashboard-automation-index-variant {variant}" if variant else ""
     return [
         "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md",
         "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md",
@@ -1429,12 +1449,12 @@ def _dashboard_automation_index_required_commands() -> list[str]:
         "r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures",
         "r-project --root . --check-dashboard-example-fixtures",
         "r-project --root . --check-dashboard-section-writer-matrix",
-        "r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
-        "r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
-        "r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
-        "r-project --root . --generate-dashboard-automation-index",
-        "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index",
-        "r-project --root . --check-dashboard-automation-index",
+        f"r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant {section_writer_variant}",
+        f"r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant {section_writer_variant}",
+        f"r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant {section_writer_variant}",
+        f"r-project --root . --generate-dashboard-automation-index{automation_variant_suffix}",
+        f"r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index{automation_variant_suffix}",
+        f"r-project --root . --check-dashboard-automation-index{automation_variant_suffix}",
     ]
 
 
