@@ -148,10 +148,22 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python -m r_project --root . --check-automation-command-fixtures" in compose_text
     assert "python -m r_project --root . --generate-dashboard-automation-index" in compose_text
     assert (
+        "python -m r_project --root . --generate-dashboard-automation-index --dashboard-automation-index-variant expanded"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index"
         in compose_text
     )
+    assert (
+        "python -m r_project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index --dashboard-automation-index-variant expanded"
+        in compose_text
+    )
     assert "python -m r_project --root . --check-dashboard-automation-index" in compose_text
+    assert (
+        "python -m r_project --root . --check-dashboard-automation-index --dashboard-automation-index-variant expanded"
+        in compose_text
+    )
     assert "python -m r_project --root . --generate-dashboard-example-fixtures" in compose_text
     assert "python -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures" in compose_text
     assert "python -m r_project --root . --check-dashboard-example-fixtures" in compose_text
@@ -161,10 +173,22 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert (
+        "python -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact"
         in compose_text
     )
     assert (
+        "python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact"
+        in compose_text
+    )
+    assert (
+        "python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded"
         in compose_text
     )
