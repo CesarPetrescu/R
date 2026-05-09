@@ -4,8 +4,8 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add comparison and boolean result support to the C-hosted Rust-like interpreter, backed by fixtures proving `let x = 3; x == 3` evaluates to `1` and non-equal values evaluate to `0`.
-2. Add block expression support to the C-hosted Rust-like interpreter, backed by fixtures proving `{ let x = 2; x + 1 }` evaluates to `3` once nested scopes are designed.
+1. Add block expression support to the C-hosted Rust-like interpreter, backed by fixtures proving `{ let x = 2; x + 1 }` evaluates to `3` once nested scopes are designed.
+2. Add comparison operators beyond equality (`!=`, `<`, `<=`, `>`, `>=`) to the C-hosted Rust-like interpreter, backed by fixtures for true/false boolean integer results and precedence with arithmetic.
 3. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 4. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
