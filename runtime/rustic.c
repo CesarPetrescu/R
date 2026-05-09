@@ -11,6 +11,7 @@
 struct Binding {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     long value;
+    size_t scope_depth;
 };
 
 struct Parser {
@@ -18,6 +19,7 @@ struct Parser {
     RusticStatus status;
     struct Binding bindings[RUSTIC_MAX_BINDINGS];
     size_t binding_count;
+    size_t scope_depth;
 };
 
 static void skip_spaces(struct Parser *parser) {
@@ -97,10 +99,26 @@ static void add_binding(struct Parser *parser, const char *name, long value) {
     strncpy(parser->bindings[parser->binding_count].name, name, RUSTIC_MAX_IDENTIFIER_LENGTH);
     parser->bindings[parser->binding_count].name[RUSTIC_MAX_IDENTIFIER_LENGTH] = '\0';
     parser->bindings[parser->binding_count].value = value;
+    parser->bindings[parser->binding_count].scope_depth = parser->scope_depth;
     parser->binding_count++;
 }
 
+static void push_scope(struct Parser *parser) {
+    parser->scope_depth++;
+}
+
+static void pop_scope(struct Parser *parser) {
+    while (parser->binding_count > 0 &&
+           parser->bindings[parser->binding_count - 1].scope_depth == parser->scope_depth) {
+        parser->binding_count--;
+    }
+    if (parser->scope_depth > 0) {
+        parser->scope_depth--;
+    }
+}
+
 static long parse_expression(struct Parser *parser);
+static long parse_statement_sequence(struct Parser *parser, char terminator);
 
 static long parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
@@ -108,6 +126,25 @@ static long parse_factor(struct Parser *parser) {
     char *end = NULL;
 
     skip_spaces(parser);
+    if (*parser->cursor == '{') {
+        parser->cursor++;
+        push_scope(parser);
+        value = parse_statement_sequence(parser, '}');
+        if (parser->status != RUSTIC_OK) {
+            pop_scope(parser);
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor != '}') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            pop_scope(parser);
+            return 0;
+        }
+        parser->cursor++;
+        pop_scope(parser);
+        return value;
+    }
+
     if (*parser->cursor == '(') {
         parser->cursor++;
         value = parse_expression(parser);
@@ -264,13 +301,23 @@ static int parse_assignment_statement(struct Parser *parser, long *out_value) {
     return 1;
 }
 
-static long parse_program(struct Parser *parser) {
+static long parse_statement_sequence(struct Parser *parser, char terminator) {
     long value = 0;
     int saw_statement = 0;
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
+        if (terminator != '\0' && *parser->cursor == terminator) {
+            if (!saw_statement) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+            }
+            return value;
+        }
         if (*parser->cursor == '\0') {
+            if (terminator != '\0') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+                return 0;
+            }
             if (!saw_statement) {
                 parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
             }
@@ -313,6 +360,10 @@ static long parse_program(struct Parser *parser) {
     return value;
 }
 
+static long parse_program(struct Parser *parser) {
+    return parse_statement_sequence(parser, '\0');
+}
+
 RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     struct Parser parser;
     long value;
@@ -324,6 +375,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.cursor = source;
     parser.status = RUSTIC_OK;
     parser.binding_count = 0;
+    parser.scope_depth = 0;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
@@ -360,6 +412,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "too many bindings";
     case RUSTIC_ERR_EXPECTED_CLOSING_PAREN:
         return "expected closing parenthesis";
+    case RUSTIC_ERR_EXPECTED_CLOSING_BRACE:
+        return "expected closing brace";
     default:
         return "unknown rustic interpreter error";
     }
