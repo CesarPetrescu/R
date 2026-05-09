@@ -19,9 +19,9 @@ The main goal of R is to present interpreted Rust inside C and show the automati
 ## Current runtime slice
 
 - `runtime/include/rustic.h` declares the first C host API.
-- `runtime/rustic.c` evaluates tiny Rust-like integer programs with `+`, `*`, whitespace skipping, multiplication precedence, parenthesized expressions, single-scope `let` bindings, identifier lookup, semicolon-separated expression-statement sequencing that returns the final expression value, assignment/mutation, equality comparisons (`==`), and ordering comparisons (`!=`, `<`, `<=`, `>`, `>=`) that return boolean integers.
+- `runtime/rustic.c` evaluates tiny Rust-like integer programs with `+`, `*`, whitespace skipping, multiplication precedence, parenthesized expressions, single-scope `let` bindings, identifier lookup, semicolon-separated expression-statement sequencing that returns the final expression value, assignment/mutation, equality comparisons (`==`), ordering comparisons (`!=`, `<`, `<=`, `>`, `>=`) that return boolean integers, block expressions with nested lexical scopes, and conditional `if`/`else` expressions that evaluate only the selected branch.
 - `tests/fixtures/rustic_expression_driver.c` is the executable C host fixture used by pytest.
-- `tests/test_rustic_interpreter.py` compiles the runtime and proves `1 + 2 * 3 => 7`, `(1 + 2) * 3 => 9`, `let x = 2 + 3; x * 4 => 20`, `let x = 1; x = x + 2; x => 3`, `let x = 3; x == 3 => 1`, `let x = 3; x == 4 => 0`, `let x = 3; x != 4 => 1`, `1 + 2 < 2 * 2`, `1 + 2; 3 * 4; 5 + 6 => 11`, and stable invalid-expression/undefined-identifier/comparison diagnostics.
+- `tests/test_rustic_interpreter.py` compiles the runtime and proves `1 + 2 * 3 => 7`, `(1 + 2) * 3 => 9`, `let x = 2 + 3; x * 4 => 20`, `let x = 1; x = x + 2; x => 3`, `let x = 3; x == 3 => 1`, `let x = 3; x == 4 => 0`, `let x = 3; x != 4 => 1`, `1 + 2 < 2 * 2`, `{ let x = 2; x + 1 } => 3`, `if 1 < 2 { let x = 3; x + 4 } else { missing } => 7`, `let x = 5; if x == 4 { missing } else { x * 2 } => 10`, `1 + 2; 3 * 4; 5 + 6 => 11`, and stable invalid-expression/undefined-identifier/comparison/block-scope diagnostics.
 
 ## Folder policy
 

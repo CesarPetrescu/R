@@ -312,6 +312,49 @@ def test_c_hosted_rustic_interpreter_rejects_unclosed_block_expression(tmp_path)
     assert "expected closing brace" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_evaluates_if_else_true_branch(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "if 1 < 2 { let x = 3; x + 4 } else { missing }"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "if 1 < 2 { let x = 3; x + 4 } else { missing } => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_evaluates_if_else_false_branch(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "let x = 5; if x == 4 { missing } else { x * 2 }"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "let x = 5; if x == 4 { missing } else { x * 2 } => 10\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_if_branch_bindings_scoped(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "if 1 { let x = 2; x } else { 0 }; x"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
