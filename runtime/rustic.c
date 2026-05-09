@@ -3,10 +3,21 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define RUSTIC_MAX_BINDINGS 16
+#define RUSTIC_MAX_IDENTIFIER_LENGTH 31
+
+struct Binding {
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    long value;
+};
 
 struct Parser {
     const char *cursor;
     RusticStatus status;
+    struct Binding bindings[RUSTIC_MAX_BINDINGS];
+    size_t binding_count;
 };
 
 static void skip_spaces(struct Parser *parser) {
@@ -15,23 +26,97 @@ static void skip_spaces(struct Parser *parser) {
     }
 }
 
-static long parse_integer(struct Parser *parser) {
-    char *end = NULL;
-    long value;
+static int is_identifier_start(char character) {
+    return isalpha((unsigned char)character) || character == '_';
+}
+
+static int is_identifier_continue(char character) {
+    return isalnum((unsigned char)character) || character == '_';
+}
+
+static int parse_identifier(struct Parser *parser, char *out_name, size_t out_size) {
+    size_t length = 0;
 
     skip_spaces(parser);
-    if (!isdigit((unsigned char)*parser->cursor)) {
-        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+    if (!is_identifier_start(*parser->cursor)) {
+        parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
         return 0;
     }
 
-    value = strtol(parser->cursor, &end, 10);
-    parser->cursor = end;
-    return value;
+    while (is_identifier_continue(*parser->cursor)) {
+        if (length + 1 < out_size) {
+            out_name[length] = *parser->cursor;
+            length++;
+        }
+        parser->cursor++;
+    }
+    out_name[length] = '\0';
+    return 1;
+}
+
+static int cursor_starts_keyword(const struct Parser *parser, const char *keyword) {
+    size_t length = strlen(keyword);
+
+    return strncmp(parser->cursor, keyword, length) == 0 &&
+           !is_identifier_continue(parser->cursor[length]);
+}
+
+static int lookup_binding(const struct Parser *parser, const char *name, long *out_value) {
+    size_t index;
+
+    for (index = parser->binding_count; index > 0; index--) {
+        const struct Binding *binding = &parser->bindings[index - 1];
+        if (strcmp(binding->name, name) == 0) {
+            *out_value = binding->value;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void add_binding(struct Parser *parser, const char *name, long value) {
+    if (parser->binding_count >= RUSTIC_MAX_BINDINGS) {
+        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+        return;
+    }
+
+    strncpy(parser->bindings[parser->binding_count].name, name, RUSTIC_MAX_IDENTIFIER_LENGTH);
+    parser->bindings[parser->binding_count].name[RUSTIC_MAX_IDENTIFIER_LENGTH] = '\0';
+    parser->bindings[parser->binding_count].value = value;
+    parser->binding_count++;
+}
+
+static long parse_expression(struct Parser *parser);
+
+static long parse_factor(struct Parser *parser) {
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    long value;
+    char *end = NULL;
+
+    skip_spaces(parser);
+    if (isdigit((unsigned char)*parser->cursor)) {
+        value = strtol(parser->cursor, &end, 10);
+        parser->cursor = end;
+        return value;
+    }
+
+    if (is_identifier_start(*parser->cursor)) {
+        if (!parse_identifier(parser, name, sizeof(name))) {
+            return 0;
+        }
+        if (!lookup_binding(parser, name, &value)) {
+            parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+            return 0;
+        }
+        return value;
+    }
+
+    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+    return 0;
 }
 
 static long parse_term(struct Parser *parser) {
-    long value = parse_integer(parser);
+    long value = parse_factor(parser);
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
@@ -39,7 +124,7 @@ static long parse_term(struct Parser *parser) {
             return value;
         }
         parser->cursor++;
-        value *= parse_integer(parser);
+        value *= parse_factor(parser);
     }
 
     return value;
@@ -63,6 +148,51 @@ static long parse_expression(struct Parser *parser) {
     return value;
 }
 
+static void parse_let_statement(struct Parser *parser) {
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    long value;
+
+    parser->cursor += 3;
+    if (!parse_identifier(parser, name, sizeof(name))) {
+        return;
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != '=') {
+        parser->status = RUSTIC_ERR_EXPECTED_EQUALS;
+        return;
+    }
+    parser->cursor++;
+
+    value = parse_expression(parser);
+    if (parser->status != RUSTIC_OK) {
+        return;
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != ';') {
+        parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+        return;
+    }
+    parser->cursor++;
+    add_binding(parser, name, value);
+}
+
+static long parse_program(struct Parser *parser) {
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (!cursor_starts_keyword(parser, "let")) {
+            break;
+        }
+        parse_let_statement(parser);
+    }
+
+    if (parser->status != RUSTIC_OK) {
+        return 0;
+    }
+    return parse_expression(parser);
+}
+
 RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     struct Parser parser;
     long value;
@@ -73,7 +203,8 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
 
     parser.cursor = source;
     parser.status = RUSTIC_OK;
-    value = parse_expression(&parser);
+    parser.binding_count = 0;
+    value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
     }
@@ -97,6 +228,16 @@ const char *rustic_status_message(RusticStatus status) {
         return "expected operator";
     case RUSTIC_ERR_TRAILING_INPUT:
         return "trailing input";
+    case RUSTIC_ERR_EXPECTED_IDENTIFIER:
+        return "expected identifier";
+    case RUSTIC_ERR_EXPECTED_EQUALS:
+        return "expected equals";
+    case RUSTIC_ERR_EXPECTED_SEMICOLON:
+        return "expected semicolon";
+    case RUSTIC_ERR_UNDEFINED_IDENTIFIER:
+        return "undefined identifier";
+    case RUSTIC_ERR_TOO_MANY_BINDINGS:
+        return "too many bindings";
     default:
         return "unknown rustic interpreter error";
     }

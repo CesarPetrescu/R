@@ -45,6 +45,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add CLI filters that let memory-overlap demos narrow fixture spans by qualified-name prefix or provenance tag before totals/threshold calculations.
 - [x] Add a compact JSON schema description for memory-overlap demo outputs so dashboard consumers can validate fields without reading source.
 - [x] Start the interpreted Rust inside C showcase with a tiny C-hosted Rust-like expression interpreter fixture.
+- [x] Extend the C-hosted Rust-like interpreter with `let` bindings and identifier lookup, backed by a C host fixture that evaluates `let x = 2 + 3; x * 4` to `20` and reports undefined identifiers.
 
 ## P2 — project quality
 
