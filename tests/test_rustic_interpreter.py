@@ -188,6 +188,56 @@ def test_c_hosted_rustic_interpreter_evaluates_non_equal_comparison_to_zero(tmp_
     assert result.stdout == "let x = 3; x == 4 => 0\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_not_equal_comparison(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "let x = 3; x != 4"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "let x = 3; x != 4 => 1\n"
+
+
+def test_c_hosted_rustic_interpreter_evaluates_ordering_comparisons(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "1 + 2 < 2 * 2": 1,
+        "4 <= 4": 1,
+        "5 > 9": 0,
+        "5 >= 5": 1,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_single_bang_inside_expression(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "1 ! 1"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected operator" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_single_equals_inside_expression(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
