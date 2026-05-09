@@ -1896,6 +1896,83 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
     )
 
 
+def test_generate_dashboard_automation_index_emits_required_links_and_commands():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--generate-dashboard-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "- [dashboard readiness/schema index](dashboard-index.md)" in result.stdout
+    assert "- [dashboard section writer matrix](dashboard-section-writer-matrix.md)" in result.stdout
+    assert "r-project --root . --check-dashboard-automation-index" in result.stdout
+    assert "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index" in result.stdout
+    assert result.stderr == ""
+
+
+def test_dashboard_automation_index_writer_dry_run_appends_missing_links_and_commands(tmp_path):
+    dashboard_index = tmp_path / "docs" / "dashboard-automation-index.md"
+    write(
+        dashboard_index,
+        """# Dashboard Automation Index
+
+## Dashboard surfaces
+
+- [dashboard readiness/schema index](dashboard-index.md)
+
+## Verification commands
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+```
+
+Run the dashboard automation index guard itself after changing links or commands:
+
+```bash
+r-project --root . --check-dashboard-automation-index
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-dashboard-automation-index",
+            "--dry-run-dashboard-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "- [dashboard example fixture registry](dashboard-example-fixtures.md)" in result.stdout
+    assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in result.stdout
+    assert "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index" in result.stdout
+    assert dashboard_index.read_text(encoding="utf-8").count("dashboard example fixture registry") == 0
+    assert result.stderr == ""
+
+
 def test_dashboard_example_fixture_registry_guard_matches_docker_harness():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

@@ -8,7 +8,7 @@ Last updated: 2026-05-09
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: repository-readiness toolkit for autonomous software maintenance.
-- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority readiness reports, README/example/schema drift guards and writers, dashboard and release automation docs with Docker-covered guards, dashboard example fixture row generation and writer dry-runs derived from `docs/dashboard-index.md`, release section writer matrix row generation/writing, memory-layout helpers with overlap diagnostics/demos/schemas, release checklist guards/fixtures, lightweight linting, Docker verification, and AGPL-3.0-or-later licensing.
+- Current implementation: tested Python scaffold with `r_project` analyzer and installable `r-project`/`r-project-lint` CLIs, including per-priority readiness reports, README/example/schema drift guards and writers, dashboard and release automation docs with Docker-covered guards, dashboard automation index link/command row generation and writer dry-runs, dashboard example fixture row generation and writer dry-runs derived from `docs/dashboard-index.md`, release section writer matrix row generation/writing, memory-layout helpers with overlap diagnostics/demos/schemas, release checklist guards/fixtures, lightweight linting, Docker verification, and AGPL-3.0-or-later licensing.
 - Test environment: Dockerized verification via `Dockerfile` and `docker-compose.yml` service `test`.
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
@@ -79,6 +79,8 @@ Last updated: 2026-05-09
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-automation-command-fixtures` audits `docs/automation-command-fixtures.md` table rows and exits nonzero when any indexed split-doc automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-dashboard-automation-index` audits `docs/dashboard-automation-index.md` and exits nonzero when the dashboard-only automation entry point omits a dashboard surface link, has no documented `r-project` commands, or documents commands missing equivalent `docker-compose.yml` clean-container harness coverage.
+- `python3 -m r_project --root <path> --generate-dashboard-automation-index` emits dashboard automation index surface-link rows and Docker-covered command lines from the built-in dashboard surface registry so new dashboard docs can preview exact additions.
+- `python3 -m r_project --root <path> --write-dashboard-automation-index --dry-run-dashboard-automation-index` previews the `docs/dashboard-automation-index.md` content that would result from appending any missing generated dashboard links and commands; omitting the dry-run flag appends those missing rows once.
 - `python3 -m r_project --root <path> --generate-dashboard-example-fixtures` emits `docs/dashboard-example-fixtures.md` table rows derived from `docs/dashboard-index.md` commands so new dashboard index snippets can be registered without hand-copying command cells.
 - `python3 -m r_project --root <path> --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures` previews the dashboard fixture registry content that would result from appending any missing dashboard-index-derived rows; omitting the dry-run flag appends those missing rows once.
 - `python3 -m r_project --root <path> --check-dashboard-example-fixtures` audits `docs/dashboard-example-fixtures.md` table rows and exits nonzero when any indexed dashboard readiness/schema command is missing equivalent `docker-compose.yml` clean-container harness coverage or when the registry omits a dashboard-index command.
@@ -163,6 +165,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safet
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
+PYTHONPATH=src python3 -m r_project --root . --generate-dashboard-automation-index
+PYTHONPATH=src python3 -m r_project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
 PYTHONPATH=src python3 -m r_project --root . --generate-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
