@@ -4,6 +4,7 @@ This page is the single navigation entry point for dashboard and release automat
 
 ## Dashboard automation
 
+- [dashboard automation index](dashboard-automation-index.md) is the dashboard-only navigation page with link and command coverage guards.
 - [dashboard readiness/schema index](dashboard-index.md) links the checked readiness report examples with compact memory-overlap schema examples.
 - [readiness report examples](usage-examples.md) stores the checked JSON and Markdown readiness report fences.
 - [memory overlap schema examples](dashboard-schema.md) stores the checked compact JSON Schema fence for memory-overlap demo payloads.
@@ -17,6 +18,7 @@ r-project --root . --check-readme-examples --readme-examples-path docs/dashboard
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
 r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
+r-project --root . --check-dashboard-automation-index
 r-project --root . --check-dashboard-example-fixtures
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
@@ -29,7 +31,7 @@ r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-s
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 90, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 53, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 91, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 54, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -37,7 +39,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 90 |
+| Completed backlog items | 91 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -47,7 +49,7 @@ The combined index also embeds the checked readiness report examples directly so
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 53 | 0 | None |
+| P2 | 54 | 0 | None |
 
 ## Next backlog item
 

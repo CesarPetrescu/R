@@ -132,6 +132,7 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     assert "python -m r_project --root . --check-automation-index-links" in compose_text
     assert "python -m r_project --root . --check-automation-index-commands" in compose_text
     assert "python -m r_project --root . --check-automation-command-fixtures" in compose_text
+    assert "python -m r_project --root . --check-dashboard-automation-index" in compose_text
     assert "python -m r_project --root . --check-dashboard-example-fixtures" in compose_text
     assert "python -m r_project --root . --check-dashboard-section-writer-matrix" in compose_text
     assert (

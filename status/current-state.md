@@ -78,6 +78,7 @@ Last updated: 2026-05-09
 - `python3 -m r_project --root <path> --check-automation-index-links` audits `docs/automation-index.md` and exits nonzero when the combined automation navigation page omits a standalone dashboard or release automation surface link.
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-automation-command-fixtures` audits `docs/automation-command-fixtures.md` table rows and exits nonzero when any indexed split-doc automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
+- `python3 -m r_project --root <path> --check-dashboard-automation-index` audits `docs/dashboard-automation-index.md` and exits nonzero when the dashboard-only automation entry point omits a dashboard surface link, has no documented `r-project` commands, or documents commands missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-dashboard-example-fixtures` audits `docs/dashboard-example-fixtures.md` table rows and exits nonzero when any indexed dashboard readiness/schema command is missing equivalent `docker-compose.yml` clean-container harness coverage or when the registry omits a dashboard-index command.
 - `docs/dashboard-section-writer-matrix.md` maps every dashboard fixture registry check command to a corresponding README/schema writer dry-run, and `python3 -m r_project --root <path> --check-dashboard-section-writer-matrix` exits nonzero when a registry row lacks writer coverage or when a matrix command is missing from the Docker harness. Add `--dashboard-section-writer-matrix-variant <label>` to require variant-labeled matrix rows for every dashboard writer command before publishing variant-specific dashboard docs.
 - `python3 -m r_project --root <path> --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant <label>` emits Markdown table rows derived from `docs/dashboard-example-fixtures.md` so new dashboard preview variants can copy exact writer dry-run rows into the matrix before running the guard.
@@ -160,6 +161,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safet
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact

@@ -155,6 +155,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safet
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
@@ -348,6 +349,7 @@ r-project --root . --check-release-examples-path-safety
 r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands
 r-project --root . --check-automation-command-fixtures
+r-project --root . --check-dashboard-automation-index
 r-project --root . --check-dashboard-example-fixtures
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
@@ -359,7 +361,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 90, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 53, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 91, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 54, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -371,7 +373,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 90 |
+| Completed backlog items | 91 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -381,7 +383,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 53 | 0 | None |
+| P2 | 54 | 0 | None |
 
 ## Next backlog item
 
@@ -413,6 +415,8 @@ verified by host tests and Docker as a dashboard landing page. [`docs/dashboard-
 indexes those dashboard example guard commands against Docker coverage so future
 split dashboard docs stay auditable. [`docs/dashboard-section-writer-matrix.md`](docs/dashboard-section-writer-matrix.md)
 proves each indexed dashboard readiness/schema surface has a Docker-covered writer dry-run and can preview or append variant-labeled writer rows from the fixture registry.
+[`docs/dashboard-automation-index.md`](docs/dashboard-automation-index.md)
+keeps dashboard-only automation links and commands auditable against Docker coverage.
 [`docs/automation-index.md`](docs/automation-index.md)
 embeds checked readiness and compact schema examples while linking the dashboard
 and release automation surfaces from one combined index. [`docs/automation-command-fixtures.md`](docs/automation-command-fixtures.md)
@@ -547,6 +551,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safet
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
+PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
