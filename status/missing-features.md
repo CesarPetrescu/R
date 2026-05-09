@@ -95,3 +95,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a dashboard section writer matrix so readiness and schema example writers can target independently named Markdown sections.
 - [x] Add a configurable release-section writer matrix preview version so future release docs can audit non-`0.2.0` dry-run targets.
 - [x] Add a dashboard section writer matrix guard so readiness/schema writer dry-runs stay covered for every dashboard fixture registry row.
+- [x] Add a configurable dashboard-section writer matrix preview mode so variant-specific dashboard docs can be audited against Docker coverage.

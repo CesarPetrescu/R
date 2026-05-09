@@ -238,6 +238,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--dashboard-section-writer-matrix-variant",
+        metavar="LABEL",
+        help=(
+            "With --check-dashboard-section-writer-matrix, require writer matrix rows for this dashboard "
+            "preview variant label in addition to default writer coverage."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -401,7 +409,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
     if args.check_dashboard_section_writer_matrix:
-        return _check_dashboard_section_writer_matrix(Path(args.root))
+        return _check_dashboard_section_writer_matrix(Path(args.root), args.dashboard_section_writer_matrix_variant)
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -969,7 +977,7 @@ def _check_dashboard_example_fixtures(root: Path) -> int:
     return 0
 
 
-def _check_dashboard_section_writer_matrix(root: Path) -> int:
+def _check_dashboard_section_writer_matrix(root: Path, variant: str | None = None) -> int:
     matrix = root / "docs" / "dashboard-section-writer-matrix.md"
     registry = root / "docs" / "dashboard-example-fixtures.md"
     compose = root / "docker-compose.yml"
@@ -994,6 +1002,17 @@ def _check_dashboard_section_writer_matrix(root: Path) -> int:
             )
         return 1
 
+    if variant:
+        variant_commands = _dashboard_section_writer_matrix_variant_commands(matrix_text, variant)
+        missing_variant_commands = [command for command in required_writer_commands if command not in variant_commands]
+        if missing_variant_commands:
+            for command in missing_variant_commands:
+                print(
+                    f"Dashboard section writer matrix is missing variant {variant} writer command for dashboard fixture: {command}",
+                    file=sys.stderr,
+                )
+            return 1
+
     missing_docker_commands = [
         command for command in matrix_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
     ]
@@ -1002,7 +1021,10 @@ def _check_dashboard_section_writer_matrix(root: Path) -> int:
             print(f"Docker harness is missing dashboard section writer matrix command: {command}", file=sys.stderr)
         return 1
 
-    print("Dashboard section writer matrix matches fixture registry and Docker harness commands.")
+    if variant:
+        print(f"Dashboard section writer matrix matches fixture registry, variant {variant} rows, and Docker harness commands.")
+    else:
+        print("Dashboard section writer matrix matches fixture registry and Docker harness commands.")
     return 0
 
 
@@ -1084,6 +1106,21 @@ def _dashboard_example_fixture_registry_commands(index_text: str) -> list[str]:
 
 def _dashboard_section_writer_matrix_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
+
+
+def _dashboard_section_writer_matrix_variant_commands(index_text: str, variant: str) -> list[str]:
+    commands: list[str] = []
+    variant_marker = f"Variant `{variant}`"
+    for line in index_text.splitlines():
+        if variant_marker not in line:
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not cells:
+            continue
+        command = _single_code_span(cells[-1])
+        if command is not None:
+            commands.append(command)
+    return commands
 
 
 def _markdown_table_code_span_commands(index_text: str) -> list[str]:
