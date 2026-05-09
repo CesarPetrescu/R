@@ -16,6 +16,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_UNDEFINED_IDENTIFIER = 7,
     RUSTIC_ERR_TOO_MANY_BINDINGS = 8,
     RUSTIC_ERR_EXPECTED_CLOSING_PAREN = 9,
+    RUSTIC_ERR_EXPECTED_CLOSING_BRACE = 10,
 } RusticStatus;
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

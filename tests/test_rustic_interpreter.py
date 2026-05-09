@@ -218,6 +218,50 @@ def test_c_hosted_rustic_interpreter_rejects_missing_right_comparison_operand(tm
     assert "expected integer" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_evaluates_block_expression(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "{ let x = 2; x + 1 }"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "{ let x = 2; x + 1 } => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_block_bindings_scoped(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "{ let x = 2; x }; x"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_rejects_unclosed_block_expression(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "{ let x = 2; x + 1"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected closing brace" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
