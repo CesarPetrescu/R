@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a dashboard automation surface link/command guard extension if future dashboard docs add new standalone surfaces beyond `docs/dashboard-section-writer-matrix.md`.
-3. Add a release section writer matrix row writer if release docs need the same safe append/idempotence workflow now available for dashboard variant rows.
+3. Add a release automation surface link/command guard extension if future release docs add new standalone surfaces beyond `docs/release-section-writer-matrix.md`.
 
 ## Every-run checklist
 

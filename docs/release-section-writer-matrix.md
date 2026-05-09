@@ -15,4 +15,5 @@ Run the matrix guard after adding release checklist sections or future-version s
 r-project --root . --check-release-section-writer-matrix
 r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
+r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 ```

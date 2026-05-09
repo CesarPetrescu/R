@@ -2663,6 +2663,151 @@ def test_cli_generates_release_section_writer_matrix_rows_from_registry(tmp_path
     )
 
 
+def test_cli_dry_runs_release_section_writer_matrix_append(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "release-section-writer-matrix.md"
+    original_matrix = """# Release Section Writer Matrix
+
+| Markdown path | Section | Version target | Docker-covered writer command |
+| --- | --- | --- | --- |
+
+Run the matrix guard after adding release checklist sections or future-version snippets:
+"""
+    write(matrix_path, original_matrix)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-section-writer-matrix",
+            "--dry-run-release-section-writer-matrix",
+            "--release-section-writer-matrix-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert matrix_path.read_text(encoding="utf-8") == original_matrix
+    assert (
+        "| `docs/release-examples.md` | First JSON fence | Current package version | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md` |"
+        in result.stdout
+    )
+    assert (
+        "| `docs/release-examples.md` | First JSON fence | Future package version `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md` |"
+        in result.stdout
+    )
+
+
+def test_cli_writes_release_section_writer_matrix_rows_once(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "release-section-writer-matrix.md"
+    write(
+        matrix_path,
+        """# Release Section Writer Matrix
+
+| Markdown path | Section | Version target | Docker-covered writer command |
+| --- | --- | --- | --- |
+
+Run the matrix guard after adding release checklist sections or future-version snippets:
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    command = [
+        sys.executable,
+        "-m",
+        "r_project",
+        "--root",
+        str(tmp_path),
+        "--write-release-section-writer-matrix",
+        "--release-section-writer-matrix-version",
+        "0.3.0",
+    ]
+
+    first = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    second = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+
+    assert first.returncode == 0
+    assert first.stdout == "Updated docs/release-section-writer-matrix.md with 2 release section writer rows.\n"
+    assert first.stderr == ""
+    assert second.returncode == 0
+    assert second.stdout == "docs/release-section-writer-matrix.md already contains release section writer rows.\n"
+    assert second.stderr == ""
+    matrix_text = matrix_path.read_text(encoding="utf-8")
+    assert matrix_text.count("Current package version") == 1
+    assert matrix_text.count("Future package version `0.3.0`") == 1
+
+
+def test_release_section_writer_matrix_writer_does_not_duplicate_existing_commands(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+""",
+    )
+    matrix_path = tmp_path / "docs" / "release-section-writer-matrix.md"
+    matrix = """# Release Section Writer Matrix
+
+| Markdown path | Section | Version target | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/release-examples.md` | Release examples | Current | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md` |
+| `docs/release-examples.md` | Release examples | Future `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md` |
+"""
+    write(matrix_path, matrix)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-section-writer-matrix",
+            "--release-section-writer-matrix-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "docs/release-section-writer-matrix.md already contains release section writer rows.\n"
+    assert result.stderr == ""
+    assert matrix_path.read_text(encoding="utf-8") == matrix
+
+
 def test_release_section_writer_matrix_guard_reports_missing_future_version_writer(tmp_path):
     write(
         tmp_path / "docs" / "release-example-sections.md",

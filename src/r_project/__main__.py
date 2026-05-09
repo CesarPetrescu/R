@@ -204,12 +204,28 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--write-release-section-writer-matrix",
+        action="store_true",
+        help=(
+            "Append missing current-version and future-version release section writer matrix rows derived from "
+            "docs/release-example-sections.md."
+        ),
+    )
+    parser.add_argument(
+        "--dry-run-release-section-writer-matrix",
+        action="store_true",
+        help=(
+            "With --write-release-section-writer-matrix, print the updated matrix document without modifying it."
+        ),
+    )
+    parser.add_argument(
         "--release-section-writer-matrix-version",
         default="0.2.0",
         metavar="VERSION",
         help=(
-            "With --check-release-section-writer-matrix or --generate-release-section-writer-matrix, "
-            "use this package version instead of the default 0.2.0 preview target."
+            "With --check-release-section-writer-matrix, --generate-release-section-writer-matrix, "
+            "or --write-release-section-writer-matrix, use this package version instead of the default 0.2.0 "
+            "preview target."
         ),
     )
     parser.add_argument(
@@ -430,6 +446,12 @@ def main(argv: list[str] | None = None) -> int:
         return _check_release_example_sections(Path(args.root))
     if args.generate_release_section_writer_matrix:
         return _generate_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
+    if args.write_release_section_writer_matrix:
+        return _write_release_section_writer_matrix(
+            Path(args.root),
+            args.release_section_writer_matrix_version,
+            dry_run=args.dry_run_release_section_writer_matrix,
+        )
     if args.check_release_section_writer_matrix:
         return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_examples_path_safety:
@@ -916,6 +938,41 @@ def _generate_release_section_writer_matrix(root: Path, future_version: str = "0
     for row in rows:
         print(row)
     return 0
+
+
+def _write_release_section_writer_matrix(root: Path, future_version: str = "0.2.0", *, dry_run: bool = False) -> int:
+    rows = _release_section_writer_matrix_rows(root, future_version)
+    if not rows:
+        print("Release example section registry does not list any Docker verification commands.", file=sys.stderr)
+        return 1
+
+    matrix_path = root / "docs" / "release-section-writer-matrix.md"
+    matrix_text = matrix_path.read_text(encoding="utf-8") if matrix_path.exists() else ""
+    existing_commands = set(_release_section_writer_matrix_commands(matrix_text))
+    missing_rows = [row for row in rows if (_single_code_span(row.split("|")[-2]) or "") not in existing_commands]
+    if not missing_rows:
+        print("docs/release-section-writer-matrix.md already contains release section writer rows.")
+        return 0
+
+    updated = _append_release_section_writer_matrix_rows(matrix_text, missing_rows)
+    if dry_run:
+        print(updated, end="")
+    else:
+        matrix_path.write_text(updated, encoding="utf-8")
+        row_label = "row" if len(missing_rows) == 1 else "rows"
+        print(f"Updated docs/release-section-writer-matrix.md with {len(missing_rows)} release section writer {row_label}.")
+    return 0
+
+
+def _append_release_section_writer_matrix_rows(matrix_text: str, rows: list[str]) -> str:
+    lines = matrix_text.splitlines()
+    insertion_index = 0
+    for index, line in enumerate(lines):
+        if line.startswith("|"):
+            insertion_index = index + 1
+    updated_lines = lines[:insertion_index] + rows + lines[insertion_index:]
+    trailing_newline = "\n" if matrix_text.endswith("\n") or matrix_text else ""
+    return "\n".join(updated_lines) + trailing_newline
 
 
 def _release_section_writer_command(check_command: str) -> str:
