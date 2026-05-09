@@ -120,6 +120,98 @@ static void pop_scope(struct Parser *parser) {
 static long parse_expression(struct Parser *parser);
 static long parse_statement_sequence(struct Parser *parser, char terminator);
 
+static int skip_block(struct Parser *parser) {
+    size_t depth = 0;
+
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return 0;
+    }
+
+    while (*parser->cursor != '\0') {
+        if (*parser->cursor == '{') {
+            depth++;
+        } else if (*parser->cursor == '}') {
+            depth--;
+            parser->cursor++;
+            if (depth == 0) {
+                return 1;
+            }
+            continue;
+        }
+        parser->cursor++;
+    }
+
+    parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+    return 0;
+}
+
+static long parse_block_expression(struct Parser *parser) {
+    long value;
+
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return 0;
+    }
+
+    parser->cursor++;
+    push_scope(parser);
+    value = parse_statement_sequence(parser, '}');
+    if (parser->status != RUSTIC_OK) {
+        pop_scope(parser);
+        return 0;
+    }
+    skip_spaces(parser);
+    if (*parser->cursor != '}') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        pop_scope(parser);
+        return 0;
+    }
+    parser->cursor++;
+    pop_scope(parser);
+    return value;
+}
+
+static long parse_if_expression(struct Parser *parser) {
+    long condition;
+    long value;
+
+    parser->cursor += 2;
+    condition = parse_expression(parser);
+    if (parser->status != RUSTIC_OK) {
+        return 0;
+    }
+
+    if (condition != 0) {
+        value = parse_block_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+    } else if (!skip_block(parser)) {
+        return 0;
+    }
+
+    skip_spaces(parser);
+    if (!cursor_starts_keyword(parser, "else")) {
+        parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
+        return 0;
+    }
+    parser->cursor += 4;
+
+    if (condition == 0) {
+        value = parse_block_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+    } else if (!skip_block(parser)) {
+        return 0;
+    }
+
+    return value;
+}
+
 static long parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     long value;
@@ -127,22 +219,11 @@ static long parse_factor(struct Parser *parser) {
 
     skip_spaces(parser);
     if (*parser->cursor == '{') {
-        parser->cursor++;
-        push_scope(parser);
-        value = parse_statement_sequence(parser, '}');
-        if (parser->status != RUSTIC_OK) {
-            pop_scope(parser);
-            return 0;
-        }
-        skip_spaces(parser);
-        if (*parser->cursor != '}') {
-            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
-            pop_scope(parser);
-            return 0;
-        }
-        parser->cursor++;
-        pop_scope(parser);
-        return value;
+        return parse_block_expression(parser);
+    }
+
+    if (cursor_starts_keyword(parser, "if")) {
+        return parse_if_expression(parser);
     }
 
     if (*parser->cursor == '(') {

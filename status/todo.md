@@ -4,8 +4,8 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add conditional `if`/`else` expression support to the C-hosted Rust-like interpreter now that blocks and boolean integer comparisons exist, backed by fixtures proving branch selection and scoped bindings.
-2. Add `while` loop statement support to the C-hosted Rust-like interpreter after conditionals land, backed by a fixture that mutates a counter and returns an accumulated value.
+1. Add `while` loop statement support to the C-hosted Rust-like interpreter now that conditionals and mutation exist, backed by a fixture that mutates a counter and returns an accumulated value.
+2. Add `fn`-like named function declarations/calls to the C-hosted Rust-like interpreter after loops land, backed by fixtures proving argument binding and return expression evaluation.
 3. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 4. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
