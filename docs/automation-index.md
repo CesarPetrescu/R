@@ -35,7 +35,7 @@ r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-s
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 93, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 56, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 94, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 57, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -43,7 +43,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 93 |
+| Completed backlog items | 94 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -53,7 +53,7 @@ The combined index also embeds the checked readiness report examples directly so
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 56 | 0 | None |
+| P2 | 57 | 0 | None |
 
 ## Next backlog item
 
@@ -76,6 +76,7 @@ The compact schema fence below is checked with the same alternate README-style p
 
 ## Release automation
 
+- [release automation index](release-automation-index.md) is the release-only navigation page with link and command coverage guards.
 - [release readiness index](release-index.md) links release checklist fixture docs with version/tag guard commands.
 - [release checklist fixture workflow](release-checklist.md) documents the external release checklist path.
 - [checked release checklist JSON](release/checklist.json) is the docs-path fixture for release automation consumers.
@@ -105,6 +106,9 @@ r-project --root . --check-release-section-writer-matrix --release-section-write
 r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 r-project --root . --check-release-examples-path-safety
+r-project --root . --generate-release-automation-index
+r-project --root . --write-release-automation-index --dry-run-release-automation-index
+r-project --root . --check-release-automation-index
 r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands
 r-project --root . --check-automation-command-fixtures

@@ -129,6 +129,12 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert "python -m r_project --root . --check-release-examples-path-safety" in compose_text
+    assert "python -m r_project --root . --generate-release-automation-index" in compose_text
+    assert (
+        "python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index"
+        in compose_text
+    )
+    assert "python -m r_project --root . --check-release-automation-index" in compose_text
     assert "python -m r_project --root . --check-automation-index-links" in compose_text
     assert "python -m r_project --root . --check-automation-index-commands" in compose_text
     assert "python -m r_project --root . --check-automation-command-fixtures" in compose_text
