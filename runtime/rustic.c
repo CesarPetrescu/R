@@ -212,6 +212,36 @@ static long parse_if_expression(struct Parser *parser) {
     return value;
 }
 
+static long parse_while_statement(struct Parser *parser) {
+    const char *condition_start;
+    long condition;
+    long value = 0;
+
+    parser->cursor += 5;
+    condition_start = parser->cursor;
+    while (parser->status == RUSTIC_OK) {
+        parser->cursor = condition_start;
+        condition = parse_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+
+        if (condition == 0) {
+            if (!skip_block(parser)) {
+                return 0;
+            }
+            return value;
+        }
+
+        value = parse_block_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+    }
+
+    return value;
+}
+
 static long parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     long value;
@@ -429,6 +459,21 @@ static long parse_statement_sequence(struct Parser *parser, char terminator) {
         if (cursor_starts_keyword(parser, "let")) {
             parse_let_statement(parser);
             saw_statement = 1;
+            continue;
+        }
+
+        if (cursor_starts_keyword(parser, "while")) {
+            value = parse_while_statement(parser);
+            if (parser->status != RUSTIC_OK) {
+                return 0;
+            }
+            saw_statement = 1;
+
+            skip_spaces(parser);
+            if (*parser->cursor != ';') {
+                return value;
+            }
+            parser->cursor++;
             continue;
         }
 

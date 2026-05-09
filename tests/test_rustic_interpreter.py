@@ -355,6 +355,36 @@ def test_c_hosted_rustic_interpreter_keeps_if_branch_bindings_scoped(tmp_path):
     assert "undefined identifier" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_evaluates_while_loop_mutation(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let i = 0; let total = 0; while i < 4 { total = total + i; i = i + 1; }; total"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 6\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let x = 3; while 0 { missing }; x"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 3\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
