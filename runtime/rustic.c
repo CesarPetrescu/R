@@ -159,7 +159,7 @@ static long parse_term(struct Parser *parser) {
     return value;
 }
 
-static long parse_expression(struct Parser *parser) {
+static long parse_additive_expression(struct Parser *parser) {
     long value = parse_term(parser);
 
     while (parser->status == RUSTIC_OK) {
@@ -172,6 +172,26 @@ static long parse_expression(struct Parser *parser) {
         } else {
             return value;
         }
+    }
+
+    return value;
+}
+
+static long parse_expression(struct Parser *parser) {
+    long value = parse_additive_expression(parser);
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '=') {
+            return value;
+        }
+        parser->cursor++;
+        if (*parser->cursor != '=') {
+            parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+            return 0;
+        }
+        parser->cursor++;
+        value = (value == parse_additive_expression(parser)) ? 1 : 0;
     }
 
     return value;
@@ -222,7 +242,7 @@ static int parse_assignment_statement(struct Parser *parser, long *out_value) {
     }
 
     skip_spaces(parser);
-    if (*parser->cursor != '=') {
+    if (*parser->cursor != '=' || parser->cursor[1] == '=') {
         parser->cursor = statement_start;
         parser->status = RUSTIC_OK;
         return 0;

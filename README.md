@@ -59,14 +59,17 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 The first Rust-in-C runtime slice lives under `runtime/`. It exposes a tiny C API,
 `rustic_eval_expression(...)`, that parses and evaluates Rust-like integer
 programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `let x = 2 + 3; x * 4`,
-`1 + 2; 3 * 4; 5 + 6`, and `let x = 1; x = x + 2; x` from a C
+`1 + 2; 3 * 4; 5 + 6`, `let x = 1; x = x + 2; x`, and
+`let x = 3; x == 3` from a C
 host fixture. The evaluator supports `+`, `*`,
 multiplication precedence, parenthesized expressions, single-scope `let` bindings, identifier lookup,
 semicolon-separated expression-statement sequencing that returns the final
-expression value, assignment/mutation of existing bindings, and stable
-undefined-identifier and unmatched-parenthesis diagnostics. The pytest suite
+expression value, assignment/mutation of existing bindings, equality comparisons
+(`==`) that return `1` for true and `0` for false, and stable
+undefined-identifier, malformed-equality, and unmatched-parenthesis diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
-proves end-to-end interpreted expressions, grouping, bindings, sequencing, and mutation
+proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
+and boolean comparison results
 before larger statement forms or runtime objects are added.
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
@@ -414,7 +417,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 102, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 38, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 103, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 39, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -426,7 +429,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 102 |
+| Completed backlog items | 103 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -435,7 +438,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 38 | 0 | None |
+| P1 | 39 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
