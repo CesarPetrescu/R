@@ -64,6 +64,7 @@ services:
       && python -m r_project --root . --check-automation-index-links
       && python -m r_project --root . --check-automation-index-commands
       && python -m r_project --root . --check-automation-command-fixtures
+      && python -m r_project --root . --check-dashboard-automation-index
       && python -m r_project --root . --check-dashboard-example-fixtures
       && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-schema.md
       && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md

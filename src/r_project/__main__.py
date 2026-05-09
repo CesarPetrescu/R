@@ -249,6 +249,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/automation-command-fixtures.md lists commands missing from docker-compose.yml.",
     )
     parser.add_argument(
+        "--check-dashboard-automation-index",
+        action="store_true",
+        help="Exit nonzero when docs/dashboard-automation-index.md omits dashboard links or Docker-covered commands.",
+    )
+    parser.add_argument(
         "--check-dashboard-example-fixtures",
         action="store_true",
         help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
@@ -462,6 +467,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_index_commands(Path(args.root))
     if args.check_automation_command_fixtures:
         return _check_automation_command_fixtures(Path(args.root))
+    if args.check_dashboard_automation_index:
+        return _check_dashboard_automation_index(Path(args.root))
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
     if args.write_dashboard_section_writer_matrix:
@@ -1073,6 +1080,39 @@ def _check_automation_command_fixtures(root: Path) -> int:
     return 0
 
 
+def _check_dashboard_automation_index(root: Path) -> int:
+    dashboard_index = root / "docs" / "dashboard-automation-index.md"
+    compose = root / "docker-compose.yml"
+    index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+
+    missing_links = [
+        docs_path
+        for docs_path in _standalone_dashboard_automation_surface_paths()
+        if f"({_automation_index_href(docs_path)})" not in index_text
+    ]
+    if missing_links:
+        for docs_path in missing_links:
+            print(f"Dashboard automation index is missing link to {docs_path}.", file=sys.stderr)
+        return 1
+
+    documented_commands = _dashboard_automation_index_r_project_commands(index_text)
+    if not documented_commands:
+        print("Dashboard automation index does not document any r-project verification commands.", file=sys.stderr)
+        return 1
+
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing dashboard automation index command: {command}", file=sys.stderr)
+        return 1
+
+    print("Dashboard automation index links dashboard surfaces and matches Docker harness commands.")
+    return 0
+
+
 def _check_dashboard_example_fixtures(root: Path) -> int:
     fixture_index = root / "docs" / "dashboard-example-fixtures.md"
     dashboard_index = root / "docs" / "dashboard-index.md"
@@ -1235,6 +1275,7 @@ def _dashboard_section_writer_command(check_command: str) -> str:
 
 def _standalone_automation_surface_paths() -> tuple[str, ...]:
     return (
+        "docs/dashboard-automation-index.md",
         "docs/dashboard-index.md",
         "docs/usage-examples.md",
         "docs/dashboard-schema.md",
@@ -1251,11 +1292,25 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
     )
 
 
+def _standalone_dashboard_automation_surface_paths() -> tuple[str, ...]:
+    return (
+        "docs/dashboard-index.md",
+        "docs/usage-examples.md",
+        "docs/dashboard-schema.md",
+        "docs/dashboard-example-fixtures.md",
+        "docs/dashboard-section-writer-matrix.md",
+    )
+
+
 def _automation_index_href(docs_path: str) -> str:
     return docs_path.removeprefix("docs/")
 
 
 def _automation_index_r_project_commands(index_text: str) -> list[str]:
+    return _r_project_commands_in_bash_fences(index_text)
+
+
+def _dashboard_automation_index_r_project_commands(index_text: str) -> list[str]:
     return _r_project_commands_in_bash_fences(index_text)
 
 

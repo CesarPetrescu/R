@@ -1690,6 +1690,7 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
     assert result.returncode == 1
     assert result.stdout == ""
     assert result.stderr == (
+        "Automation index is missing link to docs/dashboard-automation-index.md.\n"
         "Automation index is missing link to docs/dashboard-example-fixtures.md.\n"
         "Automation index is missing link to docs/dashboard-section-writer-matrix.md.\n"
         "Automation index is missing link to docs/release-example-fixtures.md.\n"
@@ -1772,6 +1773,126 @@ docker compose run --build --rm test
     assert result.stderr == (
         "Docker harness is missing automation index command: "
         "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md\n"
+    )
+
+
+def test_dashboard_automation_index_guard_succeeds_when_links_and_commands_are_covered():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-dashboard-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Dashboard automation index links dashboard surfaces and matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_dashboard_automation_index_guard_reports_missing_dashboard_surface_link(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-automation-index.md",
+        """# Dashboard Automation Index
+
+- [dashboard readiness/schema index](dashboard-index.md)
+- [readiness report examples](usage-examples.md)
+- [memory-overlap schema examples](dashboard-schema.md)
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Dashboard automation index is missing link to docs/dashboard-example-fixtures.md.\n"
+        "Dashboard automation index is missing link to docs/dashboard-section-writer-matrix.md.\n"
+    )
+
+
+def test_dashboard_automation_index_guard_reports_missing_docker_coverage(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-automation-index.md",
+        """# Dashboard Automation Index
+
+- [dashboard readiness/schema index](dashboard-index.md)
+- [readiness report examples](usage-examples.md)
+- [memory-overlap schema examples](dashboard-schema.md)
+- [dashboard example fixture registry](dashboard-example-fixtures.md)
+- [dashboard section writer matrix](dashboard-section-writer-matrix.md)
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing dashboard automation index command: "
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
     )
 
 
