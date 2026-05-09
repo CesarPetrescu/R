@@ -16,6 +16,7 @@ docker compose run --build --rm test
 | [Automation index](automation-index.md) | Dashboard readiness examples in the combined automation index | `r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Dashboard schema examples in the combined automation index | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Dashboard example fixture registry guard | `r-project --root . --check-dashboard-example-fixtures` |
+| [Automation index](automation-index.md) | Dashboard section writer matrix guard | `r-project --root . --check-dashboard-section-writer-matrix` |
 | [Automation index](automation-index.md) | Release version documentation guard | `r-project --root . --check-changelog-version` |
 | [Automation index](automation-index.md) | Release tag readiness guard | `r-project --root . --check-release-tag v0.1.0 --docker-verified` |
 | [Automation index](automation-index.md) | Docs-path release checklist fixture guard | `r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json` |
