@@ -54,6 +54,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Extend the C-hosted Rust-like interpreter with comparison operators beyond equality (`!=`, `<`, `<=`, `>`, `>=`), backed by fixtures proving true/false boolean integer results and arithmetic precedence before comparisons.
 - [x] Extend the C-hosted Rust-like interpreter with conditional `if`/`else` expressions, backed by fixtures proving true/false branch selection, skipped branch non-evaluation, and scoped branch bindings.
 - [x] Extend the C-hosted Rust-like interpreter with `while` loop statements, backed by fixtures proving counter mutation/accumulation and skipped-body non-evaluation.
+- [x] Extend the C-hosted Rust-like interpreter with `fn`-like named function declarations and calls, backed by fixtures proving argument binding, return expression evaluation, scoped parameters, unknown-function diagnostics, and argument-count diagnostics.
 
 ## P2 — project quality
 
