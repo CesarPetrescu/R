@@ -2022,6 +2022,133 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
     )
 
 
+def test_cli_generates_dashboard_example_fixture_rows_from_dashboard_index(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-index.md",
+        """# Dashboard Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--generate-dashboard-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert result.stdout == (
+        "| `docs/dashboard-index.md` | Dashboard readiness report examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |\n"
+        "| `docs/dashboard-index.md` | Dashboard memory-overlap schema example. | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md` |\n"
+    )
+
+
+def test_cli_dry_runs_dashboard_example_fixture_append(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-index.md",
+        """# Dashboard Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+```
+""",
+    )
+    fixture_path = tmp_path / "docs" / "dashboard-example-fixtures.md"
+    original_fixture = """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/dashboard-index.md` | Dashboard readiness report examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+
+Run the fixture guard after adding dashboard sections:
+"""
+    write(fixture_path, original_fixture)
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-dashboard-example-fixtures",
+            "--dry-run-dashboard-example-fixtures",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert fixture_path.read_text(encoding="utf-8") == original_fixture
+    assert (
+        "| `docs/dashboard-index.md` | Dashboard memory-overlap schema example. | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md` |"
+        in result.stdout
+    )
+
+
+def test_cli_writes_dashboard_example_fixture_rows_once(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-index.md",
+        """# Dashboard Index
+
+```bash
+r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
+```
+""",
+    )
+    fixture_path = tmp_path / "docs" / "dashboard-example-fixtures.md"
+    write(
+        fixture_path,
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+    command = [
+        sys.executable,
+        "-m",
+        "r_project",
+        "--root",
+        str(tmp_path),
+        "--write-dashboard-example-fixtures",
+    ]
+
+    first = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+    second = subprocess.run(command, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+
+    assert first.returncode == 0
+    assert first.stdout == "Updated docs/dashboard-example-fixtures.md with 1 dashboard fixture row.\n"
+    assert first.stderr == ""
+    assert second.returncode == 0
+    assert second.stdout == "docs/dashboard-example-fixtures.md already contains dashboard fixture rows.\n"
+    assert second.stderr == ""
+    assert fixture_path.read_text(encoding="utf-8").count("--check-readme-examples --readme-examples-path docs/dashboard-index.md") == 1
+
+
 def test_dashboard_section_writer_matrix_guard_matches_fixture_registry_and_docker_harness():
     env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
 

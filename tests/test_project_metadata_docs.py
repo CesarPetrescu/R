@@ -140,6 +140,8 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
     assert "r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0" in text
     assert "r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0" in text
     assert "r-project --root . --check-dashboard-automation-index" in text
+    assert "r-project --root . --generate-dashboard-example-fixtures" in text
+    assert "r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures" in text
     assert "r-project --root . --check-automation-command-fixtures" in text
     assert "docker compose run --build --rm test" in text
     for command in (
@@ -148,6 +150,8 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
         "--check-readme-examples --readme-examples-path docs/automation-index.md",
         "--check-readme-schema-examples --readme-schema-path docs/automation-index.md",
         "--check-dashboard-automation-index",
+        "--generate-dashboard-example-fixtures",
+        "--write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures",
         "--check-release-example-fixtures",
         "--check-release-section-writer-matrix",
         "--check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",

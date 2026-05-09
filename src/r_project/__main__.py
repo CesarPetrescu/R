@@ -259,6 +259,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
     )
     parser.add_argument(
+        "--generate-dashboard-example-fixtures",
+        action="store_true",
+        help="Emit dashboard example fixture registry rows derived from docs/dashboard-index.md commands.",
+    )
+    parser.add_argument(
+        "--write-dashboard-example-fixtures",
+        action="store_true",
+        help="Append missing dashboard example fixture registry rows derived from docs/dashboard-index.md commands.",
+    )
+    parser.add_argument(
+        "--dry-run-dashboard-example-fixtures",
+        action="store_true",
+        help="With --write-dashboard-example-fixtures, print the updated fixture registry without modifying it.",
+    )
+    parser.add_argument(
         "--check-dashboard-section-writer-matrix",
         action="store_true",
         help=(
@@ -469,6 +484,13 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_automation_index:
         return _check_dashboard_automation_index(Path(args.root))
+    if args.generate_dashboard_example_fixtures:
+        return _generate_dashboard_example_fixtures(Path(args.root))
+    if args.write_dashboard_example_fixtures:
+        return _write_dashboard_example_fixtures(
+            Path(args.root),
+            dry_run=args.dry_run_dashboard_example_fixtures,
+        )
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
     if args.write_dashboard_section_writer_matrix:
@@ -1140,6 +1162,80 @@ def _check_dashboard_example_fixtures(root: Path) -> int:
         return 1
     print("Dashboard example fixture registry matches Docker harness commands.")
     return 0
+
+
+def _dashboard_example_fixture_rows_from_dashboard_index(root: Path) -> list[str]:
+    dashboard_index = root / "docs" / "dashboard-index.md"
+    dashboard_index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
+    return [
+        f"| `{_dashboard_example_command_path(command)}` | {_dashboard_example_command_purpose(command)} | `{command}` |"
+        for command in _dashboard_index_r_project_commands(dashboard_index_text)
+    ]
+
+
+def _generate_dashboard_example_fixtures(root: Path) -> int:
+    rows = _dashboard_example_fixture_rows_from_dashboard_index(root)
+    if not rows:
+        print("Dashboard index does not document any r-project commands.", file=sys.stderr)
+        return 1
+    for row in rows:
+        print(row)
+    return 0
+
+
+def _write_dashboard_example_fixtures(root: Path, *, dry_run: bool = False) -> int:
+    rows = _dashboard_example_fixture_rows_from_dashboard_index(root)
+    if not rows:
+        print("Dashboard index does not document any r-project commands.", file=sys.stderr)
+        return 1
+
+    fixture_path = root / "docs" / "dashboard-example-fixtures.md"
+    fixture_text = fixture_path.read_text(encoding="utf-8") if fixture_path.exists() else ""
+    existing_commands = set(_dashboard_example_fixture_registry_commands(fixture_text))
+    missing_rows = [row for row in rows if (_single_code_span(row.split("|")[-2]) or "") not in existing_commands]
+    if not missing_rows:
+        print("docs/dashboard-example-fixtures.md already contains dashboard fixture rows.")
+        return 0
+
+    updated = _append_dashboard_example_fixture_rows(fixture_text, missing_rows)
+    if dry_run:
+        print(updated, end="")
+    else:
+        fixture_path.write_text(updated, encoding="utf-8")
+        row_label = "row" if len(missing_rows) == 1 else "rows"
+        print(f"Updated docs/dashboard-example-fixtures.md with {len(missing_rows)} dashboard fixture {row_label}.")
+    return 0
+
+
+def _append_dashboard_example_fixture_rows(fixture_text: str, rows: list[str]) -> str:
+    lines = fixture_text.splitlines()
+    insertion_index = 0
+    for index, line in enumerate(lines):
+        if line.startswith("|"):
+            insertion_index = index + 1
+    updated_lines = lines[:insertion_index] + rows + lines[insertion_index:]
+    trailing_newline = "\n" if fixture_text.endswith("\n") or fixture_text else ""
+    return "\n".join(updated_lines) + trailing_newline
+
+
+def _dashboard_example_command_path(command: str) -> str:
+    parts = command.split()
+    for option in ("--readme-examples-path", "--readme-schema-path"):
+        if option in parts:
+            option_index = parts.index(option)
+            if option_index + 1 < len(parts):
+                return parts[option_index + 1]
+    return "docs/dashboard-index.md"
+
+
+def _dashboard_example_command_purpose(command: str) -> str:
+    path = _dashboard_example_command_path(command)
+    prefix = "Dashboard" if path == "docs/dashboard-index.md" else "Standalone"
+    if "--check-readme-examples" in command:
+        return f"{prefix} readiness report examples."
+    if "--check-readme-schema-examples" in command:
+        return f"{prefix} memory-overlap schema example."
+    return f"{prefix} dashboard verification command."
 
 
 def _dashboard_section_writer_matrix_rows(root: Path, variant: str | None = None) -> list[str]:
