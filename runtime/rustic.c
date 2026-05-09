@@ -108,6 +108,21 @@ static long parse_factor(struct Parser *parser) {
     char *end = NULL;
 
     skip_spaces(parser);
+    if (*parser->cursor == '(') {
+        parser->cursor++;
+        value = parse_expression(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor != ')') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+            return 0;
+        }
+        parser->cursor++;
+        return value;
+    }
+
     if (isdigit((unsigned char)*parser->cursor)) {
         value = strtol(parser->cursor, &end, 10);
         parser->cursor = end;
@@ -323,6 +338,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "undefined identifier";
     case RUSTIC_ERR_TOO_MANY_BINDINGS:
         return "too many bindings";
+    case RUSTIC_ERR_EXPECTED_CLOSING_PAREN:
+        return "expected closing parenthesis";
     default:
         return "unknown rustic interpreter error";
     }
