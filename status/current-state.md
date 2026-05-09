@@ -79,7 +79,7 @@ Last updated: 2026-05-09
 - `python3 -m r_project --root <path> --check-automation-index-commands` audits `docs/automation-index.md` fenced `r-project` commands and exits nonzero when any documented automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-automation-command-fixtures` audits `docs/automation-command-fixtures.md` table rows and exits nonzero when any indexed split-doc automation command is missing equivalent `docker-compose.yml` clean-container harness coverage.
 - `python3 -m r_project --root <path> --check-dashboard-example-fixtures` audits `docs/dashboard-example-fixtures.md` table rows and exits nonzero when any indexed dashboard readiness/schema command is missing equivalent `docker-compose.yml` clean-container harness coverage or when the registry omits a dashboard-index command.
-- `docs/dashboard-section-writer-matrix.md` maps every dashboard fixture registry check command to a corresponding README/schema writer dry-run, and `python3 -m r_project --root <path> --check-dashboard-section-writer-matrix` exits nonzero when a registry row lacks writer coverage or when a matrix command is missing from the Docker harness.
+- `docs/dashboard-section-writer-matrix.md` maps every dashboard fixture registry check command to a corresponding README/schema writer dry-run, and `python3 -m r_project --root <path> --check-dashboard-section-writer-matrix` exits nonzero when a registry row lacks writer coverage or when a matrix command is missing from the Docker harness. Add `--dashboard-section-writer-matrix-variant <label>` to require variant-labeled matrix rows for every dashboard writer command before publishing variant-specific dashboard docs.
 - `python3 -m r_project --root <path> --check-release-examples-path-safety` audits release example Markdown path override safety by proving absolute paths and `..` escapes are rejected before future checker/writer modes can touch files outside `--root`.
 - `docs/release-example-fixtures.md` indexes release-example smoke fixtures and the Docker commands that exercise them so future release-doc fixture additions remain auditable from one page.
 - Add `--memory-overlap-name-prefix <prefix>` or one or more `--memory-overlap-tag <tag>` flags to the fixture-backed memory threshold and grouped-total demos to filter spans before overlap totals or threshold violations are calculated.
@@ -156,6 +156,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
+PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 PYTHONPATH=src python3 -m r_project.lint --root .
 docker compose run --build --rm test
 ```
