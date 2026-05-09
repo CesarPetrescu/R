@@ -1693,6 +1693,7 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
         "Automation index is missing link to docs/dashboard-automation-index.md.\n"
         "Automation index is missing link to docs/dashboard-example-fixtures.md.\n"
         "Automation index is missing link to docs/dashboard-section-writer-matrix.md.\n"
+        "Automation index is missing link to docs/release-automation-index.md.\n"
         "Automation index is missing link to docs/release-example-fixtures.md.\n"
         "Automation index is missing link to docs/release-example-sections.md.\n"
         "Automation index is missing link to docs/release-section-writer-matrix.md.\n"
@@ -1970,6 +1971,207 @@ r-project --root . --check-dashboard-automation-index
     assert "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in result.stdout
     assert "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index" in result.stdout
     assert dashboard_index.read_text(encoding="utf-8").count("dashboard example fixture registry") == 0
+    assert result.stderr == ""
+
+
+def test_release_automation_index_guard_succeeds_when_links_and_commands_are_covered():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Release automation index links release surfaces and matches Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_release_automation_index_guard_reports_missing_release_surface_link(tmp_path):
+    write(
+        tmp_path / "docs" / "release-automation-index.md",
+        """# Release Automation Index
+
+- [release readiness index](release-index.md)
+- [release checklist fixture docs](release-checklist.md)
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Release automation index is missing link to docs/release/checklist.json.\n"
+        "Release automation index is missing link to docs/release-examples.md.\n"
+        "Release automation index is missing link to docs/release-example-fixtures.md.\n"
+        "Release automation index is missing link to docs/release-example-sections.md.\n"
+        "Release automation index is missing link to docs/release-section-writer-matrix.md.\n"
+    )
+
+
+def test_release_automation_index_guard_reports_missing_docker_coverage(tmp_path):
+    write(
+        tmp_path / "docs" / "release-automation-index.md",
+        """# Release Automation Index
+
+- [release readiness index](release-index.md)
+- [release checklist fixture docs](release-checklist.md)
+- [release checklist JSON fixture](release/checklist.json)
+- [release checklist examples](release-examples.md)
+- [release example fixture registry](release-example-fixtures.md)
+- [release example section registry](release-example-sections.md)
+- [release section writer matrix](release-section-writer-matrix.md)
+
+```bash
+r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
+r-project --root . --check-release-example-sections
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --check-release-examples --release-examples-path docs/release-examples.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing release automation index command: "
+        "r-project --root . --check-release-example-sections\n"
+    )
+
+
+def test_generate_release_automation_index_emits_required_links_and_commands():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--generate-release-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "- [release readiness index](release-index.md)" in result.stdout
+    assert "- [release section writer matrix](release-section-writer-matrix.md)" in result.stdout
+    assert "r-project --root . --check-release-automation-index" in result.stdout
+    assert "r-project --root . --write-release-automation-index --dry-run-release-automation-index" in result.stdout
+    assert result.stderr == ""
+
+
+def test_release_automation_index_writer_dry_run_appends_missing_links_and_commands(tmp_path):
+    release_index = tmp_path / "docs" / "release-automation-index.md"
+    write(
+        release_index,
+        """# Release Automation Index
+
+## Release surfaces
+
+- [release readiness index](release-index.md)
+
+## Verification commands
+
+```bash
+r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
+```
+
+Run the release automation index guard itself after changing links or commands:
+
+```bash
+r-project --root . --check-release-automation-index
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-automation-index",
+            "--dry-run-release-automation-index",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "- [release example section registry](release-example-sections.md)" in result.stdout
+    assert "r-project --root . --check-release-section-writer-matrix" in result.stdout
+    assert "r-project --root . --write-release-automation-index --dry-run-release-automation-index" in result.stdout
+    assert release_index.read_text(encoding="utf-8").count("release example section registry") == 0
     assert result.stderr == ""
 
 

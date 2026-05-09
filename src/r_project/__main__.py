@@ -219,6 +219,26 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--check-release-automation-index",
+        action="store_true",
+        help="Exit nonzero when docs/release-automation-index.md omits release links or Docker-covered commands.",
+    )
+    parser.add_argument(
+        "--generate-release-automation-index",
+        action="store_true",
+        help="Emit release automation index link and command rows derived from the built-in release surface registry.",
+    )
+    parser.add_argument(
+        "--write-release-automation-index",
+        action="store_true",
+        help="Append missing release automation index links and commands derived from the built-in release surface registry.",
+    )
+    parser.add_argument(
+        "--dry-run-release-automation-index",
+        action="store_true",
+        help="With --write-release-automation-index, print the updated release automation index without modifying it.",
+    )
+    parser.add_argument(
         "--release-section-writer-matrix-version",
         default="0.2.0",
         metavar="VERSION",
@@ -489,6 +509,15 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.check_release_section_writer_matrix:
         return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
+    if args.check_release_automation_index:
+        return _check_release_automation_index(Path(args.root))
+    if args.generate_release_automation_index:
+        return _generate_release_automation_index(Path(args.root))
+    if args.write_release_automation_index:
+        return _write_release_automation_index(
+            Path(args.root),
+            dry_run=args.dry_run_release_automation_index,
+        )
     if args.check_release_examples_path_safety:
         return _check_release_examples_path_safety(Path(args.root))
     if args.check_automation_index_links:
@@ -1124,6 +1153,141 @@ def _check_automation_command_fixtures(root: Path) -> int:
     return 0
 
 
+def _check_release_automation_index(root: Path) -> int:
+    release_index = root / "docs" / "release-automation-index.md"
+    compose = root / "docker-compose.yml"
+    index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+
+    missing_links = [
+        docs_path
+        for docs_path in _standalone_release_automation_surface_paths()
+        if f"({_automation_index_href(docs_path)})" not in index_text
+    ]
+    if missing_links:
+        for docs_path in missing_links:
+            print(f"Release automation index is missing link to {docs_path}.", file=sys.stderr)
+        return 1
+
+    documented_commands = _release_automation_index_r_project_commands(index_text)
+    if not documented_commands:
+        print("Release automation index does not document any r-project verification commands.", file=sys.stderr)
+        return 1
+
+    missing_commands = [
+        command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if missing_commands:
+        for command in missing_commands:
+            print(f"Docker harness is missing release automation index command: {command}", file=sys.stderr)
+        return 1
+
+    print("Release automation index links release surfaces and matches Docker harness commands.")
+    return 0
+
+
+def _generate_release_automation_index(root: Path) -> int:
+    del root
+    for row in _release_automation_index_surface_rows():
+        print(row)
+    print()
+    print("```bash")
+    for command in _release_automation_index_required_commands():
+        print(command)
+    print("```")
+    return 0
+
+
+def _write_release_automation_index(root: Path, *, dry_run: bool = False) -> int:
+    release_index = root / "docs" / "release-automation-index.md"
+    index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else _release_automation_index_skeleton()
+    updated = _updated_release_automation_index(index_text)
+    if updated == index_text:
+        print("docs/release-automation-index.md already contains release automation links and commands.")
+        return 0
+    if dry_run:
+        print(updated, end="")
+    else:
+        release_index.parent.mkdir(parents=True, exist_ok=True)
+        release_index.write_text(updated, encoding="utf-8")
+        print("Updated docs/release-automation-index.md with release automation links and commands.")
+    return 0
+
+
+def _updated_release_automation_index(index_text: str) -> str:
+    text = index_text if index_text else _release_automation_index_skeleton()
+    existing_links = {
+        docs_path
+        for docs_path in _standalone_release_automation_surface_paths()
+        if f"({_automation_index_href(docs_path)})" in text
+    }
+    missing_link_rows = [
+        row
+        for docs_path, row in zip(_standalone_release_automation_surface_paths(), _release_automation_index_surface_rows())
+        if docs_path not in existing_links
+    ]
+    existing_commands = set(_release_automation_index_r_project_commands(text))
+    missing_commands = [command for command in _release_automation_index_required_commands() if command not in existing_commands]
+    if missing_link_rows:
+        text = _append_markdown_list_rows_to_section(text, "Release surfaces", missing_link_rows)
+    if missing_commands:
+        text = _append_bash_fence_commands(text, missing_commands)
+    return text
+
+
+def _release_automation_index_skeleton() -> str:
+    return """# Release Automation Index
+
+## Release surfaces
+
+## Verification commands
+
+```bash
+```
+"""
+
+
+def _release_automation_index_surface_rows() -> list[str]:
+    return [
+        f"- [{_release_automation_surface_label(docs_path)}]({_automation_index_href(docs_path)})"
+        for docs_path in _standalone_release_automation_surface_paths()
+    ]
+
+
+def _release_automation_surface_label(docs_path: str) -> str:
+    labels = {
+        "docs/release-index.md": "release readiness index",
+        "docs/release-checklist.md": "release checklist fixture docs",
+        "docs/release/checklist.json": "release checklist JSON fixture",
+        "docs/release-examples.md": "release checklist examples",
+        "docs/release-example-fixtures.md": "release example fixture registry",
+        "docs/release-example-sections.md": "release example section registry",
+        "docs/release-section-writer-matrix.md": "release section writer matrix",
+    }
+    return labels[docs_path]
+
+
+def _release_automation_index_required_commands() -> list[str]:
+    return [
+        "r-project --root . --check-changelog-version",
+        "r-project --root . --check-release-tag v0.1.0 --docker-verified",
+        "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json",
+        "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md",
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md",
+        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md",
+        "r-project --root . --check-release-example-fixtures",
+        "r-project --root . --check-release-example-sections",
+        "r-project --root . --check-release-section-writer-matrix",
+        "r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
+        "r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
+        "r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
+        "r-project --root . --check-release-examples-path-safety",
+        "r-project --root . --generate-release-automation-index",
+        "r-project --root . --write-release-automation-index --dry-run-release-automation-index",
+        "r-project --root . --check-release-automation-index",
+    ]
+
+
 def _check_dashboard_automation_index(root: Path) -> int:
     dashboard_index = root / "docs" / "dashboard-automation-index.md"
     compose = root / "docker-compose.yml"
@@ -1534,6 +1698,7 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
         "docs/dashboard-schema.md",
         "docs/dashboard-example-fixtures.md",
         "docs/dashboard-section-writer-matrix.md",
+        "docs/release-automation-index.md",
         "docs/release-index.md",
         "docs/release-checklist.md",
         "docs/release/checklist.json",
@@ -1555,11 +1720,27 @@ def _standalone_dashboard_automation_surface_paths() -> tuple[str, ...]:
     )
 
 
+def _standalone_release_automation_surface_paths() -> tuple[str, ...]:
+    return (
+        "docs/release-index.md",
+        "docs/release-checklist.md",
+        "docs/release/checklist.json",
+        "docs/release-examples.md",
+        "docs/release-example-fixtures.md",
+        "docs/release-example-sections.md",
+        "docs/release-section-writer-matrix.md",
+    )
+
+
 def _automation_index_href(docs_path: str) -> str:
     return docs_path.removeprefix("docs/")
 
 
 def _automation_index_r_project_commands(index_text: str) -> list[str]:
+    return _r_project_commands_in_bash_fences(index_text)
+
+
+def _release_automation_index_r_project_commands(index_text: str) -> list[str]:
     return _r_project_commands_in_bash_fences(index_text)
 
 
