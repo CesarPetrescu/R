@@ -16,6 +16,8 @@ docker compose run --build --rm test
 | [Automation index](automation-index.md) | Dashboard readiness examples in the combined automation index | `r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Dashboard schema examples in the combined automation index | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md` |
 | [Automation index](automation-index.md) | Dashboard automation index guard | `r-project --root . --check-dashboard-automation-index` |
+| [Automation index](automation-index.md) | Dashboard example fixture row generator | `r-project --root . --generate-dashboard-example-fixtures` |
+| [Automation index](automation-index.md) | Dashboard example fixture row writer dry-run | `r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures` |
 | [Automation index](automation-index.md) | Dashboard example fixture registry guard | `r-project --root . --check-dashboard-example-fixtures` |
 | [Automation index](automation-index.md) | Dashboard section writer matrix guard | `r-project --root . --check-dashboard-section-writer-matrix` |
 | [Automation index](automation-index.md) | Dashboard section writer matrix variant preview guard | `r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact` |

@@ -101,3 +101,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release section writer matrix row generator so release docs can preview registry-derived current/future writer rows before appending them.
 - [x] Add a release section writer matrix row writer so release docs can safely append generated current/future writer rows after preview.
 - [x] Add a dashboard automation index guard so future dashboard-only automation docs must link every dashboard surface and keep documented commands covered in Docker.
+- [x] Add a dashboard example fixture row writer so dashboard-index commands can safely append missing registry rows after preview.

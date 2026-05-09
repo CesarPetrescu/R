@@ -29,7 +29,7 @@ The first scaffold is a Python package, `r_project`, with a CLI that analyzes an
 - README-style path overrides for compact memory-overlap JSON Schema drift checks and writers when dashboard docs move out of the main README, plus a standalone checked `docs/dashboard-schema.md` schema surface for dashboard consumers
 - an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
 - an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands with root-relative path overrides for the machine-readable checklist JSON
-- a standalone release-example fixture index that can be audited against Docker coverage, a release example section registry and release section writer matrix with row generator and writer dry-run commands for independently named Markdown snippets, a dashboard example fixture registry and dashboard section writer matrix with configurable variant-preview checks plus variant row generator and writer dry-run commands for new dashboard preview labels, a release examples path-safety audit guard for Markdown path override modes, an automation command index guard for combined docs, and an automation command fixture index guard for split-doc command coverage
+- a standalone release-example fixture index that can be audited against Docker coverage, a release example section registry and release section writer matrix with row generator and writer dry-run commands for independently named Markdown snippets, a dashboard example fixture registry with row generator and writer dry-run commands, a dashboard section writer matrix with configurable variant-preview checks plus variant row generator and writer dry-run commands for new dashboard preview labels, a release examples path-safety audit guard for Markdown path override modes, an automation command index guard for combined docs, and an automation command fixture index guard for split-doc command coverage
 - a lightweight Python syntax lint command for source and test files
 - a small vector memory-layout helper that includes alignment padding in
   payload offsets and total byte size calculations
@@ -156,6 +156,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
+PYTHONPATH=src python3 -m r_project --root . --generate-dashboard-example-fixtures
+PYTHONPATH=src python3 -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
@@ -350,6 +352,8 @@ r-project --root . --check-automation-index-links
 r-project --root . --check-automation-index-commands
 r-project --root . --check-automation-command-fixtures
 r-project --root . --check-dashboard-automation-index
+r-project --root . --generate-dashboard-example-fixtures
+r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
 r-project --root . --check-dashboard-example-fixtures
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
@@ -361,7 +365,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 91, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 54, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 92, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 55, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -373,7 +377,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 91 |
+| Completed backlog items | 92 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -383,7 +387,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 54 | 0 | None |
+| P2 | 55 | 0 | None |
 
 ## Next backlog item
 
@@ -552,6 +556,8 @@ PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
 PYTHONPATH=src python3 -m r_project --root . --check-automation-command-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-automation-index
+PYTHONPATH=src python3 -m r_project --root . --generate-dashboard-example-fixtures
+PYTHONPATH=src python3 -m r_project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact

@@ -1,6 +1,6 @@
 # Dashboard Example Fixture Registry
 
-This registry maps dashboard-facing README-style example surfaces to the exact `r-project` commands that Docker verification must exercise. Use it when dashboard docs split readiness or schema examples across multiple independently checked Markdown sections.
+This registry maps dashboard-facing README-style example surfaces to the exact `r-project` commands that Docker verification must exercise. Use it when dashboard docs split readiness or schema examples across multiple independently checked Markdown sections. Generate or preview missing registry rows from the dashboard index with `r-project --root . --generate-dashboard-example-fixtures` or `r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures` before appending them.
 
 | Markdown path | Purpose | Docker verification command |
 | --- | --- | --- |

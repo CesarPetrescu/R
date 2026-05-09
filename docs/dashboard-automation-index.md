@@ -17,6 +17,8 @@ Run these Docker-covered commands before publishing dashboard docs changes:
 ```bash
 r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+r-project --root . --generate-dashboard-example-fixtures
+r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures
 r-project --root . --check-dashboard-example-fixtures
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
