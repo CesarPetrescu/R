@@ -96,3 +96,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a configurable release-section writer matrix preview version so future release docs can audit non-`0.2.0` dry-run targets.
 - [x] Add a dashboard section writer matrix guard so readiness/schema writer dry-runs stay covered for every dashboard fixture registry row.
 - [x] Add a configurable dashboard-section writer matrix preview mode so variant-specific dashboard docs can be audited against Docker coverage.
+- [x] Add a dashboard section writer matrix row generator so new variant-specific dashboard docs can preview registry-derived writer rows before appending them.
