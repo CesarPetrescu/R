@@ -10,6 +10,11 @@ typedef enum RusticStatus {
     RUSTIC_ERR_EXPECTED_INTEGER = 1,
     RUSTIC_ERR_EXPECTED_OPERATOR = 2,
     RUSTIC_ERR_TRAILING_INPUT = 3,
+    RUSTIC_ERR_EXPECTED_IDENTIFIER = 4,
+    RUSTIC_ERR_EXPECTED_EQUALS = 5,
+    RUSTIC_ERR_EXPECTED_SEMICOLON = 6,
+    RUSTIC_ERR_UNDEFINED_IDENTIFIER = 7,
+    RUSTIC_ERR_TOO_MANY_BINDINGS = 8,
 } RusticStatus;
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

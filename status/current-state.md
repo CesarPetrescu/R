@@ -14,7 +14,7 @@ Last updated: 2026-05-09
 
 ## Implemented behavior
 
-- `runtime/include/rustic.h` and `runtime/rustic.c` expose `rustic_eval_expression(...)`, a C-hosted Rust-like integer expression evaluator with whitespace skipping, `+`, `*`, multiplication precedence, and stable parse-error status messages; `tests/fixtures/rustic_expression_driver.c` demonstrates the API end to end.
+- `runtime/include/rustic.h` and `runtime/rustic.c` expose `rustic_eval_expression(...)`, a C-hosted Rust-like integer expression evaluator with whitespace skipping, `+`, `*`, multiplication precedence, single-scope `let` bindings, identifier lookup, undefined-identifier errors, and stable parse-error status messages; `tests/fixtures/rustic_expression_driver.c` demonstrates the API end to end.
 - `r_project.report.analyze_project(root)` reads a checkout and returns backlog counts, per-priority backlog groups, the next unchecked item, and active blocker status.
 - `ProjectReport.to_markdown()` formats readiness data as GitHub-flavored Markdown for human status pages.
 - `python3 -m r_project --root <path> --json` emits the report as stable JSON for cron/agent consumption.
