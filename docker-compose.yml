@@ -63,4 +63,8 @@ services:
       && python -m r_project --root . --check-automation-index-commands
       && python -m r_project --root . --check-automation-command-fixtures
       && python -m r_project --root . --check-dashboard-example-fixtures
+      && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-schema.md
+      && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-index.md
+      && python -m r_project --root . --check-dashboard-section-writer-matrix
       && python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0"

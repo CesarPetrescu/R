@@ -94,3 +94,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a dashboard automation fixture registry so future dashboard docs split readiness/schema examples across multiple independently checked Markdown sections.
 - [x] Add a dashboard section writer matrix so readiness and schema example writers can target independently named Markdown sections.
 - [x] Add a configurable release-section writer matrix preview version so future release docs can audit non-`0.2.0` dry-run targets.
+- [x] Add a dashboard section writer matrix guard so readiness/schema writer dry-runs stay covered for every dashboard fixture registry row.

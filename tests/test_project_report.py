@@ -1691,6 +1691,7 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
     assert result.stdout == ""
     assert result.stderr == (
         "Automation index is missing link to docs/dashboard-example-fixtures.md.\n"
+        "Automation index is missing link to docs/dashboard-section-writer-matrix.md.\n"
         "Automation index is missing link to docs/release-example-fixtures.md.\n"
         "Automation index is missing link to docs/release-example-sections.md.\n"
         "Automation index is missing link to docs/release-section-writer-matrix.md.\n"
@@ -1897,6 +1898,139 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
     assert result.stderr == (
         "Dashboard example fixture registry is missing dashboard-index command: "
         "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
+    )
+
+
+def test_dashboard_section_writer_matrix_guard_matches_fixture_registry_and_docker_harness():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-dashboard-section-writer-matrix",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == "Dashboard section writer matrix matches fixture registry and Docker harness commands.\n"
+    assert result.stderr == ""
+
+
+def test_dashboard_section_writer_matrix_guard_reports_missing_writer_from_registry(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/dashboard-index.md` | Combined dashboard readiness report examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+| `docs/dashboard-index.md` | Combined dashboard memory-overlap schema example. | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docs" / "dashboard-section-writer-matrix.md",
+        """# Dashboard Section Writer Matrix
+
+| Markdown path | Section | Example type | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/dashboard-index.md` | First JSON and Markdown fences | Readiness report examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q
+      && python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md
+      && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-index.md"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-section-writer-matrix",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Dashboard section writer matrix is missing writer command for dashboard fixture: "
+        "r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-index.md\n"
+    )
+
+
+def test_dashboard_section_writer_matrix_guard_reports_missing_docker_command(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/dashboard-index.md` | Combined dashboard readiness report examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docs" / "dashboard-section-writer-matrix.md",
+        """# Dashboard Section Writer Matrix
+
+| Markdown path | Section | Example type | Docker-covered writer command |
+| --- | --- | --- | --- |
+| `docs/dashboard-index.md` | First JSON and Markdown fences | Readiness report examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md` |
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m pytest -q"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-dashboard-section-writer-matrix",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Docker harness is missing dashboard section writer matrix command: "
+        "r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/dashboard-index.md\n"
     )
 
 

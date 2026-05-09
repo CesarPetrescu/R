@@ -230,6 +230,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
     )
     parser.add_argument(
+        "--check-dashboard-section-writer-matrix",
+        action="store_true",
+        help=(
+            "Exit nonzero when docs/dashboard-section-writer-matrix.md omits dashboard example writer "
+            "dry-runs or Docker coverage."
+        ),
+    )
+    parser.add_argument(
         "--docker-verified",
         action="store_true",
         help="With --check-release-tag, confirm docker compose run --build --rm test has passed in this release run.",
@@ -392,6 +400,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
+    if args.check_dashboard_section_writer_matrix:
+        return _check_dashboard_section_writer_matrix(Path(args.root))
     if args.write_release_examples:
         root = Path(args.root)
         try:
@@ -959,12 +969,60 @@ def _check_dashboard_example_fixtures(root: Path) -> int:
     return 0
 
 
+def _check_dashboard_section_writer_matrix(root: Path) -> int:
+    matrix = root / "docs" / "dashboard-section-writer-matrix.md"
+    registry = root / "docs" / "dashboard-example-fixtures.md"
+    compose = root / "docker-compose.yml"
+    matrix_text = matrix.read_text(encoding="utf-8") if matrix.exists() else ""
+    registry_text = registry.read_text(encoding="utf-8") if registry.exists() else ""
+    compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
+    matrix_commands = _dashboard_section_writer_matrix_commands(matrix_text)
+    required_writer_commands = [
+        _dashboard_section_writer_command(command) for command in _dashboard_example_fixture_registry_commands(registry_text)
+    ]
+
+    if not matrix_commands:
+        print("Dashboard section writer matrix does not list any writer commands.", file=sys.stderr)
+        return 1
+
+    missing_writer_commands = [command for command in required_writer_commands if command not in matrix_commands]
+    if missing_writer_commands:
+        for command in missing_writer_commands:
+            print(
+                f"Dashboard section writer matrix is missing writer command for dashboard fixture: {command}",
+                file=sys.stderr,
+            )
+        return 1
+
+    missing_docker_commands = [
+        command for command in matrix_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
+    ]
+    if missing_docker_commands:
+        for command in missing_docker_commands:
+            print(f"Docker harness is missing dashboard section writer matrix command: {command}", file=sys.stderr)
+        return 1
+
+    print("Dashboard section writer matrix matches fixture registry and Docker harness commands.")
+    return 0
+
+
+def _dashboard_section_writer_command(check_command: str) -> str:
+    if "--check-readme-examples" in check_command:
+        return check_command.replace("--check-readme-examples", "--write-readme-examples --dry-run-readme-examples", 1)
+    if "--check-readme-schema-examples" in check_command:
+        return check_command.replace(
+            "--check-readme-schema-examples", "--write-readme-schema-examples --dry-run-readme-schema-examples", 1
+        )
+    return check_command
+
+
 def _standalone_automation_surface_paths() -> tuple[str, ...]:
     return (
         "docs/dashboard-index.md",
         "docs/usage-examples.md",
         "docs/dashboard-schema.md",
         "docs/dashboard-example-fixtures.md",
+        "docs/dashboard-section-writer-matrix.md",
         "docs/release-index.md",
         "docs/release-checklist.md",
         "docs/release/checklist.json",
@@ -1021,6 +1079,10 @@ def _automation_command_fixture_index_commands(index_text: str) -> list[str]:
 
 
 def _dashboard_example_fixture_registry_commands(index_text: str) -> list[str]:
+    return _markdown_table_code_span_commands(index_text)
+
+
+def _dashboard_section_writer_matrix_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
 
 
