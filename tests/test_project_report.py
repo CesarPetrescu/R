@@ -2622,6 +2622,47 @@ def test_release_section_writer_matrix_guard_matches_registry_and_docker_harness
     assert result.stderr == ""
 
 
+def test_cli_generates_release_section_writer_matrix_rows_from_registry(tmp_path):
+    write(
+        tmp_path / "docs" / "release-example-sections.md",
+        """# Release Example Section Registry
+
+| Markdown path | Section | Docker verification command |
+| --- | --- | --- |
+| `docs/release-examples.md` | First JSON fence | `r-project --root . --check-release-examples --release-examples-path docs/release-examples.md` |
+| `docs/automation-index.md` | Embedded release checklist example | `r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--generate-release-section-writer-matrix",
+            "--release-section-writer-matrix-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert result.stdout == (
+        "| `docs/release-examples.md` | First JSON fence | Current package version | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md` |\n"
+        "| `docs/release-examples.md` | First JSON fence | Future package version `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md` |\n"
+        "| `docs/automation-index.md` | Embedded release checklist example | Current package version | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |\n"
+        "| `docs/automation-index.md` | Embedded release checklist example | Future package version `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |\n"
+    )
+
+
 def test_release_section_writer_matrix_guard_reports_missing_future_version_writer(tmp_path):
     write(
         tmp_path / "docs" / "release-example-sections.md",

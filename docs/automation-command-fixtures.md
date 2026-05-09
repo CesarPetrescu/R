@@ -34,6 +34,7 @@ docker compose run --build --rm test
 | [Automation index](automation-index.md) | Release example section registry guard | `r-project --root . --check-release-example-sections` |
 | [Automation index](automation-index.md) | Release section writer matrix guard | `r-project --root . --check-release-section-writer-matrix` |
 | [Automation index](automation-index.md) | Configurable release section writer matrix guard | `r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0` |
+| [Automation index](automation-index.md) | Release section writer matrix row generator | `r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0` |
 | [Automation index](automation-index.md) | Release examples path safety audit | `r-project --root . --check-release-examples-path-safety` |
 | [Automation index](automation-index.md) | Automation index standalone-link guard | `r-project --root . --check-automation-index-links` |
 | [Automation index](automation-index.md) | Automation index command coverage guard | `r-project --root . --check-automation-index-commands` |

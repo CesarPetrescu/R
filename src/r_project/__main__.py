@@ -196,12 +196,20 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--generate-release-section-writer-matrix",
+        action="store_true",
+        help=(
+            "Emit current-version and future-version release section writer matrix rows derived from "
+            "docs/release-example-sections.md."
+        ),
+    )
+    parser.add_argument(
         "--release-section-writer-matrix-version",
         default="0.2.0",
         metavar="VERSION",
         help=(
-            "With --check-release-section-writer-matrix, require future-version writer dry-runs for "
-            "this package version instead of the default 0.2.0 preview target."
+            "With --check-release-section-writer-matrix or --generate-release-section-writer-matrix, "
+            "use this package version instead of the default 0.2.0 preview target."
         ),
     )
     parser.add_argument(
@@ -420,6 +428,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_release_example_fixtures(Path(args.root))
     if args.check_release_example_sections:
         return _check_release_example_sections(Path(args.root))
+    if args.generate_release_section_writer_matrix:
+        return _generate_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_section_writer_matrix:
         return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_examples_path_safety:
@@ -886,6 +896,28 @@ def _check_release_section_writer_matrix(root: Path, future_version: str = "0.2.
     return 0
 
 
+def _release_section_writer_matrix_rows(root: Path, future_version: str = "0.2.0") -> list[str]:
+    registry = root / "docs" / "release-example-sections.md"
+    registry_text = registry.read_text(encoding="utf-8") if registry.exists() else ""
+    rows: list[str] = []
+    for path, section, check_command in _release_example_section_registry_rows(registry_text):
+        current_command = _release_section_writer_command(check_command)
+        future_command = _future_release_section_writer_command(current_command, future_version)
+        rows.append(f"| `{path}` | {section} | Current package version | `{current_command}` |")
+        rows.append(f"| `{path}` | {section} | Future package version `{future_version}` | `{future_command}` |")
+    return rows
+
+
+def _generate_release_section_writer_matrix(root: Path, future_version: str = "0.2.0") -> int:
+    rows = _release_section_writer_matrix_rows(root, future_version)
+    if not rows:
+        print("Release example section registry does not list any Docker verification commands.", file=sys.stderr)
+        return 1
+    for row in rows:
+        print(row)
+    return 0
+
+
 def _release_section_writer_command(check_command: str) -> str:
     return check_command.replace("--check-release-examples", "--write-release-examples --dry-run-release-examples", 1)
 
@@ -1196,6 +1228,19 @@ def _release_example_fixture_index_commands(index_text: str) -> list[str]:
 
 def _release_example_section_registry_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
+
+
+def _release_example_section_registry_rows(index_text: str) -> list[tuple[str, str, str]]:
+    rows: list[tuple[str, str, str]] = []
+    for line in index_text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 3 or cells[0] in {"Markdown path", "---"}:
+            continue
+        path = _single_code_span(cells[0])
+        command = _single_code_span(cells[-1])
+        if path is not None and command is not None:
+            rows.append((path, cells[1], command))
+    return rows
 
 
 def _release_section_writer_matrix_commands(index_text: str) -> list[str]:
