@@ -254,6 +254,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when docs/dashboard-automation-index.md omits dashboard links or Docker-covered commands.",
     )
     parser.add_argument(
+        "--generate-dashboard-automation-index",
+        action="store_true",
+        help="Emit dashboard automation index link and command rows derived from the built-in dashboard surface registry.",
+    )
+    parser.add_argument(
+        "--write-dashboard-automation-index",
+        action="store_true",
+        help="Append missing dashboard automation index links and commands derived from the built-in dashboard surface registry.",
+    )
+    parser.add_argument(
+        "--dry-run-dashboard-automation-index",
+        action="store_true",
+        help="With --write-dashboard-automation-index, print the updated dashboard automation index without modifying it.",
+    )
+    parser.add_argument(
         "--check-dashboard-example-fixtures",
         action="store_true",
         help="Exit nonzero when docs/dashboard-example-fixtures.md lists dashboard commands missing from docker-compose.yml.",
@@ -484,6 +499,13 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_automation_index:
         return _check_dashboard_automation_index(Path(args.root))
+    if args.generate_dashboard_automation_index:
+        return _generate_dashboard_automation_index(Path(args.root))
+    if args.write_dashboard_automation_index:
+        return _write_dashboard_automation_index(
+            Path(args.root),
+            dry_run=args.dry_run_dashboard_automation_index,
+        )
     if args.generate_dashboard_example_fixtures:
         return _generate_dashboard_example_fixtures(Path(args.root))
     if args.write_dashboard_example_fixtures:
@@ -1133,6 +1155,141 @@ def _check_dashboard_automation_index(root: Path) -> int:
 
     print("Dashboard automation index links dashboard surfaces and matches Docker harness commands.")
     return 0
+
+
+def _generate_dashboard_automation_index(root: Path) -> int:
+    del root
+    for row in _dashboard_automation_index_surface_rows():
+        print(row)
+    print()
+    print("```bash")
+    for command in _dashboard_automation_index_required_commands():
+        print(command)
+    print("```")
+    return 0
+
+
+def _write_dashboard_automation_index(root: Path, *, dry_run: bool = False) -> int:
+    dashboard_index = root / "docs" / "dashboard-automation-index.md"
+    index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else _dashboard_automation_index_skeleton()
+    updated = _updated_dashboard_automation_index(index_text)
+    if updated == index_text:
+        print("docs/dashboard-automation-index.md already contains dashboard automation links and commands.")
+        return 0
+    if dry_run:
+        print(updated, end="")
+    else:
+        dashboard_index.parent.mkdir(parents=True, exist_ok=True)
+        dashboard_index.write_text(updated, encoding="utf-8")
+        print("Updated docs/dashboard-automation-index.md with dashboard automation links and commands.")
+    return 0
+
+
+def _updated_dashboard_automation_index(index_text: str) -> str:
+    text = index_text if index_text else _dashboard_automation_index_skeleton()
+    existing_links = {
+        docs_path
+        for docs_path in _standalone_dashboard_automation_surface_paths()
+        if f"({_automation_index_href(docs_path)})" in text
+    }
+    missing_link_rows = [
+        row
+        for docs_path, row in zip(_standalone_dashboard_automation_surface_paths(), _dashboard_automation_index_surface_rows())
+        if docs_path not in existing_links
+    ]
+    existing_commands = set(_dashboard_automation_index_r_project_commands(text))
+    missing_commands = [
+        command for command in _dashboard_automation_index_required_commands() if command not in existing_commands
+    ]
+    if missing_link_rows:
+        text = _append_markdown_list_rows_to_section(text, "Dashboard surfaces", missing_link_rows)
+    if missing_commands:
+        text = _append_bash_fence_commands(text, missing_commands)
+    return text
+
+
+def _dashboard_automation_index_skeleton() -> str:
+    return """# Dashboard Automation Index
+
+## Dashboard surfaces
+
+## Verification commands
+
+```bash
+```
+"""
+
+
+def _dashboard_automation_index_surface_rows() -> list[str]:
+    return [
+        f"- [{_dashboard_automation_surface_label(docs_path)}]({_automation_index_href(docs_path)})"
+        for docs_path in _standalone_dashboard_automation_surface_paths()
+    ]
+
+
+def _dashboard_automation_surface_label(docs_path: str) -> str:
+    labels = {
+        "docs/dashboard-index.md": "dashboard readiness/schema index",
+        "docs/usage-examples.md": "readiness report examples",
+        "docs/dashboard-schema.md": "memory-overlap schema examples",
+        "docs/dashboard-example-fixtures.md": "dashboard example fixture registry",
+        "docs/dashboard-section-writer-matrix.md": "dashboard section writer matrix",
+    }
+    return labels[docs_path]
+
+
+def _dashboard_automation_index_required_commands() -> list[str]:
+    return [
+        "r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md",
+        "r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md",
+        "r-project --root . --generate-dashboard-example-fixtures",
+        "r-project --root . --write-dashboard-example-fixtures --dry-run-dashboard-example-fixtures",
+        "r-project --root . --check-dashboard-example-fixtures",
+        "r-project --root . --check-dashboard-section-writer-matrix",
+        "r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
+        "r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
+        "r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact",
+        "r-project --root . --generate-dashboard-automation-index",
+        "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index",
+        "r-project --root . --check-dashboard-automation-index",
+    ]
+
+
+def _append_markdown_list_rows_to_section(text: str, section: str, rows: list[str]) -> str:
+    section_start = _markdown_section_start(text, section)
+    if section_start == -1:
+        insertion = f"\n## {section}\n\n" + "\n".join(rows) + "\n"
+        return text.rstrip() + insertion + ("\n" if text else "")
+    next_section = _next_markdown_section_start(text, section_start + 1)
+    section_end = len(text) if next_section == -1 else next_section
+    insertion_index = section_end
+    section_text = text[section_start:section_end]
+    for line_start, line in _line_offsets(section_text):
+        if line.startswith("-"):
+            insertion_index = section_start + line_start + len(line)
+    insertion = ("\n" if insertion_index > 0 and text[insertion_index - 1] != "\n" else "") + "\n".join(rows) + "\n"
+    return text[:insertion_index] + insertion + text[insertion_index:]
+
+
+def _append_bash_fence_commands(text: str, commands: list[str]) -> str:
+    fence_start = text.find("```bash\n")
+    if fence_start == -1:
+        insertion = "\n```bash\n" + "\n".join(commands) + "\n```\n"
+        return text.rstrip() + insertion
+    fence_end = text.find("\n```", fence_start + len("```bash\n"))
+    if fence_end == -1:
+        return text.rstrip() + "\n" + "\n".join(commands) + "\n```\n"
+    insertion = ("\n" if fence_end > 0 and text[fence_end - 1] != "\n" else "") + "\n".join(commands)
+    return text[:fence_end] + insertion + text[fence_end:]
+
+
+def _line_offsets(text: str) -> list[tuple[int, str]]:
+    offsets: list[tuple[int, str]] = []
+    start = 0
+    for line in text.splitlines(keepends=True):
+        offsets.append((start, line))
+        start += len(line)
+    return offsets
 
 
 def _check_dashboard_example_fixtures(root: Path) -> int:

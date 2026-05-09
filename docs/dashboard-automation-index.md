@@ -24,6 +24,8 @@ r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --generate-dashboard-automation-index
+r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index
 ```
 
 Run the dashboard automation index guard itself after changing links or commands:
