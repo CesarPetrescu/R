@@ -50,20 +50,29 @@ services:
       && python -m r_project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md
       && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
       && python -m r_project --root . --check-release-example-fixtures
       && python -m r_project --root . --check-release-example-sections
       && python -m r_project --root . --check-release-section-writer-matrix
       && python -m r_project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
+      && python -m r_project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.3.0
       && python -m r_project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
+      && python -m r_project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.3.0
       && python -m r_project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
+      && python -m r_project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.3.0
       && python -m r_project --root . --check-release-examples-path-safety
       && python -m r_project --root . --generate-release-automation-index
+      && python -m r_project --root . --generate-release-automation-index --release-automation-index-version 0.3.0
       && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index
+      && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.3.0
       && python -m r_project --root . --check-release-automation-index
+      && python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.3.0
       && python -m r_project --root . --check-automation-index-links
       && python -m r_project --root . --check-automation-index-commands
       && python -m r_project --root . --check-automation-command-fixtures

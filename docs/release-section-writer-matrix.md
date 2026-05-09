@@ -8,6 +8,8 @@ This matrix lists the release checklist Markdown sections whose writer dry-runs 
 | `docs/release-examples.md` | First JSON fence | Future package version `0.2.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md` |
 | `docs/automation-index.md` | Embedded release checklist example | Current package version | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
 | `docs/automation-index.md` | Embedded release checklist example | Future package version `0.2.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
+| `docs/release-examples.md` | First JSON fence | Future package version `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/release-examples.md` |
+| `docs/automation-index.md` | Embedded release checklist example | Future package version `0.3.0` | `r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.3.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'` |
 
 Run the matrix guard after adding release checklist sections or future-version snippets:
 

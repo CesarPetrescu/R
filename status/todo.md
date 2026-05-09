@@ -5,8 +5,8 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-2. Add a release automation index variant/version selector if release-only docs start needing multiple named preview profiles beyond the default generated link/command rows.
-3. Add a dashboard automation index variant selector if dashboard-only docs start needing multiple named preview profiles beyond the default generated link/command rows.
+2. Add a dashboard automation index variant selector if dashboard-only docs start needing multiple named preview profiles beyond the default generated link/command rows.
+3. Add release automation index guard coverage for requiring named profile blocks if release docs eventually need multiple simultaneous preview-version profiles in the same document.
 
 ## Every-run checklist
 

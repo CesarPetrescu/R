@@ -239,6 +239,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="With --write-release-automation-index, print the updated release automation index without modifying it.",
     )
     parser.add_argument(
+        "--release-automation-index-version",
+        default="0.2.0",
+        metavar="VERSION",
+        help=(
+            "With --check-release-automation-index, --generate-release-automation-index, "
+            "or --write-release-automation-index, use this release preview version instead of "
+            "the default 0.2.0 target."
+        ),
+    )
+    parser.add_argument(
         "--release-section-writer-matrix-version",
         default="0.2.0",
         metavar="VERSION",
@@ -510,13 +520,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_release_section_writer_matrix:
         return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_automation_index:
-        return _check_release_automation_index(Path(args.root))
+        return _check_release_automation_index(Path(args.root), args.release_automation_index_version)
     if args.generate_release_automation_index:
-        return _generate_release_automation_index(Path(args.root))
+        return _generate_release_automation_index(Path(args.root), args.release_automation_index_version)
     if args.write_release_automation_index:
         return _write_release_automation_index(
             Path(args.root),
             dry_run=args.dry_run_release_automation_index,
+            version=args.release_automation_index_version,
         )
     if args.check_release_examples_path_safety:
         return _check_release_examples_path_safety(Path(args.root))
@@ -1153,7 +1164,7 @@ def _check_automation_command_fixtures(root: Path) -> int:
     return 0
 
 
-def _check_release_automation_index(root: Path) -> int:
+def _check_release_automation_index(root: Path, version: str = "0.2.0") -> int:
     release_index = root / "docs" / "release-automation-index.md"
     compose = root / "docker-compose.yml"
     index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else ""
@@ -1174,6 +1185,14 @@ def _check_release_automation_index(root: Path) -> int:
         print("Release automation index does not document any r-project verification commands.", file=sys.stderr)
         return 1
 
+    missing_profile_commands = [
+        command for command in _release_automation_index_required_commands(version) if command not in documented_commands
+    ]
+    if version != "0.2.0" and missing_profile_commands:
+        for command in missing_profile_commands:
+            print(f"Release automation index is missing version {version} command: {command}", file=sys.stderr)
+        return 1
+
     missing_commands = [
         command for command in documented_commands if not _docker_harness_contains_equivalent_command(compose_text, command)
     ]
@@ -1182,26 +1201,26 @@ def _check_release_automation_index(root: Path) -> int:
             print(f"Docker harness is missing release automation index command: {command}", file=sys.stderr)
         return 1
 
-    print("Release automation index links release surfaces and matches Docker harness commands.")
+    print(f"Release automation index links release surfaces, version {version} commands, and Docker harness commands.")
     return 0
 
 
-def _generate_release_automation_index(root: Path) -> int:
+def _generate_release_automation_index(root: Path, version: str = "0.2.0") -> int:
     del root
     for row in _release_automation_index_surface_rows():
         print(row)
     print()
     print("```bash")
-    for command in _release_automation_index_required_commands():
+    for command in _release_automation_index_required_commands(version):
         print(command)
     print("```")
     return 0
 
 
-def _write_release_automation_index(root: Path, *, dry_run: bool = False) -> int:
+def _write_release_automation_index(root: Path, *, dry_run: bool = False, version: str = "0.2.0") -> int:
     release_index = root / "docs" / "release-automation-index.md"
     index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else _release_automation_index_skeleton()
-    updated = _updated_release_automation_index(index_text)
+    updated = _updated_release_automation_index(index_text, version)
     if updated == index_text:
         print("docs/release-automation-index.md already contains release automation links and commands.")
         return 0
@@ -1214,7 +1233,7 @@ def _write_release_automation_index(root: Path, *, dry_run: bool = False) -> int
     return 0
 
 
-def _updated_release_automation_index(index_text: str) -> str:
+def _updated_release_automation_index(index_text: str, version: str = "0.2.0") -> str:
     text = index_text if index_text else _release_automation_index_skeleton()
     existing_links = {
         docs_path
@@ -1227,7 +1246,7 @@ def _updated_release_automation_index(index_text: str) -> str:
         if docs_path not in existing_links
     ]
     existing_commands = set(_release_automation_index_r_project_commands(text))
-    missing_commands = [command for command in _release_automation_index_required_commands() if command not in existing_commands]
+    missing_commands = [command for command in _release_automation_index_required_commands(version) if command not in existing_commands]
     if missing_link_rows:
         text = _append_markdown_list_rows_to_section(text, "Release surfaces", missing_link_rows)
     if missing_commands:
@@ -1267,20 +1286,20 @@ def _release_automation_surface_label(docs_path: str) -> str:
     return labels[docs_path]
 
 
-def _release_automation_index_required_commands() -> list[str]:
+def _release_automation_index_required_commands(version: str = "0.2.0") -> list[str]:
     return [
         "r-project --root . --check-changelog-version",
         "r-project --root . --check-release-tag v0.1.0 --docker-verified",
         "r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json",
         "r-project --root . --check-release-examples --release-examples-path docs/release-examples.md",
-        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md",
-        "r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md",
+        f"r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version {version} --release-examples-path docs/release-examples.md",
+        f"r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version {version} --release-examples-path tests/fixtures/release-examples-future-version-smoke.md",
         "r-project --root . --check-release-example-fixtures",
         "r-project --root . --check-release-example-sections",
         "r-project --root . --check-release-section-writer-matrix",
-        "r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
-        "r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
-        "r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0",
+        f"r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version {version}",
+        f"r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version {version}",
+        f"r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version {version}",
         "r-project --root . --check-release-examples-path-safety",
         "r-project --root . --generate-release-automation-index",
         "r-project --root . --write-release-automation-index --dry-run-release-automation-index",

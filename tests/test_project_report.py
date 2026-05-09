@@ -1994,7 +1994,9 @@ def test_release_automation_index_guard_succeeds_when_links_and_commands_are_cov
     )
 
     assert result.returncode == 0
-    assert result.stdout == "Release automation index links release surfaces and matches Docker harness commands.\n"
+    assert result.stdout == (
+        "Release automation index links release surfaces, version 0.2.0 commands, and Docker harness commands.\n"
+    )
     assert result.stderr == ""
 
 
@@ -2122,6 +2124,62 @@ def test_generate_release_automation_index_emits_required_links_and_commands():
     assert "- [release section writer matrix](release-section-writer-matrix.md)" in result.stdout
     assert "r-project --root . --check-release-automation-index" in result.stdout
     assert "r-project --root . --write-release-automation-index --dry-run-release-automation-index" in result.stdout
+    assert result.stderr == ""
+
+
+def test_generate_release_automation_index_uses_configured_preview_version():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--generate-release-automation-index",
+            "--release-automation-index-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "--release-examples-version 0.3.0" in result.stdout
+    assert "--release-section-writer-matrix-version 0.3.0" in result.stdout
+    assert "0.2.0" not in result.stdout
+    assert result.stderr == ""
+
+
+def test_release_automation_index_guard_accepts_configured_preview_version():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--check-release-automation-index",
+            "--release-automation-index-version",
+            "0.3.0",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == (
+        "Release automation index links release surfaces, version 0.3.0 commands, and Docker harness commands.\n"
+    )
     assert result.stderr == ""
 
 
