@@ -238,11 +238,20 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--generate-dashboard-section-writer-matrix",
+        action="store_true",
+        help=(
+            "Emit dashboard section writer matrix rows derived from docs/dashboard-example-fixtures.md, "
+            "optionally labeled with --dashboard-section-writer-matrix-variant."
+        ),
+    )
+    parser.add_argument(
         "--dashboard-section-writer-matrix-variant",
         metavar="LABEL",
         help=(
             "With --check-dashboard-section-writer-matrix, require writer matrix rows for this dashboard "
-            "preview variant label in addition to default writer coverage."
+            "preview variant label in addition to default writer coverage; with "
+            "--generate-dashboard-section-writer-matrix, label generated rows for this preview variant."
         ),
     )
     parser.add_argument(
@@ -408,6 +417,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_automation_command_fixtures(Path(args.root))
     if args.check_dashboard_example_fixtures:
         return _check_dashboard_example_fixtures(Path(args.root))
+    if args.generate_dashboard_section_writer_matrix:
+        return _generate_dashboard_section_writer_matrix(Path(args.root), args.dashboard_section_writer_matrix_variant)
     if args.check_dashboard_section_writer_matrix:
         return _check_dashboard_section_writer_matrix(Path(args.root), args.dashboard_section_writer_matrix_variant)
     if args.write_release_examples:
@@ -977,6 +988,34 @@ def _check_dashboard_example_fixtures(root: Path) -> int:
     return 0
 
 
+def _dashboard_section_writer_matrix_rows(root: Path, variant: str | None = None) -> list[str]:
+    registry = root / "docs" / "dashboard-example-fixtures.md"
+    registry_text = registry.read_text(encoding="utf-8") if registry.exists() else ""
+    rows: list[str] = []
+    for path, purpose, check_command in _dashboard_example_fixture_registry_rows(registry_text):
+        writer_command = _dashboard_section_writer_command(check_command)
+        section = _dashboard_section_writer_section_label(writer_command)
+        example_type = purpose.rstrip(".")
+        if variant:
+            section = f"Variant `{variant}` {section}"
+            if example_type:
+                example_type = f"Variant `{variant}` {example_type[0].lower()}{example_type[1:]}"
+            else:
+                example_type = f"Variant `{variant}` dashboard writer dry-run"
+        rows.append(f"| `{path}` | {section} | {example_type} | `{writer_command}` |")
+    return rows
+
+
+def _generate_dashboard_section_writer_matrix(root: Path, variant: str | None = None) -> int:
+    rows = _dashboard_section_writer_matrix_rows(root, variant)
+    if not rows:
+        print("Dashboard example fixture registry does not document any r-project commands.", file=sys.stderr)
+        return 1
+    for row in rows:
+        print(row)
+    return 0
+
+
 def _check_dashboard_section_writer_matrix(root: Path, variant: str | None = None) -> int:
     matrix = root / "docs" / "dashboard-section-writer-matrix.md"
     registry = root / "docs" / "dashboard-example-fixtures.md"
@@ -1102,6 +1141,27 @@ def _automation_command_fixture_index_commands(index_text: str) -> list[str]:
 
 def _dashboard_example_fixture_registry_commands(index_text: str) -> list[str]:
     return _markdown_table_code_span_commands(index_text)
+
+
+def _dashboard_example_fixture_registry_rows(index_text: str) -> list[tuple[str, str, str]]:
+    rows: list[tuple[str, str, str]] = []
+    for line in index_text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) < 3 or cells[0] in {"Markdown path", "---"}:
+            continue
+        path = _single_code_span(cells[0])
+        command = _single_code_span(cells[-1])
+        if path is not None and command is not None:
+            rows.append((path, cells[1], command))
+    return rows
+
+
+def _dashboard_section_writer_section_label(writer_command: str) -> str:
+    if "--write-readme-examples" in writer_command:
+        return "first JSON and Markdown fences"
+    if "--write-readme-schema-examples" in writer_command:
+        return "memory overlap demo JSON Schemas"
+    return "writer dry-run"
 
 
 def _dashboard_section_writer_matrix_commands(index_text: str) -> list[str]:

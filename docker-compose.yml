@@ -68,4 +68,5 @@ services:
       && python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-index.md
       && python -m r_project --root . --check-dashboard-section-writer-matrix
       && python -m r_project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+      && python -m r_project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
       && python -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-version 0.2.0"

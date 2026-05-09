@@ -20,6 +20,7 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/auto
 r-project --root . --check-dashboard-example-fixtures
 r-project --root . --check-dashboard-section-writer-matrix
 r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
+r-project --root . --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant compact
 ```
 
 ## Embedded readiness report example
@@ -27,7 +28,7 @@ r-project --root . --check-dashboard-section-writer-matrix --dashboard-section-w
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 86, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 49, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 87, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 33, "next_item": null, "open": 0}, "P2": {"completed": 50, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -35,7 +36,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 86 |
+| Completed backlog items | 87 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -45,7 +46,7 @@ The combined index also embeds the checked readiness report examples directly so
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 33 | 0 | None |
-| P2 | 49 | 0 | None |
+| P2 | 50 | 0 | None |
 
 ## Next backlog item
 

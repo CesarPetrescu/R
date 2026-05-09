@@ -2067,6 +2067,45 @@ def test_dashboard_section_writer_matrix_guard_matches_configured_variant_rows()
     assert result.stderr == ""
 
 
+def test_cli_generates_dashboard_section_writer_matrix_variant_rows_from_registry(tmp_path):
+    write(
+        tmp_path / "docs" / "dashboard-example-fixtures.md",
+        """# Dashboard Example Fixture Registry
+
+| Markdown path | Purpose | Docker verification command |
+| --- | --- | --- |
+| `docs/usage-examples.md` | Standalone readiness report JSON and Markdown examples. | `r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md` |
+| `docs/dashboard-schema.md` | Standalone compact memory-overlap JSON Schema example. | `r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-schema.md` |
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--generate-dashboard-section-writer-matrix",
+            "--dashboard-section-writer-matrix-variant",
+            "preview",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    assert result.stdout == (
+        "| `docs/usage-examples.md` | Variant `preview` first JSON and Markdown fences | Variant `preview` standalone readiness report JSON and Markdown examples | `r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md` |\n"
+        "| `docs/dashboard-schema.md` | Variant `preview` memory overlap demo JSON Schemas | Variant `preview` standalone compact memory-overlap JSON Schema example | `r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/dashboard-schema.md` |\n"
+    )
+
+
 def test_dashboard_section_writer_matrix_guard_reports_missing_docker_command(tmp_path):
     write(
         tmp_path / "docs" / "dashboard-example-fixtures.md",

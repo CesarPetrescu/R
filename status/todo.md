@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Add a dashboard automation surface link/command guard extension if future dashboard docs add new standalone surfaces beyond `docs/dashboard-section-writer-matrix.md`.
-3. Add a dashboard variant-specific writer command generator if dashboard docs gain concrete variant output flags beyond the current matrix guard preview labels.
+3. Add a dashboard variant-specific writer applicator if dashboard docs need a safe in-place mode that appends generated variant rows to `docs/dashboard-section-writer-matrix.md` after preview.
 
 ## Every-run checklist
 
