@@ -69,10 +69,13 @@ services:
       && python -m r_project --root . --check-release-examples-path-safety
       && python -m r_project --root . --generate-release-automation-index
       && python -m r_project --root . --generate-release-automation-index --release-automation-index-version 0.3.0
+      && python -m r_project --root . --generate-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'
       && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index
       && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.3.0
+      && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'
       && python -m r_project --root . --check-release-automation-index
       && python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.3.0
+      && python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'
       && python -m r_project --root . --check-automation-index-links
       && python -m r_project --root . --check-automation-index-commands
       && python -m r_project --root . --check-automation-command-fixtures

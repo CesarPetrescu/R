@@ -2366,6 +2366,161 @@ def test_release_automation_index_guard_accepts_configured_preview_version():
     assert result.stderr == ""
 
 
+def test_release_automation_index_guard_requires_commands_in_named_profile_section(tmp_path):
+    write(
+        tmp_path / "docs" / "release-automation-index.md",
+        """# Release Automation Index
+
+## Release surfaces
+
+- [release readiness index](release-index.md)
+- [release checklist fixture docs](release-checklist.md)
+- [release checklist JSON fixture](release/checklist.json)
+- [release checklist examples](release-examples.md)
+- [release example fixture registry](release-example-fixtures.md)
+- [release example section registry](release-example-sections.md)
+- [release section writer matrix](release-section-writer-matrix.md)
+
+## Verification commands
+
+```bash
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.4.0 --release-examples-path docs/release-examples.md
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.4.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
+r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+r-project --root . --generate-release-automation-index --release-automation-index-version 0.4.0
+r-project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.4.0
+r-project --root . --check-release-automation-index --release-automation-index-version 0.4.0
+```
+""",
+    )
+    write(
+        tmp_path / "docker-compose.yml",
+        """services:
+  test:
+    command: >
+      sh -c "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.4.0 --release-examples-path docs/release-examples.md
+      && python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.4.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md
+      && python -m r_project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+      && python -m r_project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+      && python -m r_project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version 0.4.0
+      && python -m r_project --root . --generate-release-automation-index --release-automation-index-version 0.4.0
+      && python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.4.0
+      && python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.4.0"
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--check-release-automation-index",
+            "--release-automation-index-version",
+            "0.4.0",
+            "--release-automation-index-profile-section",
+            "Release 0.4.0 preview profile",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "Release automation index is missing profile section: Release 0.4.0 preview profile\n"
+    )
+
+
+def test_generate_release_automation_index_can_emit_named_profile_section():
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            ".",
+            "--generate-release-automation-index",
+            "--release-automation-index-version",
+            "0.4.0",
+            "--release-automation-index-profile-section",
+            "Release 0.4.0 preview profile",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "### Release 0.4.0 preview profile\n\n```bash" in result.stdout
+    assert "--release-examples-version 0.4.0" in result.stdout
+    assert result.stderr == ""
+
+
+def test_release_automation_index_writer_dry_run_appends_named_profile_section(tmp_path):
+    release_index = tmp_path / "docs" / "release-automation-index.md"
+    write(
+        release_index,
+        """# Release Automation Index
+
+## Release surfaces
+
+- [release readiness index](release-index.md)
+- [release checklist fixture docs](release-checklist.md)
+- [release checklist JSON fixture](release/checklist.json)
+- [release checklist examples](release-examples.md)
+- [release example fixture registry](release-example-fixtures.md)
+- [release example section registry](release-example-sections.md)
+- [release section writer matrix](release-section-writer-matrix.md)
+
+## Verification commands
+
+```bash
+r-project --root . --check-release-automation-index
+```
+""",
+    )
+    env = os.environ | {"PYTHONPATH": str(Path.cwd() / "src")}
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(tmp_path),
+            "--write-release-automation-index",
+            "--dry-run-release-automation-index",
+            "--release-automation-index-version",
+            "0.4.0",
+            "--release-automation-index-profile-section",
+            "Release 0.4.0 preview profile",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0
+    assert "### Release 0.4.0 preview profile\n\n```bash" in result.stdout
+    assert "--release-section-writer-matrix-version 0.4.0" in result.stdout
+    assert release_index.read_text(encoding="utf-8").count("Release 0.4.0 preview profile") == 0
+    assert result.stderr == ""
+
+
 def test_release_automation_index_writer_dry_run_appends_missing_links_and_commands(tmp_path):
     release_index = tmp_path / "docs" / "release-automation-index.md"
     write(

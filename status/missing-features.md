@@ -106,3 +106,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a release automation index row writer so release-only docs can safely append missing link/command rows after preview.
 - [x] Add a release automation index preview-version selector so release-only docs can generate and dry-run non-default release preview profiles.
 - [x] Add a dashboard automation index variant selector so dashboard-only docs can generate, dry-run, and guard multiple named preview profiles beyond default command rows.
+- [x] Add release automation index named profile sections so multiple release preview versions can be generated, written, and guarded independently in one document.

@@ -135,12 +135,24 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert (
+        "python -m r_project --root . --generate-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'"
+        in compose_text
+    )
+    assert (
         "python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index"
+        in compose_text
+    )
+    assert (
+        "python -m r_project --root . --write-release-automation-index --dry-run-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'"
         in compose_text
     )
     assert "python -m r_project --root . --check-release-automation-index" in compose_text
     assert (
         "python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.3.0"
+        in compose_text
+    )
+    assert (
+        "python -m r_project --root . --check-release-automation-index --release-automation-index-version 0.3.0 --release-automation-index-profile-section 'Release 0.3.0 preview profile'"
         in compose_text
     )
     assert "python -m r_project --root . --check-automation-index-links" in compose_text
