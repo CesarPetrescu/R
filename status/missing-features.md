@@ -98,3 +98,4 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a configurable dashboard-section writer matrix preview mode so variant-specific dashboard docs can be audited against Docker coverage.
 - [x] Add a dashboard section writer matrix row generator so new variant-specific dashboard docs can preview registry-derived writer rows before appending them.
 - [x] Add a dashboard section writer matrix row writer so new variant-specific dashboard docs can safely append generated writer rows after preview.
+- [x] Add a release section writer matrix row generator so release docs can preview registry-derived current/future writer rows before appending them.

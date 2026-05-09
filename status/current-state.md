@@ -81,6 +81,7 @@ Last updated: 2026-05-09
 - `python3 -m r_project --root <path> --check-dashboard-example-fixtures` audits `docs/dashboard-example-fixtures.md` table rows and exits nonzero when any indexed dashboard readiness/schema command is missing equivalent `docker-compose.yml` clean-container harness coverage or when the registry omits a dashboard-index command.
 - `docs/dashboard-section-writer-matrix.md` maps every dashboard fixture registry check command to a corresponding README/schema writer dry-run, and `python3 -m r_project --root <path> --check-dashboard-section-writer-matrix` exits nonzero when a registry row lacks writer coverage or when a matrix command is missing from the Docker harness. Add `--dashboard-section-writer-matrix-variant <label>` to require variant-labeled matrix rows for every dashboard writer command before publishing variant-specific dashboard docs.
 - `python3 -m r_project --root <path> --generate-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant <label>` emits Markdown table rows derived from `docs/dashboard-example-fixtures.md` so new dashboard preview variants can copy exact writer dry-run rows into the matrix before running the guard.
+- `python3 -m r_project --root <path> --generate-release-section-writer-matrix --release-section-writer-matrix-version <version>` emits Markdown table rows derived from `docs/release-example-sections.md` so release docs can copy exact current-version and future-version writer dry-run rows into the matrix before running the guard.
 - `python3 -m r_project --root <path> --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant <label>` previews the `docs/dashboard-section-writer-matrix.md` content that would result from appending any missing registry-derived variant rows; omitting the dry-run flag appends those missing rows once.
 - `python3 -m r_project --root <path> --check-release-examples-path-safety` audits release example Markdown path override safety by proving absolute paths and `..` escapes are rejected before future checker/writer modes can touch files outside `--root`.
 - `docs/release-example-fixtures.md` indexes release-example smoke fixtures and the Docker commands that exercise them so future release-doc fixture additions remain auditable from one page.
@@ -152,6 +153,7 @@ PYTHONPATH=src python3 -m r_project --root . --check-release-example-fixtures
 PYTHONPATH=src python3 -m r_project --root . --check-release-example-sections
 PYTHONPATH=src python3 -m r_project --root . --check-release-section-writer-matrix
 PYTHONPATH=src python3 -m r_project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
+PYTHONPATH=src python3 -m r_project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples-path-safety
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-links
 PYTHONPATH=src python3 -m r_project --root . --check-automation-index-commands
