@@ -19,9 +19,9 @@ The main goal of R is to present interpreted Rust inside C and show the automati
 ## Current runtime slice
 
 - `runtime/include/rustic.h` declares the first C host API.
-- `runtime/rustic.c` evaluates tiny Rust-like integer expressions with `+`, `*`, whitespace skipping, and multiplication precedence.
+- `runtime/rustic.c` evaluates tiny Rust-like integer programs with `+`, `*`, whitespace skipping, multiplication precedence, single-scope `let` bindings, identifier lookup, and semicolon-separated expression-statement sequencing that returns the final expression value.
 - `tests/fixtures/rustic_expression_driver.c` is the executable C host fixture used by pytest.
-- `tests/test_rustic_interpreter.py` compiles the runtime and proves `1 + 2 * 3 => 7` plus a stable invalid-expression diagnostic.
+- `tests/test_rustic_interpreter.py` compiles the runtime and proves `1 + 2 * 3 => 7`, `let x = 2 + 3; x * 4 => 20`, `1 + 2; 3 * 4; 5 + 6 => 11`, and stable invalid-expression/undefined-identifier diagnostics.
 
 ## Folder policy
 
