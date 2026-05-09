@@ -51,6 +51,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Extend the C-hosted Rust-like interpreter with parenthesized expressions so grouped arithmetic can override precedence and unmatched parentheses fail with a stable diagnostic.
 - [x] Extend the C-hosted Rust-like interpreter with equality comparisons that return boolean integers, backed by fixtures proving `let x = 3; x == 3` evaluates to `1`, non-equal values evaluate to `0`, and malformed comparison/equality syntax fails explicitly.
 - [x] Extend the C-hosted Rust-like interpreter with block expressions and nested lexical scopes, backed by fixtures proving `{ let x = 2; x + 1 }` evaluates to `3`, block-local bindings do not leak, and unclosed blocks fail with a stable diagnostic.
+- [x] Extend the C-hosted Rust-like interpreter with comparison operators beyond equality (`!=`, `<`, `<=`, `>`, `>=`), backed by fixtures proving true/false boolean integer results and arithmetic precedence before comparisons.
 
 ## P2 — project quality
 

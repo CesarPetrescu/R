@@ -215,20 +215,41 @@ static long parse_additive_expression(struct Parser *parser) {
 }
 
 static long parse_expression(struct Parser *parser) {
+    long right;
     long value = parse_additive_expression(parser);
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
-        if (*parser->cursor != '=') {
-            return value;
-        }
-        parser->cursor++;
-        if (*parser->cursor != '=') {
+        if (parser->cursor[0] == '=' && parser->cursor[1] == '=') {
+            parser->cursor += 2;
+            right = parse_additive_expression(parser);
+            value = (value == right) ? 1 : 0;
+        } else if (parser->cursor[0] == '!' && parser->cursor[1] == '=') {
+            parser->cursor += 2;
+            right = parse_additive_expression(parser);
+            value = (value != right) ? 1 : 0;
+        } else if (parser->cursor[0] == '<' && parser->cursor[1] == '=') {
+            parser->cursor += 2;
+            right = parse_additive_expression(parser);
+            value = (value <= right) ? 1 : 0;
+        } else if (parser->cursor[0] == '>' && parser->cursor[1] == '=') {
+            parser->cursor += 2;
+            right = parse_additive_expression(parser);
+            value = (value >= right) ? 1 : 0;
+        } else if (*parser->cursor == '<') {
+            parser->cursor++;
+            right = parse_additive_expression(parser);
+            value = (value < right) ? 1 : 0;
+        } else if (*parser->cursor == '>') {
+            parser->cursor++;
+            right = parse_additive_expression(parser);
+            value = (value > right) ? 1 : 0;
+        } else if (*parser->cursor == '=' || *parser->cursor == '!') {
             parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
             return 0;
+        } else {
+            return value;
         }
-        parser->cursor++;
-        value = (value == parse_additive_expression(parser)) ? 1 : 0;
     }
 
     return value;
