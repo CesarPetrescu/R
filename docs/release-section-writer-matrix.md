@@ -1,6 +1,6 @@
 # Release Section Writer Matrix
 
-This matrix lists the release checklist Markdown sections whose writer dry-runs are covered in clean Docker verification. It complements the checked section registry by proving both current-version and future-version writer modes can target each registered release snippet without mutating docs.
+This matrix lists the release checklist Markdown sections whose writer dry-runs are covered in clean Docker verification. It complements the checked section registry by proving both current-version and configurable future-version writer modes can target each registered release snippet without mutating docs.
 
 | Markdown path | Section | Version target | Docker-covered writer command |
 | --- | --- | --- | --- |
@@ -13,4 +13,5 @@ Run the matrix guard after adding release checklist sections or future-version s
 
 ```bash
 r-project --root . --check-release-section-writer-matrix
+r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0
 ```
