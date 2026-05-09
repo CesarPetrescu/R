@@ -102,6 +102,35 @@ def test_c_hosted_rustic_interpreter_sequences_expression_statements(tmp_path):
     assert result.stdout == "1 + 2; 3 * 4; 5 + 6 => 11\n"
 
 
+def test_c_hosted_rustic_interpreter_updates_existing_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "let x = 1; x = x + 2; x"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "let x = 1; x = x + 2; x => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_assignment_to_undefined_name(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "x = 3"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

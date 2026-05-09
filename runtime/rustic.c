@@ -74,6 +74,20 @@ static int lookup_binding(const struct Parser *parser, const char *name, long *o
     return 0;
 }
 
+static int update_binding(struct Parser *parser, const char *name, long value) {
+    size_t index;
+
+    for (index = parser->binding_count; index > 0; index--) {
+        struct Binding *binding = &parser->bindings[index - 1];
+        if (strcmp(binding->name, name) == 0) {
+            binding->value = value;
+            return 1;
+        }
+    }
+    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+    return 0;
+}
+
 static void add_binding(struct Parser *parser, const char *name, long value) {
     if (parser->binding_count >= RUSTIC_MAX_BINDINGS) {
         parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
@@ -178,6 +192,43 @@ static void parse_let_statement(struct Parser *parser) {
     add_binding(parser, name, value);
 }
 
+static int parse_assignment_statement(struct Parser *parser, long *out_value) {
+    const char *statement_start = parser->cursor;
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+    long value;
+    long existing_value;
+
+    if (!is_identifier_start(*parser->cursor)) {
+        return 0;
+    }
+
+    if (!parse_identifier(parser, name, sizeof(name))) {
+        return 0;
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != '=') {
+        parser->cursor = statement_start;
+        parser->status = RUSTIC_OK;
+        return 0;
+    }
+    parser->cursor++;
+
+    if (!lookup_binding(parser, name, &existing_value)) {
+        parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+        return 1;
+    }
+
+    value = parse_expression(parser);
+    if (parser->status != RUSTIC_OK) {
+        return 1;
+    }
+
+    update_binding(parser, name, value);
+    *out_value = value;
+    return 1;
+}
+
 static long parse_program(struct Parser *parser) {
     long value = 0;
     int saw_statement = 0;
@@ -194,6 +245,20 @@ static long parse_program(struct Parser *parser) {
         if (cursor_starts_keyword(parser, "let")) {
             parse_let_statement(parser);
             saw_statement = 1;
+            continue;
+        }
+
+        if (parse_assignment_statement(parser, &value)) {
+            if (parser->status != RUSTIC_OK) {
+                return 0;
+            }
+            saw_statement = 1;
+
+            skip_spaces(parser);
+            if (*parser->cursor != ';') {
+                return value;
+            }
+            parser->cursor++;
             continue;
         }
 
