@@ -784,6 +784,21 @@ static struct Value parse_factor(struct Parser *parser) {
             }
             parser->cursor++;
 
+            if (strcmp(name, "len") == 0) {
+                struct ArrayValue *array;
+
+                if (argument_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                return parse_index_postfix(parser, integer_value((long)array->element_count));
+            }
+
             if (lookup_binding(parser, name, &value)) {
                 function = function_from_value(parser, value);
                 if (function == NULL) {
@@ -1703,6 +1718,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "expected closing bracket";
     case RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS:
         return "array index out of bounds";
+    case RUSTIC_ERR_EXPECTED_ARRAY:
+        return "expected array";
     default:
         return "unknown rustic interpreter error";
     }
