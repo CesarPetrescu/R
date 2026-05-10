@@ -223,6 +223,21 @@ def test_c_hosted_rustic_interpreter_evaluates_ordering_comparisons(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_subtraction_with_additive_precedence(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "10 - 3 + 2 * 4"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 15\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_single_bang_inside_expression(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
@@ -398,6 +413,54 @@ def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_evaluates_nested_function_composition(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn add(a, b) { a + b }; fn twice(x) { add(x, x) }; twice(add(2, 3))"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 10\n"
+
+
+def test_c_hosted_rustic_interpreter_evaluates_recursive_countdown_function(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_runaway_recursive_function_with_step_limit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn forever(n) { forever(n) }; forever(1)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "step limit exceeded" in result.stderr
 
 
 def test_c_hosted_rustic_interpreter_keeps_function_parameters_scoped(tmp_path):

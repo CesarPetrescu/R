@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RUSTIC_MAX_BINDINGS 16
+#define RUSTIC_MAX_BINDINGS 1024
 #define RUSTIC_MAX_FUNCTIONS 8
 #define RUSTIC_MAX_IDENTIFIER_LENGTH 31
 #define RUSTIC_MAX_PARAMETERS 8
-#define RUSTIC_MAX_STEPS 10000
+#define RUSTIC_MAX_STEPS 512
 
 struct Binding {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
@@ -423,6 +423,9 @@ static long parse_additive_expression(struct Parser *parser) {
         if (*parser->cursor == '+') {
             parser->cursor++;
             value += parse_term(parser);
+        } else if (*parser->cursor == '-') {
+            parser->cursor++;
+            value -= parse_term(parser);
         } else if (*parser->cursor == '*') {
             parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
         } else {
