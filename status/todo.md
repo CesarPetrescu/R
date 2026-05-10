@@ -5,7 +5,7 @@ The autonomous agent should complete concrete implementation work every run, not
 ## Next recommended tasks
 
 1. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
-2. Add `break`/`continue` loop-control semantics to Rustic so longer loop-heavy showcase programs can exit early without encoding every branch in guard expressions.
+2. Add `match`-style expression dispatch to Rustic so showcase programs can express multi-way integer decisions without deeply nested `if`/`else` blocks.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist
