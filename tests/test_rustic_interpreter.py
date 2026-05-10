@@ -238,6 +238,56 @@ def test_c_hosted_rustic_interpreter_evaluates_subtraction_with_additive_precede
     assert result.stdout == f"{source} => 15\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_remainder_with_multiplicative_precedence(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "10 % 4 + 2 * 3": 8,
+        "2 + 7 % 4 * 3": 11,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_uses_remainder_in_recursive_divisibility_guard(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_remainder_by_zero(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "5 % 0"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "division by zero" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_evaluates_boolean_negation(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

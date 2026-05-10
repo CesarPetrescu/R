@@ -70,10 +70,11 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `10 - 3 + 2 * 4`,
 `fn add(a, b) { a + b }; let op = add; op(2, 3)`,
 `fn inc(x) { x + 1 }; fn choose() { inc }; let f = choose(); f(6)`,
 `fn add(a, b) { a + b }; fn twice(x) { add(x, x) }; twice(add(2, 3))`,
+`fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)`,
 and `fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)`,
 `fn triangle(n) { if n == 0 { 0 } else { n + triangle(n - 1) } }; triangle(5)`,
 and `fn factorial(n) { if n == 0 { 1 } else { n * factorial(n - 1) } }; factorial(5)` from a C
-host fixture. The evaluator supports `+`, `-`, `*`, unary boolean negation `!`,
+host fixture. The evaluator supports `+`, `-`, `*`, `%`, unary boolean negation `!`,
 multiplication precedence, parenthesized expressions, `let` bindings, identifier lookup,
 semicolon-separated expression-statement sequencing that returns the final
 expression value, assignment/mutation of existing bindings, equality and ordering comparisons
@@ -83,17 +84,17 @@ nested lexical scopes, conditional `if`/`else` expressions that evaluate only th
 `fn`-like named function declarations/calls with call-local parameter bindings,
 block-local function declarations that can use visible lexical bindings without leaking outside their block,
 first-class function references that can be bound with `let`, returned from helpers, and called through local names,
-function composition, recursive calls for countdown-style programs,
+function composition, recursive calls for countdown-style programs, remainder-based divisibility guards,
 a fixed interpreter step budget that returns a stable `step limit exceeded`
-diagnostic for runaway loops or recursion instead of hanging the C host, and stable undefined-identifier, malformed-comparison, wrong-argument-count,
+diagnostic for runaway loops or recursion instead of hanging the C host, and stable undefined-identifier, division-by-zero, malformed-comparison, wrong-argument-count,
 unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
-subtraction, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
+subtraction, remainder arithmetic, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
 loop-driven mutation, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
 first-class function references bound with `let`, returned from helpers, and called through local names,
 nested call composition,
-recursive countdowns, recursive triangular-number and factorial showcase fixtures, and runaway loop/recursion
+recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures, and runaway loop/recursion
 safety before larger statement forms or runtime objects are added.
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
@@ -441,7 +442,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 115, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 51, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 116, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 52, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -453,7 +454,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 115 |
+| Completed backlog items | 116 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -462,7 +463,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 51 | 0 | None |
+| P1 | 52 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
