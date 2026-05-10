@@ -60,6 +60,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add function composition and recursion fixtures backed by the interpreter step budget so nested calls and runaway recursion have stable behavior.
 - [x] Add boolean-negation expression support so conditionals can express inverted guards and recursive base cases naturally.
 - [x] Add recursive arithmetic showcase fixtures beyond countdown, including triangular-number and factorial-style examples that combine subtraction, multiplication, and recursive base cases.
+- [x] Add scoped local function declarations to the C-hosted Rust-like interpreter so block-local helper functions can close over visible bindings without leaking outside their lexical scope.
 
 ## P2 — project quality
 

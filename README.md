@@ -79,6 +79,7 @@ expression value, assignment/mutation of existing bindings, equality and orderin
 nested lexical scopes, conditional `if`/`else` expressions that evaluate only the selected branch,
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
 `fn`-like named function declarations/calls with call-local parameter bindings,
+block-local function declarations that can use visible lexical bindings without leaking outside their block,
 function composition, recursive calls for countdown-style programs,
 a fixed interpreter step budget that returns a stable `step limit exceeded`
 diagnostic for runaway loops or recursion instead of hanging the C host, and stable undefined-identifier, malformed-comparison, wrong-argument-count,
@@ -86,7 +87,8 @@ unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
 subtraction, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
-loop-driven mutation, named function calls/argument binding, nested call composition,
+loop-driven mutation, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
+nested call composition,
 recursive countdowns, recursive triangular-number and factorial showcase fixtures, and runaway loop/recursion
 safety before larger statement forms or runtime objects are added.
 
@@ -435,7 +437,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 113, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 49, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 114, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 50, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -447,7 +449,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 113 |
+| Completed backlog items | 114 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -456,7 +458,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 49 | 0 | None |
+| P1 | 50 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
