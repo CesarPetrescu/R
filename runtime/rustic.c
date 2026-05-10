@@ -9,6 +9,7 @@
 #define RUSTIC_MAX_FUNCTIONS 8
 #define RUSTIC_MAX_IDENTIFIER_LENGTH 31
 #define RUSTIC_MAX_PARAMETERS 8
+#define RUSTIC_MAX_STEPS 10000
 
 struct Binding {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
@@ -32,7 +33,17 @@ struct Parser {
     size_t scope_depth;
     struct Function functions[RUSTIC_MAX_FUNCTIONS];
     size_t function_count;
+    size_t steps_remaining;
 };
+
+static int consume_step(struct Parser *parser) {
+    if (parser->steps_remaining == 0) {
+        parser->status = RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+        return 0;
+    }
+    parser->steps_remaining--;
+    return 1;
+}
 
 static void skip_spaces(struct Parser *parser) {
     while (isspace((unsigned char)*parser->cursor)) {
@@ -606,6 +617,9 @@ static long parse_statement_sequence(struct Parser *parser, char terminator) {
     int saw_statement = 0;
 
     while (parser->status == RUSTIC_OK) {
+        if (!consume_step(parser)) {
+            return 0;
+        }
         skip_spaces(parser);
         if (terminator != '\0' && *parser->cursor == terminator) {
             if (!saw_statement) {
@@ -698,6 +712,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.binding_count = 0;
     parser.scope_depth = 0;
     parser.function_count = 0;
+    parser.steps_remaining = RUSTIC_MAX_STEPS;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
@@ -738,6 +753,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "expected closing brace";
     case RUSTIC_ERR_WRONG_ARGUMENT_COUNT:
         return "wrong argument count";
+    case RUSTIC_ERR_STEP_LIMIT_EXCEEDED:
+        return "step limit exceeded";
     default:
         return "unknown rustic interpreter error";
     }

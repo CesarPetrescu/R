@@ -4,8 +4,8 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add loop safety diagnostics (for example a maximum interpreter step budget) now that functions and loops can combine into runaway programs, backed by a fixture that terminates with a stable error instead of hanging.
-2. Add basic function composition/recursion support only after a call-depth or step-budget guard exists, backed by fixtures proving nested calls and stable runaway diagnostics.
+1. Add basic function composition/recursion fixtures now that the interpreter has a step-budget guard, proving nested calls and stable runaway diagnostics.
+2. Add subtraction or boolean-negation expression support so recursive function examples can express countdown/base-case programs without awkward arithmetic workarounds.
 3. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 4. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
