@@ -56,6 +56,8 @@ Prioritized backlog for autonomous implementation.
 - [x] Extend the C-hosted Rust-like interpreter with `while` loop statements, backed by fixtures proving counter mutation/accumulation and skipped-body non-evaluation.
 - [x] Extend the C-hosted Rust-like interpreter with `fn`-like named function declarations and calls, backed by fixtures proving argument binding, return expression evaluation, scoped parameters, unknown-function diagnostics, and argument-count diagnostics.
 - [x] Add loop safety diagnostics with an interpreter step budget so runaway programs terminate with a stable error instead of hanging.
+- [x] Add subtraction expression support so Rust-like programs can express countdown/base-case arithmetic naturally.
+- [x] Add function composition and recursion fixtures backed by the interpreter step budget so nested calls and runaway recursion have stable behavior.
 
 ## P2 — project quality
 
