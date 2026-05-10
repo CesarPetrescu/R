@@ -632,6 +632,26 @@ def test_c_hosted_rustic_interpreter_rejects_loop_control_outside_loop(tmp_path)
         assert "loop control outside loop" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_rejects_loop_control_in_while_condition(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    for source in (
+        "while if 1 { break; } else { 1 } { 99 }",
+        "while if 1 { continue; } else { 1 } { 99 }",
+    ):
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert "loop control outside loop" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_loop_control_stops_remaining_loop_body_statements(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

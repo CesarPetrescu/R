@@ -322,32 +322,28 @@ static struct Value parse_while_statement(struct Parser *parser) {
 
     parser->cursor += 5;
     condition_start = parser->cursor;
-    parser->loop_depth++;
     while (parser->status == RUSTIC_OK) {
         parser->cursor = condition_start;
         condition_value = parse_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
-            parser->loop_depth--;
             return integer_value(0);
         }
 
         if (condition == 0) {
             if (!skip_block(parser)) {
-                parser->loop_depth--;
                 return integer_value(0);
             }
-            parser->loop_depth--;
             return value;
         }
 
+        parser->loop_depth++;
         value = parse_block_expression(parser);
+        parser->loop_depth--;
         if (parser->status != RUSTIC_OK) {
-            parser->loop_depth--;
             return integer_value(0);
         }
         if (parser->loop_control == LOOP_CONTROL_BREAK) {
             parser->loop_control = LOOP_CONTROL_NONE;
-            parser->loop_depth--;
             return value;
         }
         if (parser->loop_control == LOOP_CONTROL_CONTINUE) {
@@ -355,7 +351,6 @@ static struct Value parse_while_statement(struct Parser *parser) {
         }
     }
 
-    parser->loop_depth--;
     return value;
 }
 
