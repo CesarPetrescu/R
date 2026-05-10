@@ -263,6 +263,38 @@ static void pop_scope(struct Parser *parser) {
     }
 }
 
+static void pop_scope_preserving_value(struct Parser *parser, struct Value *value) {
+    size_t read_index;
+    size_t write_index = 0;
+    size_t parent_scope_depth = parser->scope_depth > 0 ? parser->scope_depth - 1 : 0;
+
+    while (parser->binding_count > 0 &&
+           parser->bindings[parser->binding_count - 1].scope_depth == parser->scope_depth) {
+        parser->binding_count--;
+    }
+    while (parser->function_count > 0 &&
+           parser->functions[parser->function_count - 1].scope_depth == parser->scope_depth) {
+        parser->function_count--;
+    }
+    for (read_index = 0; read_index < parser->array_count; read_index++) {
+        struct ArrayValue array = parser->arrays[read_index];
+        int preserve = value->kind == VALUE_ARRAY && value->array_id == array.id;
+
+        if (array.scope_depth != parser->scope_depth || preserve) {
+            if (preserve) {
+                array.scope_depth = parent_scope_depth;
+                value->array_index = write_index;
+            }
+            parser->arrays[write_index] = array;
+            write_index++;
+        }
+    }
+    parser->array_count = write_index;
+    if (parser->scope_depth > 0) {
+        parser->scope_depth--;
+    }
+}
+
 static struct Value parse_expression(struct Parser *parser);
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator);
 static int skip_expression_operand(struct Parser *parser);
@@ -317,7 +349,7 @@ static struct Value parse_block_expression(struct Parser *parser) {
         return integer_value(0);
     }
     parser->cursor++;
-    pop_scope(parser);
+    pop_scope_preserving_value(parser, &value);
     return value;
 }
 
@@ -455,16 +487,20 @@ static struct Value parse_while_statement(struct Parser *parser) {
     const char *condition_start;
     long condition;
     struct Value condition_value;
+    size_t condition_array_count;
     struct Value value = integer_value(0);
 
     parser->cursor += 5;
     condition_start = parser->cursor;
     while (parser->status == RUSTIC_OK) {
         parser->cursor = condition_start;
+        condition_array_count = parser->array_count;
         condition_value = parse_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
+            parser->array_count = condition_array_count;
             return integer_value(0);
         }
+        parser->array_count = condition_array_count;
 
         if (condition == 0) {
             if (!skip_block(parser)) {
@@ -720,7 +756,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 parser->loop_control = saved_loop_control;
                 return integer_value(0);
             }
-            pop_scope(parser);
+            pop_scope_preserving_value(parser, &value);
             parser->cursor = call_return;
             parser->loop_depth = saved_loop_depth;
             parser->loop_control = saved_loop_control;

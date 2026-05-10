@@ -791,6 +791,43 @@ def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_indexes_scoped_array_results(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "{ [42] }[0]": 42,
+        "if 1 { [7] } else { [8] }[0]": 7,
+        "fn arr() { [5] }; arr()[0]": 5,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_outer_scope_while_condition_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while [1][0] && n < 65 { total = total + 1; n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
+
+
 def test_c_hosted_rustic_interpreter_releases_block_scoped_arrays(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let n = 0; let total = 0; while n < 65 { let xs = [1]; total = total + xs[0]; n = n + 1; }; total"
