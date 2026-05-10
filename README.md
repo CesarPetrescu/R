@@ -71,6 +71,7 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `10 - 3 + 2 * 4`,
 `fn inc(x) { x + 1 }; fn choose() { inc }; let f = choose(); f(6)`,
 `fn add(a, b) { a + b }; fn twice(x) { add(x, x) }; twice(add(2, 3))`,
 `fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)`,
+`1 < 2 && 3 < 4`, `0 || 5 == 5`,
 and `fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)`,
 `fn triangle(n) { if n == 0 { 0 } else { n + triangle(n - 1) } }; triangle(5)`,
 `fn factorial(n) { if n == 0 { 1 } else { n * factorial(n - 1) } }; factorial(5)`,
@@ -81,7 +82,8 @@ host fixture. The evaluator supports `+`, `-`, `*`, `/`, `%`, unary boolean nega
 multiplicative precedence, parenthesized expressions, `let` bindings, identifier lookup,
 semicolon-separated expression-statement sequencing that returns the final
 expression value, assignment/mutation of existing bindings, equality and ordering comparisons
-(`==`, `!=`, `<`, `<=`, `>`, `>=`) that return `1` for true and `0` for false, block expressions with
+(`==`, `!=`, `<`, `<=`, `>`, `>=`) that return `1` for true and `0` for false,
+short-circuiting boolean conjunction/disjunction (`&&`, `||`) for compound guards, block expressions with
 nested lexical scopes, conditional `if`/`else` expressions that evaluate only the selected branch,
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
 `fn`-like named function declarations/calls with call-local parameter bindings,
@@ -99,6 +101,7 @@ first-class function references bound with `let`, returned from helpers, and cal
 nested call composition,
 recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures,
 loop arithmetic showcase fixtures for `%` divisibility filtering and `/` quotient accumulation,
+compound boolean guard showcase fixtures with short-circuited skipped operands,
 and runaway loop/recursion
 safety before larger statement forms or runtime objects are added.
 
@@ -447,7 +450,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 118, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 54, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 119, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 55, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -459,7 +462,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 118 |
+| Completed backlog items | 119 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -468,7 +471,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 54 | 0 | None |
+| P1 | 55 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item

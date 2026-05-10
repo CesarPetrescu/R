@@ -572,7 +572,7 @@ static struct Value parse_additive_expression(struct Parser *parser) {
     return value;
 }
 
-static struct Value parse_expression(struct Parser *parser) {
+static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
     struct Value value = parse_additive_expression(parser);
@@ -646,6 +646,138 @@ static struct Value parse_expression(struct Parser *parser) {
         } else {
             return value;
         }
+    }
+
+    return value;
+}
+
+static int skip_logical_operand(struct Parser *parser, int stop_at_logical_operator) {
+    size_t brace_depth = 0;
+    size_t paren_depth = 0;
+    int saw_token = 0;
+
+    skip_spaces(parser);
+    while (*parser->cursor != '\0') {
+        if (brace_depth == 0 && paren_depth == 0 && *parser->cursor == '{') {
+            if (!saw_token) {
+                return skip_block(parser);
+            }
+            return 1;
+        }
+        if (*parser->cursor == '{') {
+            brace_depth++;
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor == '}') {
+            if (brace_depth == 0) {
+                return 1;
+            }
+            brace_depth--;
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor == '(') {
+            paren_depth++;
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor == ')') {
+            if (paren_depth == 0) {
+                return 1;
+            }
+            paren_depth--;
+            parser->cursor++;
+            continue;
+        }
+        if (brace_depth == 0 && paren_depth == 0) {
+            if (*parser->cursor == ';' || *parser->cursor == ',') {
+                return 1;
+            }
+            if (stop_at_logical_operator &&
+                ((parser->cursor[0] == '&' && parser->cursor[1] == '&') ||
+                 (parser->cursor[0] == '|' && parser->cursor[1] == '|'))) {
+                return 1;
+            }
+        }
+        saw_token = 1;
+        parser->cursor++;
+    }
+
+    return 1;
+}
+
+static struct Value parse_logical_and_expression(struct Parser *parser) {
+    long left;
+    long right;
+    struct Value value = parse_comparison_expression(parser);
+    struct Value right_value;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '&' || parser->cursor[1] != '&') {
+            if (*parser->cursor == '&') {
+                parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+                return integer_value(0);
+            }
+            return value;
+        }
+
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        if (left == 0) {
+            if (!skip_logical_operand(parser, 1)) {
+                return integer_value(0);
+            }
+            value = integer_value(0);
+            continue;
+        }
+
+        right_value = parse_comparison_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(right != 0 ? 1 : 0);
+    }
+
+    return value;
+}
+
+static struct Value parse_expression(struct Parser *parser) {
+    long left;
+    long right;
+    struct Value value = parse_logical_and_expression(parser);
+    struct Value right_value;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '|' || parser->cursor[1] != '|') {
+            if (*parser->cursor == '|') {
+                parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+                return integer_value(0);
+            }
+            return value;
+        }
+
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        if (left != 0) {
+            if (!skip_logical_operand(parser, 0)) {
+                return integer_value(0);
+            }
+            value = integer_value(1);
+            continue;
+        }
+
+        right_value = parse_logical_and_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(right != 0 ? 1 : 0);
     }
 
     return value;

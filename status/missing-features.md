@@ -65,6 +65,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add modulo/remainder arithmetic (`%`) to the C-hosted Rust-like interpreter so recursive and loop examples can express divisibility checks without awkward subtraction chains.
 - [x] Add integer division (`/`) to the C-hosted Rust-like interpreter with multiplicative precedence and a stable division-by-zero diagnostic.
 - [x] Add loop arithmetic showcase fixtures that use `%` divisibility filters and `/` quotient accumulation with `while` mutation.
+- [x] Add boolean conjunction/disjunction (`&&`/`||`) to the C-hosted Rust-like interpreter so compound guards short-circuit skipped operands and loop/function showcase fixtures can express natural guard combinations.
 
 ## P2 — project quality
 

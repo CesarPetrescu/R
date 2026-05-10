@@ -343,6 +343,52 @@ def test_c_hosted_rustic_interpreter_evaluates_boolean_negation(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_boolean_conjunction_and_disjunction(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "1 < 2 && 3 < 4": 1,
+        "1 < 2 && 3 > 4": 0,
+        "0 || 5 == 5": 1,
+        "0 || 0": 0,
+        "1 + 2 == 3 && 2 * 3 == 6": 1,
+        "1 == 1 || 2 == 3 && missing": 1,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_short_circuits_boolean_operators(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "0 && missing": 0,
+        "1 || missing": 1,
+        "0 && 1 / 0": 0,
+        "1 || 1 / 0": 1,
+        "0 && { missing }": 0,
+        "1 || { missing }": 1,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_uses_boolean_negation_in_recursive_guard(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
@@ -555,6 +601,44 @@ def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_p
         (
             "let n = 96; let steps = 0; while n > 1 { n = n / 2; steps = steps + 1; }; steps",
             6,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_boolean_guards_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_boolean_guards_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.split(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let n = 1; let total = 0; while n <= 10 { if n % 2 == 0 && n % 3 == 0 { total = total + n } else { 0 }; n = n + 1; }; total",
+            6,
+        ),
+        (
+            "fn clamp(n) { if n < 0 || n > 10 { 0 } else { n } }; clamp(7) + clamp(12)",
+            7,
+        ),
+        (
+            "let x = 1; if x == 1 || missing { x } else { 0 }",
+            1,
         ),
     ]
     for source, expected in cases:
