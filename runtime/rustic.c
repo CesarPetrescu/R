@@ -220,6 +220,7 @@ static void pop_scope(struct Parser *parser) {
 
 static struct Value parse_expression(struct Parser *parser);
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator);
+static int skip_expression_operand(struct Parser *parser);
 
 static int skip_block(struct Parser *parser) {
     size_t depth = 0;
@@ -314,6 +315,97 @@ static struct Value parse_if_expression(struct Parser *parser) {
     return value;
 }
 
+static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
+    char *end = NULL;
+
+    skip_spaces(parser);
+    *out_is_default = 0;
+    if (*parser->cursor == '_') {
+        parser->cursor++;
+        *out_is_default = 1;
+    } else if (isdigit((unsigned char)*parser->cursor)) {
+        *out_pattern = strtol(parser->cursor, &end, 10);
+        parser->cursor = end;
+    } else {
+        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+        return 0;
+    }
+
+    skip_spaces(parser);
+    if (parser->cursor[0] != '=' || parser->cursor[1] != '>') {
+        parser->status = RUSTIC_ERR_EXPECTED_EQUALS;
+        return 0;
+    }
+    parser->cursor += 2;
+    return 1;
+}
+
+static struct Value parse_match_expression(struct Parser *parser) {
+    struct Value scrutinee_value;
+    struct Value value = integer_value(0);
+    long scrutinee;
+    long pattern = 0;
+    int is_default = 0;
+    int matched = 0;
+
+    parser->cursor += 5;
+    scrutinee_value = parse_expression(parser);
+    if (parser->status != RUSTIC_OK || !value_as_integer(parser, scrutinee_value, &scrutinee)) {
+        return integer_value(0);
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return integer_value(0);
+    }
+    parser->cursor++;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor == '}') {
+            parser->cursor++;
+            if (!matched) {
+                parser->status = RUSTIC_ERR_NO_MATCHING_MATCH_ARM;
+                return integer_value(0);
+            }
+            return value;
+        }
+
+        if (!parse_match_arm_pattern(parser, &pattern, &is_default)) {
+            return integer_value(0);
+        }
+
+        if (!matched && (is_default || pattern == scrutinee)) {
+            value = parse_expression(parser);
+            if (parser->status != RUSTIC_OK) {
+                return integer_value(0);
+            }
+            matched = 1;
+        } else if (!skip_expression_operand(parser)) {
+            return integer_value(0);
+        }
+
+        skip_spaces(parser);
+        if (parser->loop_control != LOOP_CONTROL_NONE) {
+            while (*parser->cursor != '\0' && *parser->cursor != '}') {
+                parser->cursor++;
+            }
+        }
+        if (*parser->cursor == ',') {
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor == '}') {
+            continue;
+        }
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return integer_value(0);
+    }
+
+    return value;
+}
+
 static struct Value parse_while_statement(struct Parser *parser) {
     const char *condition_start;
     long condition;
@@ -383,6 +475,10 @@ static struct Value parse_factor(struct Parser *parser) {
 
     if (cursor_starts_keyword(parser, "if")) {
         return parse_if_expression(parser);
+    }
+
+    if (cursor_starts_keyword(parser, "match")) {
+        return parse_match_expression(parser);
     }
 
     if (*parser->cursor == '(') {
@@ -711,6 +807,14 @@ static int skip_factor_expression(struct Parser *parser) {
             return 0;
         }
         parser->cursor += 4;
+        return skip_block(parser);
+    }
+    if (cursor_starts_keyword(parser, "match")) {
+        parser->cursor += 5;
+        if (!skip_expression_operand(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
         return skip_block(parser);
     }
     if (*parser->cursor == '(') {
@@ -1297,6 +1401,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "division by zero";
     case RUSTIC_ERR_LOOP_CONTROL_OUTSIDE_LOOP:
         return "loop control outside loop";
+    case RUSTIC_ERR_NO_MATCHING_MATCH_ARM:
+        return "no matching match arm";
     default:
         return "unknown rustic interpreter error";
     }

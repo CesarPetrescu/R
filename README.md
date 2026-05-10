@@ -72,6 +72,7 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `10 - 3 + 2 * 4`,
 `fn add(a, b) { a + b }; fn twice(x) { add(x, x) }; twice(add(2, 3))`,
 `let n = 0; let total = 0; while n < 10 { n = n + 1; if n == 4 { break; } else { total = total + n; } }; total`,
 `let n = 0; let total = 0; while n < 5 { n = n + 1; if n == 3 { continue; } else { total = total + n; } }; total`,
+`let n = 2; match n { 1 => 10, 2 => 20, _ => 99 }`,
 `fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)`,
 `1 < 2 && 3 < 4`, `0 || 5 == 5`,
 and `fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)`,
@@ -89,6 +90,7 @@ short-circuiting boolean conjunction/disjunction (`&&`, `||`) for compound guard
 nested lexical scopes, conditional `if`/`else` expressions that evaluate only the selected branch,
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
 `break` statements for early loop exits and `continue` statements for skipping to the next iteration,
+`match` expressions with integer arms and `_` defaults for multi-way expression dispatch,
 `fn`-like named function declarations/calls with call-local parameter bindings,
 block-local function declarations that can use visible lexical bindings without leaking outside their block,
 first-class function references that can be bound with `let`, returned from helpers, and called through local names,
@@ -99,7 +101,7 @@ unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
 subtraction, integer division, remainder arithmetic, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
-loop-driven mutation, `break` exits, `continue` iteration skips, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
+loop-driven mutation, `break` exits, `continue` iteration skips, `match` integer dispatch/default arms, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
 first-class function references bound with `let`, returned from helpers, and called through local names,
 nested call composition,
 recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures,
@@ -454,7 +456,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 121, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 57, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 122, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 58, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -466,7 +468,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 121 |
+| Completed backlog items | 122 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -475,7 +477,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 57 | 0 | None |
+| P1 | 58 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item

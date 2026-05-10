@@ -4,6 +4,7 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 
 ## Unreleased
 
+- Added `match`-style expression dispatch to the C-hosted Rustic interpreter, with fixture coverage for selected integer arms, default arms, skipped unselected arms, and loop-control inside matched arms.
 - Added `break`/`continue` loop-control semantics to the C-hosted Rustic interpreter, with fixture coverage for early loop exits and skipped iterations.
 - Added release/versioning policy notes for the current `0.1.0` package.
 - Switched Project R from MIT to GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) so distributed and network-served modified versions remain open-source.

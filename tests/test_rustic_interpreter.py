@@ -738,6 +738,39 @@ def test_c_hosted_rustic_interpreter_runs_loop_control_showcase_fixture(tmp_path
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_match_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_match_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("let n = 2; match n { 1 => 10, 2 => 20, _ => 99 }", 20),
+        ("let n = 3; match n { 1 => missing, 2 => 20, _ => n + 4 }", 7),
+        ("let n = 4; match n % 3 { 0 => 30, 1 => 40, _ => 50 }", 40),
+        (
+            "let n = 0; while n < 5 { n = n + 1; match n { 3 => { continue; }, _ => 0 }; if n == 5 { break; } else { 0 } }; n",
+            5,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
@@ -1112,6 +1145,54 @@ def test_c_hosted_rustic_interpreter_rejects_runaway_while_loop_with_step_limit(
     assert result.returncode == 2
     assert result.stdout == ""
     assert "step limit exceeded" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_evaluates_match_expression_arms(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let n = 2; match n { 1 => 10, 2 => 20, _ => 99 }"
+    result = subprocess.run(
+        [str(binary), source],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.stdout == f"{source} => 20\n"
+    assert result.stderr == ""
+
+
+def test_c_hosted_rustic_interpreter_match_default_skips_unselected_arms(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let n = 3; match n { 1 => missing, 2 => 20, _ => n + 4 }"
+    result = subprocess.run(
+        [str(binary), source],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.stdout == f"{source} => 7\n"
+    assert result.stderr == ""
+
+
+def test_c_hosted_rustic_interpreter_rejects_match_without_matching_default(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "match 3 { 1 => 10, 2 => 20 }"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "no matching match arm" in result.stderr
 
 
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
