@@ -379,6 +379,7 @@ def test_c_hosted_rustic_interpreter_short_circuits_boolean_operators(tmp_path):
         "0 && { missing } + 1": 0,
         "1 || if 0 { missing } else { 2 }": 1,
         "0 && (missing || 1)": 0,
+        "0 && if if 1 { 0 } else { 1 } { missing } else { 2 }": 0,
     }
     for source, expected in expectations.items():
         result = subprocess.run(

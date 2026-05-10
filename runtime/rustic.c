@@ -667,9 +667,10 @@ static int skip_factor_expression(struct Parser *parser) {
     }
     if (cursor_starts_keyword(parser, "if")) {
         parser->cursor += 2;
-        while (*parser->cursor != '\0' && *parser->cursor != '{') {
-            parser->cursor++;
+        if (!skip_expression_operand(parser)) {
+            return 0;
         }
+        skip_spaces(parser);
         if (!skip_block(parser)) {
             return 0;
         }
