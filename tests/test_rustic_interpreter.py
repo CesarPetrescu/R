@@ -536,6 +536,40 @@ def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.split(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let n = 1; let total = 0; while n <= 10 { if n % 3 == 0 { total = total + n } else { 0 }; n = n + 1; }; total",
+            18,
+        ),
+        (
+            "let n = 96; let steps = 0; while n > 1 { n = n / 2; steps = steps + 1; }; steps",
+            6,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

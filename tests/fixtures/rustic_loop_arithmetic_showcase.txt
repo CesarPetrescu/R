@@ -1,0 +1,4 @@
+# Loop arithmetic showcase programs for the C-hosted Rustic evaluator.
+# Each line is parsed as: <source> => <expected integer>
+let n = 1; let total = 0; while n <= 10 { if n % 3 == 0 { total = total + n } else { 0 }; n = n + 1; }; total => 18
+let n = 96; let steps = 0; while n > 1 { n = n / 2; steps = steps + 1; }; steps => 6
