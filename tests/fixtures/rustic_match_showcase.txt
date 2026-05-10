@@ -1,0 +1,5 @@
+# Rustic match-expression showcase programs.
+let n = 2; match n { 1 => 10, 2 => 20, _ => 99 } => 20
+let n = 3; match n { 1 => missing, 2 => 20, _ => n + 4 } => 7
+let n = 4; match n % 3 { 0 => 30, 1 => 40, _ => 50 } => 40
+let n = 0; while n < 5 { n = n + 1; match n { 3 => { continue; }, _ => 0 }; if n == 5 { break; } else { 0 } }; n => 5
