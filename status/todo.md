@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add recursive arithmetic showcase fixtures beyond countdown after subtraction support, such as triangular-number or factorial-style examples once multiplication/subtraction combinations and boolean-negated guards are stable.
+1. Add local function bindings or closures to the C-hosted Rustic interpreter so recursive arithmetic examples can start moving from globally declared `fn` items toward Rust-like value/function scoping.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

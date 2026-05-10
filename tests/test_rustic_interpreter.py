@@ -497,6 +497,40 @@ def test_c_hosted_rustic_interpreter_evaluates_recursive_countdown_function(tmp_
     assert result.stdout == f"{source} => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_recursive_arithmetic_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_recursive_arithmetic_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.split(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "fn triangle(n) { if n == 0 { 0 } else { n + triangle(n - 1) } }; triangle(5)",
+            15,
+        ),
+        (
+            "fn factorial(n) { if n == 0 { 1 } else { n * factorial(n - 1) } }; factorial(5)",
+            120,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_runaway_recursive_function_with_step_limit(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

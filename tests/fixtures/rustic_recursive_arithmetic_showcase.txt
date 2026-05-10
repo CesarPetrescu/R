@@ -1,0 +1,4 @@
+# Recursive arithmetic showcase programs for the C-hosted Rustic interpreter.
+# Format: <program> => <expected integer>
+fn triangle(n) { if n == 0 { 0 } else { n + triangle(n - 1) } }; triangle(5) => 15
+fn factorial(n) { if n == 0 { 1 } else { n * factorial(n - 1) } }; factorial(5) => 120
