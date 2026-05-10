@@ -845,6 +845,35 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matches));
             }
 
+            if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0) {
+                struct ArrayValue *array;
+                long selected;
+                size_t element_index;
+                int selecting_min = strcmp(name, "min") == 0;
+
+                if (argument_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (array->element_count == 0) {
+                    parser->status = RUSTIC_ERR_EMPTY_ARRAY;
+                    return integer_value(0);
+                }
+                selected = array->elements[0];
+                for (element_index = 1; element_index < array->element_count; element_index++) {
+                    if ((selecting_min && array->elements[element_index] < selected) ||
+                        (!selecting_min && array->elements[element_index] > selected)) {
+                        selected = array->elements[element_index];
+                    }
+                }
+                return parse_index_postfix(parser, integer_value(selected));
+            }
+
             if (strcmp(name, "set") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *rebuilt_array;
@@ -1857,6 +1886,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "array index out of bounds";
     case RUSTIC_ERR_EXPECTED_ARRAY:
         return "expected array";
+    case RUSTIC_ERR_EMPTY_ARRAY:
+        return "empty array";
     default:
         return "unknown rustic interpreter error";
     }

@@ -1136,6 +1136,91 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_count_helper_arguments(tmp_
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_finds_array_minimum_and_maximum(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "min([3, 1, 4, 2])": 1,
+        "max([3, 1, 4, 2])": 4,
+        "let xs = []; let i = 0; while i < 5 { xs = push(xs, 10 - i * 2); i = i + 1; }; min(xs) * 10 + max(xs)": 30,
+        "max(push([2, 9], 5)) - min(push([2, 9], 5))": 7,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_min_max_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "min(1)": "expected array",
+        "max(1)": "expected array",
+        "min([])": "empty array",
+        "max([])": "empty array",
+        "min([1], [2])": "wrong argument count",
+        "max([1], [2])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_runs_array_min_max_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_min_max_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let xs = []; let i = 0; while i < 5 { xs = push(xs, 10 - i * 2); i = i + 1; }; min(xs) * 10 + max(xs)",
+            30,
+        ),
+        (
+            "let xs = [3, 1, 4]; let ys = set(xs, 1, 6); min(xs) * 10 + max(ys)",
+            16,
+        ),
+        (
+            "fn build(n) { let xs = []; let i = 1; while i <= n { xs = push(xs, i * i); i = i + 1; }; xs }; max(build(4)) - min(build(4))",
+            15,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_count_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_count_showcase.txt"
