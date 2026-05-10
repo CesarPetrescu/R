@@ -72,6 +72,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add array literals and integer indexing to Rustic so programs can bind small collections and select elements inside arithmetic expressions.
 - [x] Add array length helper operations to Rustic so loop-heavy showcase programs can inspect small runtime collections beyond fixed-index reads.
 - [x] Add bounded array rebuild helper operations to Rustic so loop-built showcase programs can evolve small runtime collections beyond fixed-index reads and `len(xs)` inspection.
+- [x] Add append-style bounded array construction to Rustic so loop-built showcase programs can grow small collections with `push(xs, value)` while preserving fixed array caps.
 
 ## P2 — project quality
 
