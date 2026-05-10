@@ -1,6 +1,7 @@
 #include "rustic.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -137,6 +138,30 @@ static struct Function *lookup_function(struct Parser *parser, const char *name)
         }
     }
     return NULL;
+}
+
+static long encode_function_value(size_t function_index) {
+    return LONG_MIN + (long)function_index;
+}
+
+static int decode_function_value(long value, size_t *out_function_index) {
+    if (value >= LONG_MIN && value < LONG_MIN + (long)RUSTIC_MAX_FUNCTIONS) {
+        *out_function_index = (size_t)(value - LONG_MIN);
+        return 1;
+    }
+    return 0;
+}
+
+static struct Function *function_from_value(struct Parser *parser, long value) {
+    size_t function_index;
+
+    if (!decode_function_value(value, &function_index)) {
+        return NULL;
+    }
+    if (function_index >= parser->function_count) {
+        return NULL;
+    }
+    return &parser->functions[function_index];
 }
 
 static void push_scope(struct Parser *parser) {
@@ -367,8 +392,15 @@ static long parse_factor(struct Parser *parser) {
 
             function = lookup_function(parser, name);
             if (function == NULL) {
-                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-                return 0;
+                if (!lookup_binding(parser, name, &value)) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return 0;
+                }
+                function = function_from_value(parser, value);
+                if (function == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return 0;
+                }
             }
             if (argument_count != function->parameter_count) {
                 parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -404,8 +436,12 @@ static long parse_factor(struct Parser *parser) {
             return value;
         }
         if (!lookup_binding(parser, name, &value)) {
-            parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-            return 0;
+            function = lookup_function(parser, name);
+            if (function == NULL) {
+                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                return 0;
+            }
+            return encode_function_value((size_t)(function - parser->functions));
         }
         return value;
     }
