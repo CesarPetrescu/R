@@ -887,6 +887,26 @@ def test_c_hosted_rustic_interpreter_releases_top_level_array_temporaries(tmp_pa
         assert result.stdout == f"{source} => 64\n"
 
 
+def test_c_hosted_rustic_interpreter_preserves_array_under_construction(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "[[1][0], 2][1]": 2,
+        "let xs = [[1][0], 2]; xs[1]": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_array_index_out_of_bounds(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

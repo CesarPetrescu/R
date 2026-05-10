@@ -55,6 +55,7 @@ struct ArrayValue {
     size_t element_count;
     size_t scope_depth;
     size_t id;
+    int under_construction;
 };
 
 struct Parser {
@@ -241,6 +242,20 @@ static struct ArrayValue *array_from_value(struct Parser *parser, struct Value v
     return &parser->arrays[value.array_index];
 }
 
+static struct ArrayValue *array_by_id(struct Parser *parser, size_t array_id, size_t *out_index) {
+    size_t index;
+
+    for (index = 0; index < parser->array_count; index++) {
+        if (parser->arrays[index].id == array_id) {
+            if (out_index != NULL) {
+                *out_index = index;
+            }
+            return &parser->arrays[index];
+        }
+    }
+    return NULL;
+}
+
 static void push_scope(struct Parser *parser) {
     parser->scope_depth++;
 }
@@ -276,8 +291,9 @@ static void compact_unreferenced_arrays(struct Parser *parser, struct Value *val
         struct ArrayValue array = parser->arrays[read_index];
         int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
         int preserve_binding = binding_references_array(parser, array.id);
+        int preserve_under_construction = array.under_construction;
 
-        if (preserve_returned || preserve_binding) {
+        if (preserve_returned || preserve_binding || preserve_under_construction) {
             if (preserve_returned) {
                 value->array_index = write_index;
             }
@@ -298,8 +314,9 @@ static void compact_arrays_after_scope_pop(struct Parser *parser, struct Value *
         struct ArrayValue array = parser->arrays[read_index];
         int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
         int preserve_binding = binding_references_array(parser, array.id);
+        int preserve_under_construction = array.under_construction;
 
-        if (array.scope_depth != parser->scope_depth || preserve_returned || preserve_binding) {
+        if (array.scope_depth != parser->scope_depth || preserve_returned || preserve_binding || preserve_under_construction) {
             if (array.scope_depth == parser->scope_depth && (preserve_returned || preserve_binding)) {
                 array.scope_depth = parent_scope_depth;
             }
@@ -614,6 +631,7 @@ static struct Value parse_array_literal(struct Parser *parser) {
     struct Value element_value;
     long element;
     size_t array_index;
+    size_t array_id;
 
     if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
         parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
@@ -625,7 +643,10 @@ static struct Value parse_array_literal(struct Parser *parser) {
     array->element_count = 0;
     array->scope_depth = parser->scope_depth;
     array->id = parser->next_array_id;
+    array->under_construction = 1;
+    array_id = array->id;
     parser->next_array_id++;
+    parser->array_count++;
     parser->cursor++;
 
     skip_spaces(parser);
@@ -636,6 +657,11 @@ static struct Value parse_array_literal(struct Parser *parser) {
                 return integer_value(0);
             }
             element_value = parse_expression(parser);
+            array = array_by_id(parser, array_id, &array_index);
+            if (array == NULL) {
+                parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
+                return integer_value(0);
+            }
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, element_value, &element)) {
                 return integer_value(0);
             }
@@ -655,7 +681,12 @@ static struct Value parse_array_literal(struct Parser *parser) {
         return integer_value(0);
     }
     parser->cursor++;
-    parser->array_count++;
+    array = array_by_id(parser, array_id, &array_index);
+    if (array == NULL) {
+        parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
+        return integer_value(0);
+    }
+    array->under_construction = 0;
     return array_value(array_index, array->id);
 }
 
