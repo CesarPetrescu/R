@@ -1,0 +1,4 @@
+# Rustic array any/all showcase programs.
+let xs = []; let i = 0; while i < 6 { xs = push(xs, i % 3); i = i + 1; }; any(xs, 2) * 10 + all(xs, 2) => 10
+let xs = [1, 1, 1]; let ys = set(xs, 1, 2); all(xs, 1) * 10 + any(ys, 2) => 11
+fn build(n) { let xs = []; let i = 0; while i < n { xs = push(xs, i % 2); i = i + 1; }; xs }; any(build(5), 1) + all(build(5), 0) => 1
