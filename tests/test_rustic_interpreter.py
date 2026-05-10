@@ -960,6 +960,50 @@ def test_c_hosted_rustic_interpreter_rejects_len_on_non_arrays(tmp_path):
     assert "expected array" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_rebuilds_arrays_with_set_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = [1, 2, 3]; let ys = set(xs, 1, 9); xs[1] + ys[1]": 11,
+        "let xs = [0, 0, 0]; let i = 0; while i < len(xs) { xs = set(xs, i, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2]": 6,
+        "set([1, 2], 0, 9)[0]": 9,
+        "let xs = [1, 2]; set(set(xs, 0, 7), 1, 8)[0] + set(set(xs, 0, 7), 1, 8)[1]": 15,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_set_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "set(1, 0, 9)": "expected array",
+        "set([1, 2], 2, 9)": "array index out of bounds",
+        "set([1, 2], 0, [9])": "expected integer",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"

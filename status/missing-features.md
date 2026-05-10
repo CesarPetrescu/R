@@ -71,6 +71,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add `match`-style expression dispatch to Rustic so showcase programs can express multi-way integer decisions without deeply nested `if`/`else` blocks.
 - [x] Add array literals and integer indexing to Rustic so programs can bind small collections and select elements inside arithmetic expressions.
 - [x] Add array length helper operations to Rustic so loop-heavy showcase programs can inspect small runtime collections beyond fixed-index reads.
+- [x] Add bounded array rebuild helper operations to Rustic so loop-built showcase programs can evolve small runtime collections beyond fixed-index reads and `len(xs)` inspection.
 
 ## P2 — project quality
 
