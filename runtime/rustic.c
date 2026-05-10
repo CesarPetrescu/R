@@ -709,7 +709,7 @@ static int skip_factor_expression(struct Parser *parser) {
             parser->cursor++;
             skip_spaces(parser);
             while (*parser->cursor != ')') {
-                if (!skip_logical_and_operand(parser)) {
+                if (!skip_expression_operand(parser)) {
                     return 0;
                 }
                 skip_spaces(parser);
@@ -800,6 +800,23 @@ static int skip_logical_and_operand(struct Parser *parser) {
         }
         parser->cursor += 2;
         if (!skip_comparison_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_expression_operand(struct Parser *parser) {
+    if (!skip_logical_and_operand(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '|' || parser->cursor[1] != '|') {
+            return 1;
+        }
+        parser->cursor += 2;
+        if (!skip_logical_and_operand(parser)) {
             return 0;
         }
     }
