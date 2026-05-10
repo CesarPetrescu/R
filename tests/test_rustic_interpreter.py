@@ -865,6 +865,28 @@ def test_c_hosted_rustic_interpreter_releases_block_scoped_arrays(tmp_path):
     assert result.stdout == f"{source} => 65\n"
 
 
+def test_c_hosted_rustic_interpreter_releases_top_level_array_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    let_statements = [f"let x{index} = [{index}][0]" for index in range(65)]
+    expression_statements = [f"[{index}][0]" for index in range(65)]
+    cases = [
+        "; ".join(let_statements + ["x64"]),
+        "; ".join(expression_statements),
+    ]
+
+    for source in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => 64\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_array_index_out_of_bounds(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

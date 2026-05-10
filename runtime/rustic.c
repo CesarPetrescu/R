@@ -1323,6 +1323,7 @@ static void parse_let_statement(struct Parser *parser) {
     }
     parser->cursor++;
     add_binding(parser, name, value);
+    compact_unreferenced_arrays(parser, &value);
 }
 
 static void parse_function_declaration(struct Parser *parser) {
@@ -1586,6 +1587,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             return value;
         }
         parser->cursor++;
+        compact_unreferenced_arrays(parser, NULL);
     }
 
     return value;
