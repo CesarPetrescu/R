@@ -245,6 +245,54 @@ static void push_scope(struct Parser *parser) {
     parser->scope_depth++;
 }
 
+static int binding_references_array(const struct Parser *parser, size_t array_id) {
+    size_t index;
+
+    for (index = 0; index < parser->binding_count; index++) {
+        const struct Binding *binding = &parser->bindings[index];
+        if (binding->value.kind == VALUE_ARRAY && binding->value.array_id == array_id) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void remap_binding_array_indices(struct Parser *parser, size_t array_id, size_t array_index) {
+    size_t index;
+
+    for (index = 0; index < parser->binding_count; index++) {
+        struct Binding *binding = &parser->bindings[index];
+        if (binding->value.kind == VALUE_ARRAY && binding->value.array_id == array_id) {
+            binding->value.array_index = array_index;
+        }
+    }
+}
+
+static void compact_arrays_after_scope_pop(struct Parser *parser, struct Value *value) {
+    size_t read_index;
+    size_t write_index = 0;
+    size_t parent_scope_depth = parser->scope_depth > 0 ? parser->scope_depth - 1 : 0;
+
+    for (read_index = 0; read_index < parser->array_count; read_index++) {
+        struct ArrayValue array = parser->arrays[read_index];
+        int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
+        int preserve_binding = binding_references_array(parser, array.id);
+
+        if (array.scope_depth != parser->scope_depth || preserve_returned || preserve_binding) {
+            if (array.scope_depth == parser->scope_depth && (preserve_returned || preserve_binding)) {
+                array.scope_depth = parent_scope_depth;
+            }
+            if (preserve_returned) {
+                value->array_index = write_index;
+            }
+            remap_binding_array_indices(parser, array.id, write_index);
+            parser->arrays[write_index] = array;
+            write_index++;
+        }
+    }
+    parser->array_count = write_index;
+}
+
 static void pop_scope(struct Parser *parser) {
     while (parser->binding_count > 0 &&
            parser->bindings[parser->binding_count - 1].scope_depth == parser->scope_depth) {
@@ -254,20 +302,13 @@ static void pop_scope(struct Parser *parser) {
            parser->functions[parser->function_count - 1].scope_depth == parser->scope_depth) {
         parser->function_count--;
     }
-    while (parser->array_count > 0 &&
-           parser->arrays[parser->array_count - 1].scope_depth == parser->scope_depth) {
-        parser->array_count--;
-    }
+    compact_arrays_after_scope_pop(parser, NULL);
     if (parser->scope_depth > 0) {
         parser->scope_depth--;
     }
 }
 
 static void pop_scope_preserving_value(struct Parser *parser, struct Value *value) {
-    size_t read_index;
-    size_t write_index = 0;
-    size_t parent_scope_depth = parser->scope_depth > 0 ? parser->scope_depth - 1 : 0;
-
     while (parser->binding_count > 0 &&
            parser->bindings[parser->binding_count - 1].scope_depth == parser->scope_depth) {
         parser->binding_count--;
@@ -276,20 +317,7 @@ static void pop_scope_preserving_value(struct Parser *parser, struct Value *valu
            parser->functions[parser->function_count - 1].scope_depth == parser->scope_depth) {
         parser->function_count--;
     }
-    for (read_index = 0; read_index < parser->array_count; read_index++) {
-        struct ArrayValue array = parser->arrays[read_index];
-        int preserve = value->kind == VALUE_ARRAY && value->array_id == array.id;
-
-        if (array.scope_depth != parser->scope_depth || preserve) {
-            if (preserve) {
-                array.scope_depth = parent_scope_depth;
-                value->array_index = write_index;
-            }
-            parser->arrays[write_index] = array;
-            write_index++;
-        }
-    }
-    parser->array_count = write_index;
+    compact_arrays_after_scope_pop(parser, value);
     if (parser->scope_depth > 0) {
         parser->scope_depth--;
     }

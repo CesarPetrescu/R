@@ -828,6 +828,26 @@ def test_c_hosted_rustic_interpreter_releases_outer_scope_while_condition_arrays
     assert result.stdout == f"{source} => 65\n"
 
 
+def test_c_hosted_rustic_interpreter_preserves_arrays_assigned_to_outer_bindings(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = [0]; { xs = [7]; 0 }; xs[0]": 7,
+        "let xs = [0]; while xs[0] < 3 { xs = [xs[0] + 1]; 0 }; xs[0]": 3,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_releases_block_scoped_arrays(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let n = 0; let total = 0; while n < 65 { let xs = [1]; total = total + xs[0]; n = n + 1; }; total"
