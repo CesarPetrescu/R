@@ -67,6 +67,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add loop arithmetic showcase fixtures that use `%` divisibility filters and `/` quotient accumulation with `while` mutation.
 - [x] Add boolean conjunction/disjunction (`&&`/`||`) to the C-hosted Rust-like interpreter so compound guards short-circuit skipped operands and loop/function showcase fixtures can express natural guard combinations.
 - [x] Add comparison-heavy loop showcase fixtures that combine nested blocks, local helper functions, function values, and compound boolean guards.
+- [x] Add `break`/`continue` loop-control semantics to Rustic so longer loop-heavy showcase programs can exit early without encoding every branch in guard expressions.
 
 ## P2 — project quality
 

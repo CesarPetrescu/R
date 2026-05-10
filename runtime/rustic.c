@@ -23,6 +23,12 @@ struct Value {
     size_t function_id;
 };
 
+enum LoopControl {
+    LOOP_CONTROL_NONE,
+    LOOP_CONTROL_BREAK,
+    LOOP_CONTROL_CONTINUE,
+};
+
 struct Binding {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value value;
@@ -49,6 +55,8 @@ struct Parser {
     size_t function_count;
     size_t next_function_id;
     size_t steps_remaining;
+    size_t loop_depth;
+    enum LoopControl loop_control;
 };
 
 static struct Value integer_value(long integer) {
@@ -314,26 +322,40 @@ static struct Value parse_while_statement(struct Parser *parser) {
 
     parser->cursor += 5;
     condition_start = parser->cursor;
+    parser->loop_depth++;
     while (parser->status == RUSTIC_OK) {
         parser->cursor = condition_start;
         condition_value = parse_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
+            parser->loop_depth--;
             return integer_value(0);
         }
 
         if (condition == 0) {
             if (!skip_block(parser)) {
+                parser->loop_depth--;
                 return integer_value(0);
             }
+            parser->loop_depth--;
             return value;
         }
 
         value = parse_block_expression(parser);
         if (parser->status != RUSTIC_OK) {
+            parser->loop_depth--;
             return integer_value(0);
+        }
+        if (parser->loop_control == LOOP_CONTROL_BREAK) {
+            parser->loop_control = LOOP_CONTROL_NONE;
+            parser->loop_depth--;
+            return value;
+        }
+        if (parser->loop_control == LOOP_CONTROL_CONTINUE) {
+            parser->loop_control = LOOP_CONTROL_NONE;
         }
     }
 
+    parser->loop_depth--;
     return value;
 }
 
@@ -347,6 +369,8 @@ static struct Value parse_factor(struct Parser *parser) {
     char *end = NULL;
     struct Function *function;
     const char *call_return;
+    size_t saved_loop_depth;
+    enum LoopControl saved_loop_control;
 
     skip_spaces(parser);
     if (*parser->cursor == '!') {
@@ -441,12 +465,18 @@ static struct Value parse_factor(struct Parser *parser) {
 
             call_return = parser->cursor;
             parser->cursor = function->body_start;
+            saved_loop_depth = parser->loop_depth;
+            saved_loop_control = parser->loop_control;
+            parser->loop_depth = 0;
+            parser->loop_control = LOOP_CONTROL_NONE;
             push_scope(parser);
             for (index = 0; index < argument_count; index++) {
                 add_binding(parser, function->parameters[index], arguments[index]);
                 if (parser->status != RUSTIC_OK) {
                     pop_scope(parser);
                     parser->cursor = call_return;
+                    parser->loop_depth = saved_loop_depth;
+                    parser->loop_control = saved_loop_control;
                     return integer_value(0);
                 }
             }
@@ -454,6 +484,8 @@ static struct Value parse_factor(struct Parser *parser) {
             if (parser->status != RUSTIC_OK) {
                 pop_scope(parser);
                 parser->cursor = call_return;
+                parser->loop_depth = saved_loop_depth;
+                parser->loop_control = saved_loop_control;
                 return integer_value(0);
             }
             skip_spaces(parser);
@@ -461,10 +493,14 @@ static struct Value parse_factor(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
                 pop_scope(parser);
                 parser->cursor = call_return;
+                parser->loop_depth = saved_loop_depth;
+                parser->loop_control = saved_loop_control;
                 return integer_value(0);
             }
             pop_scope(parser);
             parser->cursor = call_return;
+            parser->loop_depth = saved_loop_depth;
+            parser->loop_control = saved_loop_control;
             return value;
         }
         if (!lookup_binding(parser, name, &value)) {
@@ -1041,6 +1077,27 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     return 1;
 }
 
+static void parse_loop_control_statement(struct Parser *parser, enum LoopControl control) {
+    if (control == LOOP_CONTROL_BREAK) {
+        parser->cursor += 5;
+    } else {
+        parser->cursor += 8;
+    }
+
+    if (parser->loop_depth == 0) {
+        parser->status = RUSTIC_ERR_LOOP_CONTROL_OUTSIDE_LOOP;
+        return;
+    }
+
+    skip_spaces(parser);
+    if (*parser->cursor != ';') {
+        parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+        return;
+    }
+    parser->cursor++;
+    parser->loop_control = control;
+}
+
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
     struct Value value = integer_value(0);
     int saw_statement = 0;
@@ -1094,6 +1151,18 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             continue;
         }
 
+        if (cursor_starts_keyword(parser, "break")) {
+            parse_loop_control_statement(parser, LOOP_CONTROL_BREAK);
+            saw_statement = 1;
+            return value;
+        }
+
+        if (cursor_starts_keyword(parser, "continue")) {
+            parse_loop_control_statement(parser, LOOP_CONTROL_CONTINUE);
+            saw_statement = 1;
+            return value;
+        }
+
         if (parse_assignment_statement(parser, &value)) {
             if (parser->status != RUSTIC_OK) {
                 return integer_value(0);
@@ -1143,6 +1212,8 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.function_count = 0;
     parser.next_function_id = 1;
     parser.steps_remaining = RUSTIC_MAX_STEPS;
+    parser.loop_depth = 0;
+    parser.loop_control = LOOP_CONTROL_NONE;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
@@ -1191,6 +1262,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "step limit exceeded";
     case RUSTIC_ERR_DIVISION_BY_ZERO:
         return "division by zero";
+    case RUSTIC_ERR_LOOP_CONTROL_OUTSIDE_LOOP:
+        return "loop control outside loop";
     default:
         return "unknown rustic interpreter error";
     }
