@@ -586,6 +586,158 @@ def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_breaks_out_of_while_loop(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let n = 0; let total = 0; while n < 10 { n = n + 1; if n == 4 { break; } else { total = total + n; } }; total"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 6\n"
+
+
+def test_c_hosted_rustic_interpreter_continues_while_loop_iteration(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "let n = 0; let total = 0; while n < 5 { n = n + 1; if n == 3 { continue; } else { total = total + n; } }; total"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 12\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_loop_control_outside_loop(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    for source in ("break;", "continue;"):
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert "loop control outside loop" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_rejects_loop_control_in_while_condition(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    for source in (
+        "while if 1 { break; } else { 1 } { 99 }",
+        "while if 1 { continue; } else { 1 } { 99 }",
+    ):
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert "loop control outside loop" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_loop_control_stops_remaining_loop_body_statements(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "let n = 0; let x = 0; while n < 3 { n = n + 1; if n == 2 { continue; } else { 0 }; x = x + 10; }; x": 20,
+        "let n = 0; let x = 0; while n < 3 { n = n + 1; if n == 2 { break; } else { 0 }; x = x + 10; }; x": 10,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_loop_control_from_called_function(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    for source in (
+        "fn stop() { break; }; while 1 { stop(); }",
+        "fn skip() { continue; }; while 1 { skip(); }",
+    ):
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert "loop control outside loop" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_runs_loop_control_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_loop_control_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.split(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let n = 0; let total = 0; while n < 10 { n = n + 1; if n == 4 { break; } else { total = total + n; } }; total",
+            6,
+        ),
+        (
+            "let n = 0; let total = 0; while n < 5 { n = n + 1; if n == 3 { continue; } else { total = total + n; } }; total",
+            12,
+        ),
+        (
+            "let n = 0; let x = 0; while n < 3 { n = n + 1; if n == 2 { continue; } else { 0 }; x = x + 10; }; x",
+            20,
+        ),
+        (
+            "let n = 0; let x = 0; while n < 3 { n = n + 1; if n == 2 { break; } else { 0 }; x = x + 10; }; x",
+            10,
+        ),
+        (
+            "let n = 0; let found = 0; while n < 8 { n = n + 1; if found == 1 { continue; } else { if n % 4 == 0 { found = n; break; } else { 0 } } }; found",
+            4,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"

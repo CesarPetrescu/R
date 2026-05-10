@@ -20,6 +20,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_WRONG_ARGUMENT_COUNT = 11,
     RUSTIC_ERR_STEP_LIMIT_EXCEEDED = 12,
     RUSTIC_ERR_DIVISION_BY_ZERO = 13,
+    RUSTIC_ERR_LOOP_CONTROL_OUTSIDE_LOOP = 14,
 } RusticStatus;
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

@@ -70,6 +70,8 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `10 - 3 + 2 * 4`,
 `fn add(a, b) { a + b }; let op = add; op(2, 3)`,
 `fn inc(x) { x + 1 }; fn choose() { inc }; let f = choose(); f(6)`,
 `fn add(a, b) { a + b }; fn twice(x) { add(x, x) }; twice(add(2, 3))`,
+`let n = 0; let total = 0; while n < 10 { n = n + 1; if n == 4 { break; } else { total = total + n; } }; total`,
+`let n = 0; let total = 0; while n < 5 { n = n + 1; if n == 3 { continue; } else { total = total + n; } }; total`,
 `fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)`,
 `1 < 2 && 3 < 4`, `0 || 5 == 5`,
 and `fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)`,
@@ -86,17 +88,18 @@ expression value, assignment/mutation of existing bindings, equality and orderin
 short-circuiting boolean conjunction/disjunction (`&&`, `||`) for compound guards, block expressions with
 nested lexical scopes, conditional `if`/`else` expressions that evaluate only the selected branch,
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
+`break` statements for early loop exits and `continue` statements for skipping to the next iteration,
 `fn`-like named function declarations/calls with call-local parameter bindings,
 block-local function declarations that can use visible lexical bindings without leaking outside their block,
 first-class function references that can be bound with `let`, returned from helpers, and called through local names,
 function composition, recursive calls for countdown-style programs, remainder-based divisibility guards,
 a fixed interpreter step budget that returns a stable `step limit exceeded`
-diagnostic for runaway loops or recursion instead of hanging the C host, and stable undefined-identifier, division-by-zero, malformed-comparison, wrong-argument-count,
+diagnostic for runaway loops or recursion instead of hanging the C host, and stable undefined-identifier, loop-control-outside-loop, division-by-zero, malformed-comparison, wrong-argument-count,
 unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
 subtraction, integer division, remainder arithmetic, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
-loop-driven mutation, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
+loop-driven mutation, `break` exits, `continue` iteration skips, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
 first-class function references bound with `let`, returned from helpers, and called through local names,
 nested call composition,
 recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures,
@@ -451,7 +454,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 120, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 56, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 121, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 57, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -463,7 +466,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 120 |
+| Completed backlog items | 121 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -472,7 +475,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 56 | 0 | None |
+| P1 | 57 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
