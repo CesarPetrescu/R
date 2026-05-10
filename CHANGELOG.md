@@ -4,6 +4,7 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 
 ## Unreleased
 
+- Added `count(array, value)` value-frequency helper support to the C-hosted Rustic interpreter, with loop-built, rebuilt, and function-returned collection showcase fixtures plus non-array, non-integer, and wrong-argument diagnostics.
 - Added `sum(array)` compact array summary support to the C-hosted Rustic interpreter, with loop-built, rebuilt, and function-returned collection showcase fixtures plus non-array and wrong-argument diagnostics.
 - Added `push(array, value)` bounded append-style construction to the C-hosted Rustic interpreter, with loop-built collection showcase fixtures and diagnostics for non-array, non-integer, and full-array cases.
 - Added `match`-style expression dispatch to the C-hosted Rustic interpreter, with fixture coverage for selected integer arms, default arms, skipped unselected arms, and loop-control inside matched arms.

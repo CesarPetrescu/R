@@ -1092,6 +1092,88 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_sum_helper_arguments(tmp_pa
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_counts_array_values(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "count([1, 2, 1, 3], 1)": 2,
+        "count([], 9)": 0,
+        "let xs = []; let i = 0; while i < 5 { xs = push(xs, i % 2); i = i + 1; }; count(xs, 1)": 2,
+        "count(push([2, 3], 2), 2) + sum(push([2, 3], 2))": 9,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_count_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "count(1, 1)": "expected array",
+        "count([1], [1])": "expected integer",
+        "count([1])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_runs_array_count_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_count_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let xs = []; let i = 0; while i < 6 { xs = push(xs, i % 3); i = i + 1; }; count(xs, 2)",
+            2,
+        ),
+        (
+            "let xs = [1, 1, 2, 3]; let ys = set(xs, 2, 1); count(xs, 1) * 10 + count(ys, 1)",
+            23,
+        ),
+        (
+            "fn build(n) { let xs = []; let i = 0; while i < n { xs = push(xs, i % 2); i = i + 1; }; xs }; count(build(5), 0)",
+            3,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_sum_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_sum_showcase.txt"
