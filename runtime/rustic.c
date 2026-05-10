@@ -268,6 +268,27 @@ static void remap_binding_array_indices(struct Parser *parser, size_t array_id, 
     }
 }
 
+static void compact_unreferenced_arrays(struct Parser *parser, struct Value *value) {
+    size_t read_index;
+    size_t write_index = 0;
+
+    for (read_index = 0; read_index < parser->array_count; read_index++) {
+        struct ArrayValue array = parser->arrays[read_index];
+        int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
+        int preserve_binding = binding_references_array(parser, array.id);
+
+        if (preserve_returned || preserve_binding) {
+            if (preserve_returned) {
+                value->array_index = write_index;
+            }
+            remap_binding_array_indices(parser, array.id, write_index);
+            parser->arrays[write_index] = array;
+            write_index++;
+        }
+    }
+    parser->array_count = write_index;
+}
+
 static void compact_arrays_after_scope_pop(struct Parser *parser, struct Value *value) {
     size_t read_index;
     size_t write_index = 0;
@@ -1411,6 +1432,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     }
 
     update_binding(parser, name, value);
+    compact_unreferenced_arrays(parser, &value);
     *out_value = value;
     return 1;
 }
