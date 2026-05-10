@@ -652,6 +652,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
 }
 
 static int skip_logical_and_operand(struct Parser *parser);
+static int skip_expression_operand(struct Parser *parser);
 
 static int skip_factor_expression(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
@@ -682,7 +683,7 @@ static int skip_factor_expression(struct Parser *parser) {
     }
     if (*parser->cursor == '(') {
         parser->cursor++;
-        if (!skip_logical_and_operand(parser)) {
+        if (!skip_expression_operand(parser)) {
             return 0;
         }
         skip_spaces(parser);
@@ -864,7 +865,7 @@ static struct Value parse_expression(struct Parser *parser) {
         }
         parser->cursor += 2;
         if (left != 0) {
-            if (!skip_logical_operand(parser, 0)) {
+            if (!skip_logical_and_operand(parser)) {
                 return integer_value(0);
             }
             value = integer_value(1);
