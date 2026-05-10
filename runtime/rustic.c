@@ -845,6 +845,40 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matches));
             }
 
+            if (strcmp(name, "any") == 0 || strcmp(name, "all") == 0) {
+                struct ArrayValue *array;
+                long target;
+                long matched;
+                size_t element_index;
+                int require_all = strcmp(name, "all") == 0;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &target)) {
+                    return integer_value(0);
+                }
+                matched = require_all ? 1 : 0;
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    if (array->elements[element_index] == target) {
+                        if (!require_all) {
+                            matched = 1;
+                            break;
+                        }
+                    } else if (require_all) {
+                        matched = 0;
+                        break;
+                    }
+                }
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
             if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0) {
                 struct ArrayValue *array;
                 long selected;

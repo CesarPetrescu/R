@@ -76,6 +76,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add compact array summary helpers to Rustic so loop-built collections can be reduced with `sum(xs)` without hand-written indexing chains.
 - [x] Add array value-frequency helpers to Rustic so loop-built collections can be filtered/count summarized with `count(xs, value)` without hand-written indexing chains.
 - [x] Add array minimum/maximum helpers to Rustic so loop-built collections can be bounded with `min(xs)`/`max(xs)` without hand-written indexing chains.
+- [x] Add array membership predicate helpers to Rustic so loop-built collections can be checked with `any(xs, value)`/`all(xs, value)` without hand-written indexing chains.
 
 ## P2 — project quality
 
