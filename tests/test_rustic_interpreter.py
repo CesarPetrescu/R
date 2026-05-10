@@ -923,6 +923,43 @@ def test_c_hosted_rustic_interpreter_rejects_array_index_out_of_bounds(tmp_path)
     assert "array index out of bounds" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_reports_array_lengths(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "len([1, 2, 3])": 3,
+        "let xs = [3, 5, 8]; len(xs) + xs[len(xs) - 1]": 11,
+        "let n = 0; let total = 0; while n < len([1, 2, 3, 4]) { total = total + len([9, 8]); n = n + 1; }; total": 8,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_len_on_non_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "len(1)"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected array" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
