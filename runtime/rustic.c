@@ -20,6 +20,7 @@ struct Value {
     enum ValueKind kind;
     long integer;
     size_t function_index;
+    size_t function_id;
 };
 
 struct Binding {
@@ -35,6 +36,7 @@ struct Function {
     const char *body_start;
     const char *body_end;
     size_t scope_depth;
+    size_t id;
 };
 
 struct Parser {
@@ -45,6 +47,7 @@ struct Parser {
     size_t scope_depth;
     struct Function functions[RUSTIC_MAX_FUNCTIONS];
     size_t function_count;
+    size_t next_function_id;
     size_t steps_remaining;
 };
 
@@ -54,15 +57,17 @@ static struct Value integer_value(long integer) {
     value.kind = VALUE_INTEGER;
     value.integer = integer;
     value.function_index = 0;
+    value.function_id = 0;
     return value;
 }
 
-static struct Value function_value(size_t function_index) {
+static struct Value function_value(size_t function_index, size_t function_id) {
     struct Value value;
 
     value.kind = VALUE_FUNCTION;
     value.integer = 0;
     value.function_index = function_index;
+    value.function_id = function_id;
     return value;
 }
 
@@ -179,6 +184,9 @@ static struct Function *lookup_function(struct Parser *parser, const char *name)
 
 static struct Function *function_from_value(struct Parser *parser, struct Value value) {
     if (value.kind != VALUE_FUNCTION || value.function_index >= parser->function_count) {
+        return NULL;
+    }
+    if (parser->functions[value.function_index].id != value.function_id) {
         return NULL;
     }
     return &parser->functions[value.function_index];
@@ -413,13 +421,14 @@ static struct Value parse_factor(struct Parser *parser) {
             }
             parser->cursor++;
 
-            function = lookup_function(parser, name);
-            if (function == NULL) {
-                if (!lookup_binding(parser, name, &value)) {
+            if (lookup_binding(parser, name, &value)) {
+                function = function_from_value(parser, value);
+                if (function == NULL) {
                     parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
                     return integer_value(0);
                 }
-                function = function_from_value(parser, value);
+            } else {
+                function = lookup_function(parser, name);
                 if (function == NULL) {
                     parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
                     return integer_value(0);
@@ -464,7 +473,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
                 return integer_value(0);
             }
-            return function_value((size_t)(function - parser->functions));
+            return function_value((size_t)(function - parser->functions), function->id);
         }
         return value;
     }
@@ -706,6 +715,8 @@ static void parse_function_declaration(struct Parser *parser) {
     }
     function->body_end = parser->cursor - 1;
     function->scope_depth = parser->scope_depth;
+    function->id = parser->next_function_id;
+    parser->next_function_id++;
     parser->function_count++;
 
     skip_spaces(parser);
@@ -853,6 +864,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.binding_count = 0;
     parser.scope_depth = 0;
     parser.function_count = 0;
+    parser.next_function_id = 1;
     parser.steps_remaining = RUSTIC_MAX_STEPS;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
