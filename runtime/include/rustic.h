@@ -22,6 +22,8 @@ typedef enum RusticStatus {
     RUSTIC_ERR_DIVISION_BY_ZERO = 13,
     RUSTIC_ERR_LOOP_CONTROL_OUTSIDE_LOOP = 14,
     RUSTIC_ERR_NO_MATCHING_MATCH_ARM = 15,
+    RUSTIC_ERR_EXPECTED_CLOSING_BRACKET = 16,
+    RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS = 17,
 } RusticStatus;
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

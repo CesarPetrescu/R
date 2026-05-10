@@ -771,6 +771,42 @@ def test_c_hosted_rustic_interpreter_runs_match_showcase_fixture(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "[1, 2 + 3, 9][1]": 5,
+        "let xs = [3, 5, 8]; xs[0] + xs[2]": 11,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_array_index_out_of_bounds(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "[1, 2][2]"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "array index out of bounds" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
