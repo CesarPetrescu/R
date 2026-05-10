@@ -257,6 +257,41 @@ def test_c_hosted_rustic_interpreter_evaluates_remainder_with_multiplicative_pre
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_division_with_multiplicative_precedence(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "20 / 5 + 3 * 2": 10,
+        "18 / 3 % 4": 2,
+        "2 + 24 / 3 / 2": 6,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_division_by_zero(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "5 / 0"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "division by zero" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_uses_remainder_in_recursive_divisibility_guard(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

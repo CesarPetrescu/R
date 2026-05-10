@@ -4,8 +4,8 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add integer division (`/`) to the C-hosted Rustic interpreter with a stable division-by-zero diagnostic, sharing precedence with `*` and `%`.
-2. Add loop showcase fixtures that use `%` for divisibility filtering now that remainder arithmetic exists.
+1. Add loop showcase fixtures that use `%` and `/` for divisibility filtering and quotient accumulation now that multiplicative arithmetic is richer.
+2. Add boolean conjunction/disjunction (`&&`/`||`) to make compound Rustic guards less nested while preserving skipped-branch style safety tests.
 3. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 4. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
