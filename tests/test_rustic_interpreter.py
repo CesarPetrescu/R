@@ -448,6 +448,23 @@ def test_c_hosted_rustic_interpreter_rejects_function_argument_count_mismatch(tm
     assert "wrong argument count" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_rejects_runaway_while_loop_with_step_limit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "while 1 { 1 }"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "step limit exceeded" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_empty_program(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
