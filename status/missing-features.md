@@ -77,6 +77,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add array value-frequency helpers to Rustic so loop-built collections can be filtered/count summarized with `count(xs, value)` without hand-written indexing chains.
 - [x] Add array minimum/maximum helpers to Rustic so loop-built collections can be bounded with `min(xs)`/`max(xs)` without hand-written indexing chains.
 - [x] Add array membership predicate helpers to Rustic so loop-built collections can be checked with `any(xs, value)`/`all(xs, value)` without hand-written indexing chains.
+- [x] Add a bounded `range(n)` array builder to Rustic so showcase programs can construct compact `0..n-1` collections without hand-written push loops while preserving the fixed array cap.
 
 ## P2 — project quality
 

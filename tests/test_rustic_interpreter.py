@@ -1232,6 +1232,87 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_any_all_helper_arguments(tm
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_builds_bounded_ranges(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "len(range(0))": 0,
+        "sum(range(5))": 10,
+        "range(4)[2]": 2,
+        "let xs = range(6); len(xs) * 10 + xs[5]": 65,
+        "sum(push(range(3), 9))": 12,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_range_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "range([1])": "expected integer",
+        "range(-1)": "expected integer",
+        "range(17)": "too many bindings",
+        "range(1, 2)": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_runs_array_range_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_range_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("let xs = range(5); sum(xs) * 10 + len(xs)", 105),
+        (
+            "let xs = range(8); let i = 0; let evens = []; while i < len(xs) { if xs[i] % 2 == 0 { evens = push(evens, xs[i]) } else { 0 }; i = i + 1; }; sum(evens)",
+            12,
+        ),
+        (
+            "fn odds(n) { let xs = range(n); let out = []; let i = 0; while i < len(xs) { if xs[i] % 2 == 1 { out = push(out, xs[i]) } else { 0 }; i = i + 1; }; out }; count(odds(7), 3) * 10 + sum(odds(7))",
+            19,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_any_all_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_any_all_showcase.txt"
