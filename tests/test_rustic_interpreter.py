@@ -771,6 +771,158 @@ def test_c_hosted_rustic_interpreter_runs_match_showcase_fixture(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "[1, 2 + 3, 9][1]": 5,
+        "let xs = [3, 5, 8]; xs[0] + xs[2]": 11,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_indexes_scoped_array_results(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "{ [42] }[0]": 42,
+        "if 1 { [7] } else { [8] }[0]": 7,
+        "fn arr() { [5] }; arr()[0]": 5,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_outer_scope_while_condition_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while [1][0] && n < 65 { total = total + 1; n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
+
+
+def test_c_hosted_rustic_interpreter_preserves_arrays_assigned_to_outer_bindings(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = [0]; { xs = [7]; 0 }; xs[0]": 7,
+        "let xs = [0]; while xs[0] < 3 { xs = [xs[0] + 1]; 0 }; xs[0]": 3,
+        "let n = 0; let xs = [0]; while n < 65 { xs = [n]; n = n + 1; 0 }; xs[0]": 64,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_block_scoped_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { let xs = [1]; total = total + xs[0]; n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_top_level_array_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    let_statements = [f"let x{index} = [{index}][0]" for index in range(65)]
+    expression_statements = [f"[{index}][0]" for index in range(65)]
+    cases = [
+        "; ".join(let_statements + ["x64"]),
+        "; ".join(expression_statements),
+    ]
+
+    for source in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => 64\n"
+
+
+def test_c_hosted_rustic_interpreter_preserves_array_under_construction(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "[[1][0], 2][1]": 2,
+        "let xs = [[1][0], 2]; xs[1]": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_array_index_out_of_bounds(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "[1, 2][2]"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "array index out of bounds" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
