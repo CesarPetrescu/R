@@ -238,6 +238,57 @@ def test_c_hosted_rustic_interpreter_evaluates_subtraction_with_additive_precede
     assert result.stdout == f"{source} => 15\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_boolean_negation(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    expectations = {
+        "!0": 1,
+        "!1": 0,
+        "!(2 < 1)": 1,
+    }
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_uses_boolean_negation_in_recursive_guard(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn done(n) { if !(n == 0) { done(n - 1) } else { 9 } }; done(3)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 9\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_single_bang_without_operand(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    result = subprocess.run(
+        [str(binary), "!"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected integer" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_single_bang_inside_expression(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

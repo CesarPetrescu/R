@@ -58,6 +58,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add loop safety diagnostics with an interpreter step budget so runaway programs terminate with a stable error instead of hanging.
 - [x] Add subtraction expression support so Rust-like programs can express countdown/base-case arithmetic naturally.
 - [x] Add function composition and recursion fixtures backed by the interpreter step budget so nested calls and runaway recursion have stable behavior.
+- [x] Add boolean-negation expression support so conditionals can express inverted guards and recursive base cases naturally.
 
 ## P2 — project quality
 
