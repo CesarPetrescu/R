@@ -23,6 +23,7 @@ struct Function {
     size_t parameter_count;
     const char *body_start;
     const char *body_end;
+    size_t scope_depth;
 };
 
 struct Parser {
@@ -146,6 +147,10 @@ static void pop_scope(struct Parser *parser) {
     while (parser->binding_count > 0 &&
            parser->bindings[parser->binding_count - 1].scope_depth == parser->scope_depth) {
         parser->binding_count--;
+    }
+    while (parser->function_count > 0 &&
+           parser->functions[parser->function_count - 1].scope_depth == parser->scope_depth) {
+        parser->function_count--;
     }
     if (parser->scope_depth > 0) {
         parser->scope_depth--;
@@ -577,6 +582,7 @@ static void parse_function_declaration(struct Parser *parser) {
         return;
     }
     function->body_end = parser->cursor - 1;
+    function->scope_depth = parser->scope_depth;
     parser->function_count++;
 
     skip_spaces(parser);

@@ -564,6 +564,37 @@ def test_c_hosted_rustic_interpreter_keeps_function_parameters_scoped(tmp_path):
     assert "undefined identifier" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_evaluates_block_local_function(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "{ let factor = 3; fn scale(x) { x * factor }; scale(4) }"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 12\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_block_local_functions_scoped(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "{ fn hidden() { 4 }; hidden() }; hidden()"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_unknown_function_calls(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
