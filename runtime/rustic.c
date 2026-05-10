@@ -288,6 +288,15 @@ static long parse_factor(struct Parser *parser) {
     const char *call_return;
 
     skip_spaces(parser);
+    if (*parser->cursor == '!') {
+        parser->cursor++;
+        value = parse_factor(parser);
+        if (parser->status != RUSTIC_OK) {
+            return 0;
+        }
+        return value == 0 ? 1 : 0;
+    }
+
     if (*parser->cursor == '{') {
         return parse_block_expression(parser);
     }

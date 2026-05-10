@@ -4,10 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add boolean-negation expression support so conditionals can express inverted guards and recursive base cases more naturally.
-2. Add recursive arithmetic showcase fixtures beyond countdown after subtraction support, such as triangular-number or factorial-style examples once multiplication/subtraction combinations are stable.
-3. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
-4. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+1. Add recursive arithmetic showcase fixtures beyond countdown after subtraction support, such as triangular-number or factorial-style examples once multiplication/subtraction combinations and boolean-negated guards are stable.
+2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
+3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
 ## Every-run checklist
 
