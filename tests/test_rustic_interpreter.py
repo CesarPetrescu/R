@@ -658,6 +658,40 @@ def test_c_hosted_rustic_interpreter_runs_boolean_guards_showcase_fixture(tmp_pa
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_comparison_loop_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_comparison_loop_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.split(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let n = 1; let score = 0; while n <= 8 { { fn in_range(x) { x >= 3 && x <= 6 }; if in_range(n) && n != 5 { score = score + n } else { 0 } }; n = n + 1; }; score",
+            13,
+        ),
+        (
+            "let n = 1; let total = 0; while n <= 7 { { fn is_edge(x) { x < 3 || x > 5 }; let keep = is_edge; if keep(n) { total = total + n } else { 0 } }; n = n + 1; }; total",
+            16,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
