@@ -102,6 +102,7 @@ nested call composition,
 recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures,
 loop arithmetic showcase fixtures for `%` divisibility filtering and `/` quotient accumulation,
 compound boolean guard showcase fixtures with short-circuited skipped operands,
+comparison-heavy loop showcase fixtures combining nested blocks, block-local helpers, function-valued bindings, comparisons, and compound boolean guards,
 and runaway loop/recursion
 safety before larger statement forms or runtime objects are added.
 
@@ -450,7 +451,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 119, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 55, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 120, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 56, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -462,7 +463,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 119 |
+| Completed backlog items | 120 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -471,7 +472,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 55 | 0 | None |
+| P1 | 56 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
