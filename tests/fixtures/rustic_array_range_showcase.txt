@@ -1,0 +1,4 @@
+# Rustic range helper showcase fixtures
+let xs = range(5); sum(xs) * 10 + len(xs) => 105
+let xs = range(8); let i = 0; let evens = []; while i < len(xs) { if xs[i] % 2 == 0 { evens = push(evens, xs[i]) } else { 0 }; i = i + 1; }; sum(evens) => 12
+fn odds(n) { let xs = range(n); let out = []; let i = 0; while i < len(xs) { if xs[i] % 2 == 1 { out = push(out, xs[i]) } else { 0 }; i = i + 1; }; out }; count(odds(7), 3) * 10 + sum(odds(7)) => 19

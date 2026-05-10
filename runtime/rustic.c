@@ -799,6 +799,41 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value((long)array->element_count));
             }
 
+            if (strcmp(name, "range") == 0) {
+                struct ArrayValue *array;
+                long length;
+                size_t element_index;
+
+                if (argument_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[0], &length)) {
+                    return integer_value(0);
+                }
+                if (length < 0) {
+                    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                    return integer_value(0);
+                }
+                if ((size_t)length > RUSTIC_MAX_ARRAY_ELEMENTS || parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+
+                array = &parser->arrays[parser->array_count];
+                array->element_count = (size_t)length;
+                array->scope_depth = parser->scope_depth;
+                array->id = parser->next_array_id;
+                array->under_construction = 0;
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    array->elements[element_index] = (long)element_index;
+                }
+                value = array_value(parser->array_count, array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (strcmp(name, "sum") == 0) {
                 struct ArrayValue *array;
                 long total = 0;
