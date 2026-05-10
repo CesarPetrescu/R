@@ -59,6 +59,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add subtraction expression support so Rust-like programs can express countdown/base-case arithmetic naturally.
 - [x] Add function composition and recursion fixtures backed by the interpreter step budget so nested calls and runaway recursion have stable behavior.
 - [x] Add boolean-negation expression support so conditionals can express inverted guards and recursive base cases naturally.
+- [x] Add recursive arithmetic showcase fixtures beyond countdown, including triangular-number and factorial-style examples that combine subtraction, multiplication, and recursive base cases.
 
 ## P2 — project quality
 
