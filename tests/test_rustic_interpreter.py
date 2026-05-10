@@ -965,6 +965,8 @@ def test_c_hosted_rustic_interpreter_rebuilds_arrays_with_set_helper(tmp_path):
     expectations = {
         "let xs = [1, 2, 3]; let ys = set(xs, 1, 9); xs[1] + ys[1]": 11,
         "let xs = [0, 0, 0]; let i = 0; while i < len(xs) { xs = set(xs, i, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2]": 6,
+        "set([1, 2], 0, 9)[0]": 9,
+        "let xs = [1, 2]; set(set(xs, 0, 7), 1, 8)[0] + set(set(xs, 0, 7), 1, 8)[1]": 15,
     }
 
     for source, expected in expectations.items():

@@ -823,7 +823,7 @@ static struct Value parse_factor(struct Parser *parser) {
                     return integer_value(0);
                 }
 
-                compact_unreferenced_arrays(parser, NULL);
+                compact_unreferenced_arrays(parser, &arguments[0]);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);
