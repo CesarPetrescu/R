@@ -1,0 +1,4 @@
+# Collection summary helper showcase programs for the C-hosted Rustic evaluator.
+let xs = []; let i = 0; while i < 5 { xs = push(xs, i); i = i + 1; }; sum(xs) => 10
+let xs = [3, 1, 4]; let ys = set(xs, 1, 2); sum(xs) * 10 + sum(ys) => 89
+fn build(n) { let xs = []; let i = 1; while i <= n { xs = push(xs, i); i = i + 1; }; xs }; sum(build(4)) => 10
