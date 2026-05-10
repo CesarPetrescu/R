@@ -1,0 +1,4 @@
+# Rustic array count showcase programs.
+let xs = []; let i = 0; while i < 6 { xs = push(xs, i % 3); i = i + 1; }; count(xs, 2) => 2
+let xs = [1, 1, 2, 3]; let ys = set(xs, 2, 1); count(xs, 1) * 10 + count(ys, 1) => 23
+fn build(n) { let xs = []; let i = 0; while i < n { xs = push(xs, i % 2); i = i + 1; }; xs }; count(build(5), 0) => 3
