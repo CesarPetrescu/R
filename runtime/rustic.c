@@ -254,6 +254,10 @@ static void pop_scope(struct Parser *parser) {
            parser->functions[parser->function_count - 1].scope_depth == parser->scope_depth) {
         parser->function_count--;
     }
+    while (parser->array_count > 0 &&
+           parser->arrays[parser->array_count - 1].scope_depth == parser->scope_depth) {
+        parser->array_count--;
+    }
     if (parser->scope_depth > 0) {
         parser->scope_depth--;
     }
