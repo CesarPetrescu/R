@@ -489,18 +489,32 @@ static struct Value parse_term(struct Parser *parser) {
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
-        if (*parser->cursor != '*') {
+        if (*parser->cursor != '*' && *parser->cursor != '%') {
             return value;
         }
         if (!value_as_integer(parser, value, &left)) {
             return integer_value(0);
         }
+        if (*parser->cursor == '*') {
+            parser->cursor++;
+            value = parse_factor(parser);
+            if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &right)) {
+                return integer_value(0);
+            }
+            value = integer_value(left * right);
+            continue;
+        }
+
         parser->cursor++;
         value = parse_factor(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &right)) {
             return integer_value(0);
         }
-        value = integer_value(left * right);
+        if (right == 0) {
+            parser->status = RUSTIC_ERR_DIVISION_BY_ZERO;
+            return integer_value(0);
+        }
+        value = integer_value(left % right);
     }
 
     return value;
@@ -912,6 +926,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "wrong argument count";
     case RUSTIC_ERR_STEP_LIMIT_EXCEEDED:
         return "step limit exceeded";
+    case RUSTIC_ERR_DIVISION_BY_ZERO:
+        return "division by zero";
     default:
         return "unknown rustic interpreter error";
     }
