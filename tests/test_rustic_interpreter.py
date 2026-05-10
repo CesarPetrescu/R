@@ -1278,6 +1278,129 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_range_helper_arguments(tmp_
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_transforms_arrays_with_map_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn double(x) { x * 2 }; sum(map([1, 2, 3], double))": 12,
+        "fn inc(x) { x + 1 }; map(range(4), inc)[3]": 4,
+        "fn square(x) { x * x }; let xs = map(range(5), square); len(xs) * 100 + sum(xs)": 530,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_filters_arrays_with_filter_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn even(x) { x % 2 == 0 }; sum(filter(range(7), even))": 12,
+        "fn keep(x) { x > 2 && x < 6 }; let xs = filter(range(8), keep); len(xs) * 100 + sum(xs)": 312,
+        "fn none(x) { x > 9 }; len(filter(range(4), none))": 0,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_map_filter_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "fn id(x) { x }; map(1, id)": "expected array",
+        "fn id(x) { x }; filter(1, id)": "expected array",
+        "map([1], 1)": "undefined identifier",
+        "filter([1], 1)": "undefined identifier",
+        "fn bad(x, y) { x }; map([1], bad)": "wrong argument count",
+        "fn bad(x, y) { x }; filter([1], bad)": "wrong argument count",
+        "fn bad(x) { [x] }; map([1], bad)": "expected integer",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_map_filter_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn id(x) { x }; let n = 0; let total = 0; while n < 65 { total = total + sum(map([1], id)); n = n + 1; }; total": 65,
+        "fn yes(x) { 1 }; let n = 0; let total = 0; while n < 65 { total = total + len(filter([1], yes)); n = n + 1; }; total": 65,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_transform_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_transform_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("fn double(x) { x * 2 }; sum(map(range(6), double))", 30),
+        (
+            "fn odd(x) { x % 2 == 1 }; fn square(x) { x * x }; sum(map(filter(range(8), odd), square))",
+            84,
+        ),
+        (
+            "fn small(x) { x < 4 }; fn shift(x) { x + 10 }; let xs = map(filter(range(7), small), shift); len(xs) * 100 + min(xs) * 10 + max(xs)",
+            513,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_range_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_range_showcase.txt"

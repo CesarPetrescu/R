@@ -690,6 +690,57 @@ static struct Value parse_array_literal(struct Parser *parser) {
     return array_value(array_index, array->id);
 }
 
+static struct Value call_unary_function(struct Parser *parser, struct Function *function, long argument) {
+    const char *call_return;
+    size_t saved_loop_depth;
+    enum LoopControl saved_loop_control;
+    struct Value value;
+
+    if (function->parameter_count != 1) {
+        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+        return integer_value(0);
+    }
+
+    call_return = parser->cursor;
+    parser->cursor = function->body_start;
+    saved_loop_depth = parser->loop_depth;
+    saved_loop_control = parser->loop_control;
+    parser->loop_depth = 0;
+    parser->loop_control = LOOP_CONTROL_NONE;
+    push_scope(parser);
+    add_binding(parser, function->parameters[0], integer_value(argument));
+    if (parser->status != RUSTIC_OK) {
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+
+    value = parse_statement_sequence(parser, '}');
+    if (parser->status != RUSTIC_OK) {
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+    skip_spaces(parser);
+    if (parser->cursor != function->body_end) {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+    pop_scope_preserving_value(parser, &value);
+    parser->cursor = call_return;
+    parser->loop_depth = saved_loop_depth;
+    parser->loop_control = saved_loop_control;
+    return value;
+}
+
 static struct Value parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
@@ -829,6 +880,77 @@ static struct Value parse_factor(struct Parser *parser) {
                     array->elements[element_index] = (long)element_index;
                 }
                 value = array_value(parser->array_count, array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
+            if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0) {
+                struct ArrayValue *source_array;
+                struct ArrayValue *result_array;
+                struct Function *transform;
+                long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t source_count;
+                size_t result_count = 0;
+                size_t element_index;
+                long transformed;
+                int filtering = strcmp(name, "filter") == 0;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                transform = function_from_value(parser, arguments[1]);
+                if (transform == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+                if (transform->parameter_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+
+                source_count = source_array->element_count;
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    source_elements[element_index] = source_array->elements[element_index];
+                }
+
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    struct Value transformed_value = call_unary_function(parser, transform, source_elements[element_index]);
+                    if (parser->status != RUSTIC_OK || !value_as_integer(parser, transformed_value, &transformed)) {
+                        return integer_value(0);
+                    }
+                    if (filtering) {
+                        if (transformed != 0) {
+                            result_elements[result_count] = source_elements[element_index];
+                            result_count++;
+                        }
+                    } else {
+                        result_elements[result_count] = transformed;
+                        result_count++;
+                    }
+                }
+
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                result_array = &parser->arrays[parser->array_count];
+                result_array->element_count = result_count;
+                result_array->scope_depth = parser->scope_depth;
+                result_array->id = parser->next_array_id;
+                result_array->under_construction = 0;
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    result_array->elements[element_index] = result_elements[element_index];
+                }
+                value = array_value(parser->array_count, result_array->id);
                 parser->array_count++;
                 parser->next_array_id++;
                 return parse_index_postfix(parser, value);
