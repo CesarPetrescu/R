@@ -572,7 +572,7 @@ static struct Value parse_additive_expression(struct Parser *parser) {
     return value;
 }
 
-static struct Value parse_expression(struct Parser *parser) {
+static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
     struct Value value = parse_additive_expression(parser);
@@ -646,6 +646,255 @@ static struct Value parse_expression(struct Parser *parser) {
         } else {
             return value;
         }
+    }
+
+    return value;
+}
+
+static int skip_logical_and_operand(struct Parser *parser);
+static int skip_expression_operand(struct Parser *parser);
+
+static int skip_factor_expression(struct Parser *parser) {
+    char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+
+    skip_spaces(parser);
+    if (*parser->cursor == '!') {
+        parser->cursor++;
+        return skip_factor_expression(parser);
+    }
+    if (*parser->cursor == '{') {
+        return skip_block(parser);
+    }
+    if (cursor_starts_keyword(parser, "if")) {
+        parser->cursor += 2;
+        if (!skip_expression_operand(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (!skip_block(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (!cursor_starts_keyword(parser, "else")) {
+            parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
+            return 0;
+        }
+        parser->cursor += 4;
+        return skip_block(parser);
+    }
+    if (*parser->cursor == '(') {
+        parser->cursor++;
+        if (!skip_expression_operand(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor != ')') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+            return 0;
+        }
+        parser->cursor++;
+        return 1;
+    }
+    if (isdigit((unsigned char)*parser->cursor)) {
+        while (isdigit((unsigned char)*parser->cursor)) {
+            parser->cursor++;
+        }
+        return 1;
+    }
+    if (is_identifier_start(*parser->cursor)) {
+        if (!parse_identifier(parser, name, sizeof(name))) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor == '(') {
+            parser->cursor++;
+            skip_spaces(parser);
+            while (*parser->cursor != ')') {
+                if (!skip_expression_operand(parser)) {
+                    return 0;
+                }
+                skip_spaces(parser);
+                if (*parser->cursor != ',') {
+                    break;
+                }
+                parser->cursor++;
+                skip_spaces(parser);
+            }
+            if (*parser->cursor != ')') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return 0;
+            }
+            parser->cursor++;
+        }
+        return 1;
+    }
+
+    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+    return 0;
+}
+
+static int skip_term_expression(struct Parser *parser) {
+    if (!skip_factor_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '*' && *parser->cursor != '/' && *parser->cursor != '%') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_factor_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_additive_expression(struct Parser *parser) {
+    if (!skip_term_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '+' && *parser->cursor != '-') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_term_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_comparison_expression(struct Parser *parser) {
+    if (!skip_additive_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if ((parser->cursor[0] == '=' && parser->cursor[1] == '=') ||
+            (parser->cursor[0] == '!' && parser->cursor[1] == '=') ||
+            (parser->cursor[0] == '<' && parser->cursor[1] == '=') ||
+            (parser->cursor[0] == '>' && parser->cursor[1] == '=')) {
+            parser->cursor += 2;
+        } else if (*parser->cursor == '<' || *parser->cursor == '>') {
+            parser->cursor++;
+        } else {
+            return 1;
+        }
+        if (!skip_additive_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_logical_and_operand(struct Parser *parser) {
+    if (!skip_comparison_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '&' || parser->cursor[1] != '&') {
+            return 1;
+        }
+        parser->cursor += 2;
+        if (!skip_comparison_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_expression_operand(struct Parser *parser) {
+    if (!skip_logical_and_operand(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '|' || parser->cursor[1] != '|') {
+            return 1;
+        }
+        parser->cursor += 2;
+        if (!skip_logical_and_operand(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static struct Value parse_logical_and_expression(struct Parser *parser) {
+    long left;
+    long right;
+    struct Value value = parse_comparison_expression(parser);
+    struct Value right_value;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '&' || parser->cursor[1] != '&') {
+            if (*parser->cursor == '&') {
+                parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+                return integer_value(0);
+            }
+            return value;
+        }
+
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        if (left == 0) {
+            if (!skip_comparison_expression(parser)) {
+                return integer_value(0);
+            }
+            value = integer_value(0);
+            continue;
+        }
+
+        right_value = parse_comparison_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(right != 0 ? 1 : 0);
+    }
+
+    return value;
+}
+
+static struct Value parse_expression(struct Parser *parser) {
+    long left;
+    long right;
+    struct Value value = parse_logical_and_expression(parser);
+    struct Value right_value;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '|' || parser->cursor[1] != '|') {
+            if (*parser->cursor == '|') {
+                parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+                return integer_value(0);
+            }
+            return value;
+        }
+
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        if (left != 0) {
+            if (!skip_logical_and_operand(parser)) {
+                return integer_value(0);
+            }
+            value = integer_value(1);
+            continue;
+        }
+
+        right_value = parse_logical_and_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(right != 0 ? 1 : 0);
     }
 
     return value;
