@@ -1,0 +1,4 @@
+# Rustic array map/filter transformation showcase programs
+fn double(x) { x * 2 }; sum(map(range(6), double)) => 30
+fn odd(x) { x % 2 == 1 }; fn square(x) { x * x }; sum(map(filter(range(8), odd), square)) => 84
+fn small(x) { x < 4 }; fn shift(x) { x + 10 }; let xs = map(filter(range(7), small), shift); len(xs) * 100 + min(xs) * 10 + max(xs) => 513
