@@ -76,6 +76,7 @@ programs such as `1 + 2 * 3`, `(1 + 2) * 3`, `10 - 3 + 2 * 4`,
 `[1, 2 + 3, 9][1]`, `let xs = [3, 5, 8]; xs[0] + xs[2]`,
 `len([1, 2, 3])`, `let xs = [3, 5, 8]; len(xs) + xs[len(xs) - 1]`,
 `let xs = [0, 0, 0]; let i = 0; while i < len(xs) { xs = set(xs, i, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2]`,
+`let xs = []; let i = 0; while i < 4 { xs = push(xs, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2] + xs[3]`,
 `fn even(n) { if n == 0 { 1 } else { if n % 2 == 0 { even(n - 2) } else { 0 } } }; even(8)`,
 `1 < 2 && 3 < 4`, `0 || 5 == 5`,
 and `fn countdown(n) { if n == 0 { 7 } else { countdown(n - 1) } }; countdown(3)`,
@@ -94,7 +95,7 @@ nested lexical scopes, conditional `if`/`else` expressions that evaluate only th
 `while` loop statements that re-evaluate their condition while preserving outer mutations,
 `break` statements for early loop exits and `continue` statements for skipping to the next iteration,
 `match` expressions with integer arms and `_` defaults for multi-way expression dispatch,
-array literals with integer elements, checked integer indexing, `len(...)` array length inspection, and `set(array, index, value)` bounded rebuilds for small collection-style programs,
+array literals with integer elements, checked indexing, `len(...)` array length inspection, `set(array, index, value)` bounded rebuilds, and `push(array, value)` bounded append-style construction for small collection-style programs,
 `fn`-like named function declarations/calls with call-local parameter bindings,
 block-local function declarations that can use visible lexical bindings without leaking outside their block,
 first-class function references that can be bound with `let`, returned from helpers, and called through local names,
@@ -105,7 +106,7 @@ unmatched-parenthesis, and unclosed-block diagnostics. The pytest suite
 compiles that C runtime with `cc -std=c99 -Wall -Wextra -Werror` so the showcase
 proves end-to-end interpreted expressions, grouping, bindings, sequencing, mutation,
 subtraction, integer division, remainder arithmetic, boolean negation, boolean comparison results, scoped block evaluation, conditional branch selection,
-loop-driven mutation, `break` exits, `continue` iteration skips, `match` integer dispatch/default arms, array literal indexing with checked out-of-bounds diagnostics, `len(...)` array length inspection with non-array diagnostics, bounded `set(...)` array rebuilds with non-array/non-integer/out-of-bounds diagnostics, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
+loop-driven mutation, `break` exits, `continue` iteration skips, `match` integer dispatch/default arms, array literal indexing with checked out-of-bounds diagnostics, `len(...)` array length inspection with non-array diagnostics, bounded `set(...)` array rebuilds with non-array/non-integer/out-of-bounds diagnostics, bounded `push(...)` array appends with non-array/non-integer/full-array diagnostics, named function calls/argument binding, block-local helper functions with lexical binding visibility and non-leakage,
 first-class function references bound with `let`, returned from helpers, and called through local names,
 nested call composition,
 recursive countdowns, recursive divisibility guards, recursive triangular-number and factorial showcase fixtures,
@@ -460,7 +461,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 125, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 61, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 126, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 62, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -472,7 +473,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 125 |
+| Completed backlog items | 126 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -481,7 +482,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 61 | 0 | None |
+| P1 | 62 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item

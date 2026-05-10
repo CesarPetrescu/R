@@ -845,6 +845,51 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
+            if (strcmp(name, "push") == 0) {
+                struct ArrayValue *source_array;
+                struct ArrayValue *rebuilt_array;
+                long pushed_value;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &pushed_value)) {
+                    return integer_value(0);
+                }
+                if (source_array->element_count >= RUSTIC_MAX_ARRAY_ELEMENTS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                rebuilt_array = &parser->arrays[parser->array_count];
+                *rebuilt_array = *source_array;
+                rebuilt_array->scope_depth = parser->scope_depth;
+                rebuilt_array->id = parser->next_array_id;
+                rebuilt_array->under_construction = 0;
+                rebuilt_array->elements[rebuilt_array->element_count] = pushed_value;
+                rebuilt_array->element_count++;
+                value = array_value(parser->array_count, rebuilt_array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (lookup_binding(parser, name, &value)) {
                 function = function_from_value(parser, value);
                 if (function == NULL) {

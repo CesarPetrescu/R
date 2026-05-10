@@ -4,6 +4,7 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 
 ## Unreleased
 
+- Added `push(array, value)` bounded append-style construction to the C-hosted Rustic interpreter, with loop-built collection showcase fixtures and diagnostics for non-array, non-integer, and full-array cases.
 - Added `match`-style expression dispatch to the C-hosted Rustic interpreter, with fixture coverage for selected integer arms, default arms, skipped unselected arms, and loop-control inside matched arms.
 - Added `break`/`continue` loop-control semantics to the C-hosted Rustic interpreter, with fixture coverage for early loop exits and skipped iterations.
 - Added release/versioning policy notes for the current `0.1.0` package.

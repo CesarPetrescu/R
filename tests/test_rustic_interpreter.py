@@ -1004,6 +1004,89 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_set_helper_arguments(tmp_pa
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_appends_arrays_with_push_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = [1, 2]; let ys = push(xs, 3); len(xs) * 10 + len(ys) + ys[2]": 26,
+        "let xs = []; let i = 0; while i < 4 { xs = push(xs, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2] + xs[3]": 10,
+        "push([1], 2)[1]": 2,
+        "let xs = [1]; push(push(xs, 2), 3)[2]": 3,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_push_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    full_array = "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]"
+    cases = {
+        "push(1, 2)": "expected array",
+        "push([1], [2])": "expected integer",
+        f"push({full_array}, 16)": "too many bindings",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_runs_array_push_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_push_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let xs = []; let i = 0; while i < 4 { xs = push(xs, i + 1); i = i + 1; }; xs[0] + xs[1] + xs[2] + xs[3]",
+            10,
+        ),
+        (
+            "let xs = [2, 4]; let ys = push(xs, len(xs) + 4); len(xs) * 10 + len(ys) + ys[2]",
+            29,
+        ),
+        (
+            "let xs = [1]; push(push(xs, 2), 3)[0] + push(push(xs, 2), 3)[1] + push(push(xs, 2), 3)[2]",
+            6,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_loop_arithmetic_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_loop_arithmetic_showcase.txt"
