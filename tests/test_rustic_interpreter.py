@@ -595,6 +595,52 @@ def test_c_hosted_rustic_interpreter_keeps_block_local_functions_scoped(tmp_path
     assert "undefined identifier" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_calls_function_value_bound_with_let(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn inc(x) { x + 1 }; let f = inc; f(4)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_calls_function_value_returned_from_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn inc(x) { x + 1 }; fn choose() { inc }; let f = choose(); f(6)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_integer_that_matches_function_value_encoding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+
+    source = "fn inc(x) { x + 1 }; let f = 0 - 9223372036854775807 - 1; f(4)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "undefined identifier" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_unknown_function_calls(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
