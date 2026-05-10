@@ -489,7 +489,7 @@ static struct Value parse_term(struct Parser *parser) {
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
-        if (*parser->cursor != '*' && *parser->cursor != '%') {
+        if (*parser->cursor != '*' && *parser->cursor != '/' && *parser->cursor != '%') {
             return value;
         }
         if (!value_as_integer(parser, value, &left)) {
@@ -502,6 +502,20 @@ static struct Value parse_term(struct Parser *parser) {
                 return integer_value(0);
             }
             value = integer_value(left * right);
+            continue;
+        }
+
+        if (*parser->cursor == '/') {
+            parser->cursor++;
+            value = parse_factor(parser);
+            if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &right)) {
+                return integer_value(0);
+            }
+            if (right == 0) {
+                parser->status = RUSTIC_ERR_DIVISION_BY_ZERO;
+                return integer_value(0);
+            }
+            value = integer_value(left / right);
             continue;
         }
 
