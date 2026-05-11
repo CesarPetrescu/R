@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer collection ranking/order-statistic helpers such as `top_count(array, n)` or `nth_sorted(array, n)`, with empty-array behavior, invalid argument diagnostics, composition with `histogram_values(...)`/`frequency_score(...)`, and array-slot cleanup.
+1. Add richer collection ranking/comparison helpers such as `rank_of(array, value)` or `top_sum(array, n)`, with empty-array behavior, invalid argument diagnostics, composition with `nth_sorted(...)`/`top_count(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
