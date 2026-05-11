@@ -1,0 +1,4 @@
+# Indexed collection helper showcase fixtures.
+fn weight(i, x) { (i + 1) * x }; sum(map_indexed([3, 4, 5], weight)) => 26
+fn odd_index(i, x) { i % 2 == 1 }; sum(filter_indexed([10, 20, 30, 40], odd_index)) => 60
+fn pairish(i, x) { i * 10 + x }; fn odd_index(i, x) { i % 2 == 1 }; fn add(acc, x) { acc + x }; fold(filter_indexed(map_indexed(range(6), pairish), odd_index), 0, add) => 99

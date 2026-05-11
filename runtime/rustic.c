@@ -999,7 +999,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0) {
+            if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0 || strcmp(name, "map_indexed") == 0 || strcmp(name, "filter_indexed") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 struct Function *transform;
@@ -1009,7 +1009,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 size_t result_count = 0;
                 size_t element_index;
                 long transformed;
-                int filtering = strcmp(name, "filter") == 0;
+                int filtering = strcmp(name, "filter") == 0 || strcmp(name, "filter_indexed") == 0;
+                int indexed = strcmp(name, "map_indexed") == 0 || strcmp(name, "filter_indexed") == 0;
 
                 if (argument_count != 2) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1025,7 +1026,7 @@ static struct Value parse_factor(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
                     return integer_value(0);
                 }
-                if (transform->parameter_count != 1) {
+                if (transform->parameter_count != (indexed ? 2u : 1u)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1036,7 +1037,12 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
 
                 for (element_index = 0; element_index < source_count; element_index++) {
-                    struct Value transformed_value = call_unary_function(parser, transform, source_elements[element_index]);
+                    struct Value transformed_value;
+                    if (indexed) {
+                        transformed_value = call_binary_function(parser, transform, (long)element_index, source_elements[element_index]);
+                    } else {
+                        transformed_value = call_unary_function(parser, transform, source_elements[element_index]);
+                    }
                     if (parser->status != RUSTIC_OK || !value_as_integer(parser, transformed_value, &transformed)) {
                         return integer_value(0);
                     }

@@ -81,6 +81,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add array transformation helpers to Rustic so showcase programs can use `map(array, fn)` and `filter(array, fn)` over bounded collections without hand-written loops while preserving array-slot cleanup.
 - [x] Add array ordering/slicing helpers to Rustic so showcase programs can use `reverse(array)` and `take(array, n)` over bounded collections while preserving array-slot cleanup.
 - [x] Add array fold/reduction helpers to Rustic so showcase programs can use `fold(array, initial, fn)` over bounded collections with callback arity diagnostics and array-slot cleanup.
+- [x] Add indexed array transformation/filter helpers to Rustic so showcase programs can use `map_indexed(array, fn)` and `filter_indexed(array, fn)` with `(index, value)` callbacks for composition without pair-valued arrays.
 
 ## P2 — project quality
 
