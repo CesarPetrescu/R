@@ -1831,6 +1831,49 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(score));
             }
 
+            if (strcmp(name, "weighted_score") == 0) {
+                struct ArrayValue *source_array;
+                struct Function *weighter;
+                long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t source_count;
+                size_t element_index;
+                long score = 0;
+                long weighted;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                weighter = function_from_value(parser, arguments[1]);
+                if (weighter == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+                if (weighter->parameter_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+
+                source_count = source_array->element_count;
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    source_elements[element_index] = source_array->elements[element_index];
+                }
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    struct Value weighted_value = call_unary_function(parser, weighter, source_elements[element_index]);
+                    if (parser->status != RUSTIC_OK || !value_as_integer(parser, weighted_value, &weighted)) {
+                        return integer_value(0);
+                    }
+                    score += weighted;
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(score));
+            }
+
             if (strcmp(name, "clamp") == 0) {
                 struct ArrayValue *array;
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
