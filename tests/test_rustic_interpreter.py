@@ -1318,6 +1318,89 @@ def test_c_hosted_rustic_interpreter_releases_search_helper_temporaries(tmp_path
     assert result.stdout == f"{source} => 42\n"
 
 
+def test_c_hosted_rustic_interpreter_sorts_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "sort([3, 1, 2])[0] * 100 + sort([3, 1, 2])[2]": 103,
+        "len(sort([]))": 0,
+        "let xs = sort(concat([4, 1], [3, 2])); xs[0] * 1000 + xs[1] * 100 + xs[2] * 10 + xs[3]": 1234,
+        "find(sort([5, 2, 5, 1]), 5)": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_deduplicates_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = dedup([3, 1, 3, 2, 1]); len(xs) * 100 + sum(xs)": 306,
+        "len(dedup([]))": 0,
+        "contains_any(dedup([9, 9, 4]), [4])": 1,
+        "let xs = dedup(sort([3, 1, 3, 2, 1])); xs[0] * 100 + xs[1] * 10 + xs[2]": 123,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_sort_dedup_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "sort(1)": "expected array",
+        "sort([1], 2)": "wrong argument count",
+        "dedup(1)": "expected array",
+        "dedup([1], 2)": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_sort_dedup_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + sum(dedup(sort([3, 1, 3]))); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 260\n"
+
+
 def test_c_hosted_rustic_interpreter_builds_bounded_ranges(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
@@ -1899,6 +1982,42 @@ def test_c_hosted_rustic_interpreter_runs_array_search_showcase_fixture(tmp_path
             "fn even(x) { x % 2 == 0 }; contains_any(filter(range(6), even), concat([7], [5, 4]))",
             1,
         ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_order_compare_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_order_compare_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        (
+            "let xs = sort([4, 1, 3, 2]); xs[0] * 1000 + xs[1] * 100 + xs[2] * 10 + xs[3]",
+            1234,
+        ),
+        ("let xs = dedup([5, 2, 5, 3, 2]); len(xs) * 100 + sum(xs)", 310),
+        (
+            "let xs = dedup(sort(concat([3, 1, 3], [2, 1]))); xs[0] * 100 + xs[1] * 10 + xs[2]",
+            123,
+        ),
+        ("contains_any(dedup(sort([8, 4, 8, 2])), [4]) + find(sort([7, 1, 7]), 7)", 2),
     ]
     for source, expected in cases:
         result = subprocess.run(
