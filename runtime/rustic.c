@@ -1800,6 +1800,59 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
+            if (strcmp(name, "clamp") == 0) {
+                struct ArrayValue *array;
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long lower_bound;
+                long upper_bound;
+                size_t element_index;
+                size_t result_count;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &lower_bound)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[2], &upper_bound)) {
+                    return integer_value(0);
+                }
+                result_count = array->element_count;
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    long clamped = array->elements[element_index];
+                    if (clamped < lower_bound) {
+                        clamped = lower_bound;
+                    }
+                    if (clamped > upper_bound) {
+                        clamped = upper_bound;
+                    }
+                    result_elements[element_index] = clamped;
+                }
+                compact_unreferenced_arrays(parser, NULL);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                array = &parser->arrays[parser->array_count];
+                array->element_count = result_count;
+                array->scope_depth = parser->scope_depth;
+                array->id = parser->next_array_id;
+                array->under_construction = 0;
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    array->elements[element_index] = result_elements[element_index];
+                }
+                value = array_value(parser->array_count, array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (strcmp(name, "nth_sorted") == 0 || strcmp(name, "top_count") == 0 || strcmp(name, "rank_of") == 0 || strcmp(name, "top_sum") == 0) {
                 struct ArrayValue *array;
                 long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];

@@ -1831,6 +1831,28 @@ def test_c_hosted_rustic_interpreter_computes_array_ranking_helpers(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_array_clamp_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = clamp([5, 1, 9, 3], 3, 6); len(xs) * 1000 + xs[0] * 100 + xs[1] * 10 + xs[2]": 4536,
+        "len(clamp([], 0, 3))": 0,
+        "sum(clamp(range(7), 2, 4))": 21,
+        "top_sum(clamp([9, 1, 5, 3], 2, 6), 2) + rank_of(clamp([9, 1, 5, 3], 2, 6), 5)": 13,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1922,6 +1944,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
         ("rank_of(histogram_values([3, 1, 3, 2, 1]), 2) + top_sum(histogram_count([2, 2, 1, 3, 3, 3]), 2)", 6),
+        ("sum(clamp([9, 1, 5, 3], 2, 6)) + top_sum(clamp(histogram_count([2, 2, 1, 3, 3, 3]), 1, 2), 2)", 20),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -2016,6 +2039,10 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "top_sum([1], [1])": "expected integer",
         "top_sum([1], -1)": "expected integer",
         "top_sum([1])": "wrong argument count",
+        "clamp(1, 0, 1)": "expected array",
+        "clamp([1], [0], 1)": "expected integer",
+        "clamp([1], 0, [1])": "expected integer",
+        "clamp([1], 0)": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -2057,6 +2084,7 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + top_count([3, 1, 2], 2)[0]; n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + rank_of([3, 1, 2], 3); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + top_sum([3, 1, 2], 2); n = n + 1; }; total": 325,
+        "let n = 0; let total = 0; while n < 65 { total = total + sum(clamp([3, 1, 5], 2, 4)); n = n + 1; }; total": 585,
     }
 
     for source, expected in expectations.items():
@@ -3125,7 +3153,7 @@ def test_c_hosted_rustic_interpreter_runs_boolean_guards_showcase_fixture(tmp_pa
             6,
         ),
         (
-            "fn clamp(n) { if n < 0 || n > 10 { 0 } else { n } }; clamp(7) + clamp(12)",
+            "fn limit(n) { if n < 0 || n > 10 { 0 } else { n } }; limit(7) + limit(12)",
             7,
         ),
         (
