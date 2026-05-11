@@ -1,0 +1,4 @@
+# Showcase bounded pairwise integer composition without pair-valued arrays.
+fn add(x, y) { x + y }; sum(zip_with([1, 2, 3], [10, 20, 30], add)) => 66
+fn weight(i, x) { (i + 1) * x }; fn add(x, y) { x + y }; fn total(acc, x) { acc + x }; fold(zip_with(map_indexed(range(5), weight), filter_indexed([10, 11, 12, 13, 14], weight), add), 0, total) => 100
+fn product(x, y) { x * y }; let xs = zip_with(take(range(5), 3), reverse(range(5)), product); len(xs) * 100 + sum(xs) => 307

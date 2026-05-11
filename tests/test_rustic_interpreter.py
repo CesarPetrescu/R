@@ -1572,6 +1572,103 @@ def test_c_hosted_rustic_interpreter_runs_array_indexed_showcase_fixture(tmp_pat
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_zips_arrays_with_binary_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn add(x, y) { x + y }; sum(zip_with([1, 2, 3], [10, 20, 30], add))": 66,
+        "fn pairish(x, y) { x * 100 + y }; zip_with([1, 2, 3], [4, 5], pairish)[1]": 205,
+        "fn product(x, y) { x * y }; let xs = zip_with(range(4), reverse(range(4)), product); len(xs) * 100 + sum(xs)": 404,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_zip_with_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "fn add(x, y) { x + y }; zip_with(1, [2], add)": "expected array",
+        "fn add(x, y) { x + y }; zip_with([1], 2, add)": "expected array",
+        "zip_with([1], [2], 1)": "undefined identifier",
+        "fn bad(x) { x }; zip_with([1], [2], bad)": "wrong argument count",
+        "fn bad(x, y) { [x] }; zip_with([1], [2], bad)": "expected integer",
+        "fn add(x, y) { x + y }; zip_with([1], [2])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_zip_with_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn add(x, y) { x + y }; let n = 0; let total = 0; while n < 65 { total = total + sum(zip_with([1], [2], add)); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 195\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_zip_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_zip_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("fn add(x, y) { x + y }; sum(zip_with([1, 2, 3], [10, 20, 30], add))", 66),
+        (
+            "fn weight(i, x) { (i + 1) * x }; fn add(x, y) { x + y }; fn total(acc, x) { acc + x }; fold(zip_with(map_indexed(range(5), weight), filter_indexed([10, 11, 12, 13, 14], weight), add), 0, total)",
+            100,
+        ),
+        (
+            "fn product(x, y) { x * y }; let xs = zip_with(take(range(5), 3), reverse(range(5)), product); len(xs) * 100 + sum(xs)",
+            307,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_folds_arrays_with_accumulator_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
