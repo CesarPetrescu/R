@@ -2019,6 +2019,50 @@ def test_c_hosted_rustic_interpreter_compares_arrays_with_equals_helper(tmp_path
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_counts_array_intersections(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "intersection_count([1, 2, 3], [9, 2, 3])": 2,
+        "intersection_count([1, 1, 2, 3], [1, 3, 3])": 2,
+        "intersection_count([], [1, 2])": 0,
+        "intersection_count(dedup(sort([3, 1, 3, 2])), dedup(sort([2, 4, 1])))": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_builds_array_differences(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = difference([1, 2, 3, 2], [2, 9]); len(xs) * 100 + sum(xs)": 204,
+        "len(difference([], [1, 2]))": 0,
+        "let xs = difference(dedup(sort([4, 1, 4, 2, 3])), [2, 9]); xs[0] * 100 + xs[1] * 10 + xs[2]": 134,
+        "sum(push(difference([1, 2, 3], [2]), 9))": 13,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_compares_array_prefixes_with_starts_with_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
@@ -2051,6 +2095,12 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_array_comparison_arguments(
         "starts_with(1, [1])": "expected array",
         "starts_with([1], 1)": "expected array",
         "starts_with([1])": "wrong argument count",
+        "intersection_count(1, [1])": "expected array",
+        "intersection_count([1], 1)": "expected array",
+        "intersection_count([1])": "wrong argument count",
+        "difference(1, [1])": "expected array",
+        "difference([1], 1)": "expected array",
+        "difference([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -2069,7 +2119,7 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_array_comparison_arguments(
 
 def test_c_hosted_rustic_interpreter_releases_array_comparison_temporaries(tmp_path):
     binary = compile_rustic_driver(tmp_path)
-    source = "let n = 0; let total = 0; while n < 65 { total = total + equals(sort([2, 1]), [1, 2]) + starts_with(dedup([1, 1, 2]), [1]); n = n + 1; }; total"
+    source = "let n = 0; let total = 0; while n < 65 { total = total + equals(sort([2, 1]), [1, 2]) + starts_with(dedup([1, 1, 2]), [1]) + intersection_count([1, 2, 3], [2, 3]) + len(difference([1, 2, 3], [2])); n = n + 1; }; total"
 
     result = subprocess.run(
         [str(binary), source],
@@ -2080,7 +2130,7 @@ def test_c_hosted_rustic_interpreter_releases_array_comparison_temporaries(tmp_p
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 130\n"
+    assert result.stdout == f"{source} => 390\n"
 
 
 def test_c_hosted_rustic_interpreter_runs_array_order_compare_showcase_fixture(tmp_path):
@@ -2107,6 +2157,11 @@ def test_c_hosted_rustic_interpreter_runs_array_order_compare_showcase_fixture(t
         ("contains_any(dedup(sort([8, 4, 8, 2])), [4]) + find(sort([7, 1, 7]), 7)", 2),
         ("equals(sort([3, 1, 2]), dedup(sort([1, 2, 2, 3])))", 1),
         ("starts_with(dedup(sort([4, 2, 4, 1])), [1, 2])", 1),
+        ("intersection_count(dedup(sort([4, 1, 4, 2])), [2, 4, 8])", 2),
+        (
+            "let xs = difference(dedup(sort(concat([4, 1, 2], [4, 3]))), [2, 9]); xs[0] * 100 + xs[1] * 10 + xs[2]",
+            134,
+        ),
     ]
     for source, expected in cases:
         result = subprocess.run(

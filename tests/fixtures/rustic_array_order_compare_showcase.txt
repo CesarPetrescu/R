@@ -5,3 +5,5 @@ let xs = dedup(sort(concat([3, 1, 3], [2, 1]))); xs[0] * 100 + xs[1] * 10 + xs[2
 contains_any(dedup(sort([8, 4, 8, 2])), [4]) + find(sort([7, 1, 7]), 7) => 2
 equals(sort([3, 1, 2]), dedup(sort([1, 2, 2, 3]))) => 1
 starts_with(dedup(sort([4, 2, 4, 1])), [1, 2]) => 1
+intersection_count(dedup(sort([4, 1, 4, 2])), [2, 4, 8]) => 2
+let xs = difference(dedup(sort(concat([4, 1, 2], [4, 3]))), [2, 9]); xs[0] * 100 + xs[1] * 10 + xs[2] => 134

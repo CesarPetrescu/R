@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer collection set operations to Rustic, such as `intersection_count(array, array)` or `difference(left, right)`, with tests proving empty-array behavior, sorted/deduped composition, argument diagnostics, and array-slot cleanup.
+1. Add richer collection split/rechunk helpers to Rustic, such as `drop(array, n)` or `partition_count(array, fn)`, with tests proving empty-array behavior, callback diagnostics where applicable, composition with `difference(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

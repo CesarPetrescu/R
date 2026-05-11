@@ -1459,14 +1459,23 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(found_index));
             }
 
-            if (strcmp(name, "contains_any") == 0 || strcmp(name, "equals") == 0 || strcmp(name, "starts_with") == 0) {
+            if (strcmp(name, "contains_any") == 0 || strcmp(name, "equals") == 0 || strcmp(name, "starts_with") == 0 || strcmp(name, "intersection_count") == 0 || strcmp(name, "difference") == 0) {
                 struct ArrayValue *left_array;
                 struct ArrayValue *right_array;
+                struct ArrayValue *result_array;
+                long left_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long right_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long matched;
+                size_t left_count;
+                size_t right_count;
+                size_t result_count = 0;
                 size_t left_index;
                 size_t right_index;
                 int checking_any = strcmp(name, "contains_any") == 0;
                 int checking_equals = strcmp(name, "equals") == 0;
+                int counting_intersection = strcmp(name, "intersection_count") == 0;
+                int building_difference = strcmp(name, "difference") == 0;
 
                 if (argument_count != 2) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1483,11 +1492,20 @@ static struct Value parse_factor(struct Parser *parser) {
                     return integer_value(0);
                 }
 
+                left_count = left_array->element_count;
+                right_count = right_array->element_count;
+                for (left_index = 0; left_index < left_count; left_index++) {
+                    left_elements[left_index] = left_array->elements[left_index];
+                }
+                for (right_index = 0; right_index < right_count; right_index++) {
+                    right_elements[right_index] = right_array->elements[right_index];
+                }
+
                 if (checking_any) {
                     matched = 0;
-                    for (left_index = 0; left_index < left_array->element_count; left_index++) {
-                        for (right_index = 0; right_index < right_array->element_count; right_index++) {
-                            if (left_array->elements[left_index] == right_array->elements[right_index]) {
+                    for (left_index = 0; left_index < left_count; left_index++) {
+                        for (right_index = 0; right_index < right_count; right_index++) {
+                            if (left_elements[left_index] == right_elements[right_index]) {
                                 matched = 1;
                                 break;
                             }
@@ -1496,16 +1514,72 @@ static struct Value parse_factor(struct Parser *parser) {
                             break;
                         }
                     }
+                } else if (counting_intersection) {
+                    matched = 0;
+                    for (left_index = 0; left_index < left_count; left_index++) {
+                        int seen_left = 0;
+                        int seen_right = 0;
+                        size_t scan_index;
+                        for (scan_index = 0; scan_index < left_index; scan_index++) {
+                            if (left_elements[scan_index] == left_elements[left_index]) {
+                                seen_left = 1;
+                                break;
+                            }
+                        }
+                        if (seen_left) {
+                            continue;
+                        }
+                        for (right_index = 0; right_index < right_count; right_index++) {
+                            if (left_elements[left_index] == right_elements[right_index]) {
+                                seen_right = 1;
+                                break;
+                            }
+                        }
+                        if (seen_right) {
+                            matched++;
+                        }
+                    }
+                } else if (building_difference) {
+                    for (left_index = 0; left_index < left_count; left_index++) {
+                        int found_in_right = 0;
+                        for (right_index = 0; right_index < right_count; right_index++) {
+                            if (left_elements[left_index] == right_elements[right_index]) {
+                                found_in_right = 1;
+                                break;
+                            }
+                        }
+                        if (!found_in_right) {
+                            result_elements[result_count] = left_elements[left_index];
+                            result_count++;
+                        }
+                    }
+                    compact_unreferenced_arrays(parser, NULL);
+                    if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                        return integer_value(0);
+                    }
+                    result_array = &parser->arrays[parser->array_count];
+                    result_array->element_count = result_count;
+                    result_array->scope_depth = parser->scope_depth;
+                    result_array->id = parser->next_array_id;
+                    result_array->under_construction = 0;
+                    for (left_index = 0; left_index < result_count; left_index++) {
+                        result_array->elements[left_index] = result_elements[left_index];
+                    }
+                    value = array_value(parser->array_count, result_array->id);
+                    parser->array_count++;
+                    parser->next_array_id++;
+                    return parse_index_postfix(parser, value);
                 } else {
-                    size_t required_count = checking_equals ? left_array->element_count : right_array->element_count;
+                    size_t required_count = checking_equals ? left_count : right_count;
                     matched = 1;
-                    if (checking_equals && left_array->element_count != right_array->element_count) {
+                    if (checking_equals && left_count != right_count) {
                         matched = 0;
-                    } else if (required_count > left_array->element_count) {
+                    } else if (required_count > left_count) {
                         matched = 0;
                     } else {
                         for (left_index = 0; left_index < required_count; left_index++) {
-                            if (left_array->elements[left_index] != right_array->elements[left_index]) {
+                            if (left_elements[left_index] != right_elements[left_index]) {
                                 matched = 0;
                                 break;
                             }
