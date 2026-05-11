@@ -1796,6 +1796,33 @@ def test_c_hosted_rustic_interpreter_computes_array_distribution_helpers(tmp_pat
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_array_ranking_helpers(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "nth_sorted([9, 1, 5, 3], 0)": 1,
+        "nth_sorted([9, 1, 5, 3], 2)": 5,
+        "nth_sorted(dedup([4, 2, 4, 8, 2]), 2)": 8,
+        "let xs = top_count([5, 1, 9, 3], 2); len(xs) * 100 + xs[0] * 10 + xs[1]": 295,
+        "sum(top_count([5, 1, 9, 3], 3))": 17,
+        "len(top_count([], 3))": 0,
+        "len(top_count(range(4), 0))": 0,
+        "sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2))": 5,
+        "nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)": 4,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1884,6 +1911,8 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("median(moving_average_sum([2, 4, 8, 10], 2)) + variance_sum([1, 2, 3]) + mode([6, 1, 6])", 14),
         ("unique_count(sort([5, 1, 5, 9, 1])) + max(histogram_count([2, 2, 1, 3, 3, 3]))", 6),
         ("sum(histogram_values([3, 1, 3, 2, 1, 3])) + frequency_score([3, 1, 3, 2, 1, 3], 1)", 8),
+        ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
+        ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1961,6 +1990,16 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "frequency_score(1, 1)": "expected array",
         "frequency_score([1], [1])": "expected integer",
         "frequency_score([1])": "wrong argument count",
+        "nth_sorted(1, 0)": "expected array",
+        "nth_sorted([1], [0])": "expected integer",
+        "nth_sorted([1], -1)": "expected integer",
+        "nth_sorted([], 0)": "empty array",
+        "nth_sorted([1], 1)": "array index out of bounds",
+        "nth_sorted([1])": "wrong argument count",
+        "top_count(1, 1)": "expected array",
+        "top_count([1], [1])": "expected integer",
+        "top_count([1], -1)": "expected integer",
+        "top_count([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1998,6 +2037,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_count([3, 1, 3])); n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_values([3, 1, 3])); n = n + 1; }; total": 260,
         "let n = 0; let total = 0; while n < 65 { total = total + frequency_score([3, 1, 3], 3); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + nth_sorted([3, 1, 2], 1); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + top_count([3, 1, 2], 2)[0]; n = n + 1; }; total": 195,
     }
 
     for source, expected in expectations.items():
