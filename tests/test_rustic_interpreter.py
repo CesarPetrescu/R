@@ -1784,6 +1784,9 @@ def test_c_hosted_rustic_interpreter_computes_array_distribution_helpers(tmp_pat
         "histogram_pairs_score(histogram_values([3, 1, 3, 2, 1, 3]), histogram_count([3, 1, 3, 2, 1, 3]))": 13,
         "histogram_pairs_score([], [])": 0,
         "histogram_pairs_score(histogram_values(clamp([9, 1, 5, 3], 2, 6)), histogram_count(clamp([9, 1, 5, 3], 2, 6)))": 16,
+        "fn square(x) { x * x }; weighted_score([1, 2, 3], square)": 14,
+        "fn square(x) { x * x }; weighted_score([], square)": 0,
+        "fn boost(x) { x + frequency_score([3, 1, 3], 3) }; weighted_score(histogram_values([3, 1, 3]), boost) + histogram_pairs_score(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]))": 15,
     }
 
     for source, expected in expectations.items():
@@ -1945,6 +1948,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("unique_count(sort([5, 1, 5, 9, 1])) + max(histogram_count([2, 2, 1, 3, 3, 3]))", 6),
         ("sum(histogram_values([3, 1, 3, 2, 1, 3])) + frequency_score([3, 1, 3, 2, 1, 3], 1)", 8),
         ("histogram_pairs_score(histogram_values([3, 1, 3, 2, 1, 3]), histogram_count([3, 1, 3, 2, 1, 3]))", 13),
+        ("fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square)", 14),
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
         ("rank_of(histogram_values([3, 1, 3, 2, 1]), 2) + top_sum(histogram_count([2, 2, 1, 3, 3, 3]), 2)", 6),
@@ -2030,6 +2034,11 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "histogram_pairs_score([], 1)": "expected array",
         "histogram_pairs_score([1])": "wrong argument count",
         "histogram_pairs_score([1], [1, 2])": "array length mismatch",
+        "weighted_score(1, 1)": "expected array",
+        "weighted_score([1], 1)": "undefined identifier",
+        "fn add(x, y) { x + y }; weighted_score([1], add)": "wrong argument count",
+        "fn returns_array(x) { [x] }; weighted_score([1], returns_array)": "expected integer",
+        "weighted_score([1])": "wrong argument count",
         "nth_sorted(1, 0)": "expected array",
         "nth_sorted([1], [0])": "expected integer",
         "nth_sorted([1], -1)": "expected integer",
@@ -2089,6 +2098,7 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_values([3, 1, 3])); n = n + 1; }; total": 260,
         "let n = 0; let total = 0; while n < 65 { total = total + frequency_score([3, 1, 3], 3); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + histogram_pairs_score(histogram_values([3, 1, 3]), histogram_count([3, 1, 3])); n = n + 1; }; total": 455,
+        "fn square(x) { x * x }; let n = 0; let total = 0; while n < 65 { total = total + weighted_score([1, 2], square); n = n + 1; }; total": 325,
         "let n = 0; let total = 0; while n < 65 { total = total + nth_sorted([3, 1, 2], 1); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + top_count([3, 1, 2], 2)[0]; n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + rank_of([3, 1, 2], 3); n = n + 1; }; total": 130,
