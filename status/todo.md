@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add higher-level collection distribution helpers such as `histogram_count(array)` or `unique_count(array)`, with empty-array behavior, composition with `mode(...)`/`dedup(...)`, invalid argument diagnostics, and array-slot cleanup.
+1. Add richer collection distribution helpers such as `histogram_values(array)` or `frequency_score(array, value)`, with empty-array behavior, composition with `histogram_count(...)`/`unique_count(...)`, invalid argument diagnostics, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

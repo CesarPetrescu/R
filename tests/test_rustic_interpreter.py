@@ -1765,6 +1765,31 @@ def test_c_hosted_rustic_interpreter_computes_array_variance_and_mode_helpers(tm
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_array_distribution_helpers(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "unique_count([3, 1, 3, 2, 1, 3])": 3,
+        "unique_count([])": 0,
+        "unique_count(sort([5, 1, 5, 9, 1])) + mode([2, 2, 7])": 5,
+        "let xs = histogram_count([3, 1, 3, 2, 1, 3]); len(xs) * 100 + xs[0] * 10 + xs[2]": 323,
+        "len(histogram_count([]))": 0,
+        "sum(histogram_count(dedup([4, 2, 4, 1])))": 3,
+        "max(histogram_count([2, 2, 1, 3, 3, 3])) + unique_count(dedup([7, 7, 8]))": 5,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1851,6 +1876,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("median(sort([9, 1, 5, 3])) + median(dedup([5, 1, 5, 9, 1]))", 9),
         ("variance_sum(sort([9, 1, 5, 3])) + mode(dedup([2, 4, 2, 8, 4]))", 38),
         ("median(moving_average_sum([2, 4, 8, 10], 2)) + variance_sum([1, 2, 3]) + mode([6, 1, 6])", 14),
+        ("unique_count(sort([5, 1, 5, 9, 1])) + max(histogram_count([2, 2, 1, 3, 3, 3]))", 6),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1919,6 +1945,10 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "mode(1)": "expected array",
         "mode([])": "empty array",
         "mode([1], 2)": "wrong argument count",
+        "unique_count(1)": "expected array",
+        "unique_count([1], 2)": "wrong argument count",
+        "histogram_count(1)": "expected array",
+        "histogram_count([1], 2)": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1952,6 +1982,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + median(sort([3, 1, 2])); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + variance_sum(sort([3, 1, 2])); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + mode(sort([3, 1, 3])); n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + unique_count(sort([3, 1, 3])); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_count([3, 1, 3])); n = n + 1; }; total": 195,
     }
 
     for source, expected in expectations.items():

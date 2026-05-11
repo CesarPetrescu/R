@@ -1773,6 +1773,67 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
+            if (strcmp(name, "unique_count") == 0 || strcmp(name, "histogram_count") == 0) {
+                struct ArrayValue *array;
+                long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long histogram_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t element_index;
+                size_t scan_index;
+                size_t unique_total = 0;
+                int building_histogram = strcmp(name, "histogram_count") == 0;
+
+                if (argument_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    sorted_elements[element_index] = array->elements[element_index];
+                }
+                for (element_index = 1; element_index < array->element_count; element_index++) {
+                    long current = sorted_elements[element_index];
+                    scan_index = element_index;
+                    while (scan_index > 0 && sorted_elements[scan_index - 1] > current) {
+                        sorted_elements[scan_index] = sorted_elements[scan_index - 1];
+                        scan_index--;
+                    }
+                    sorted_elements[scan_index] = current;
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    if (element_index == 0 || sorted_elements[element_index] != sorted_elements[element_index - 1]) {
+                        histogram_elements[unique_total] = 1;
+                        unique_total++;
+                    } else {
+                        histogram_elements[unique_total - 1]++;
+                    }
+                }
+                if (!building_histogram) {
+                    compact_unreferenced_arrays(parser, &arguments[0]);
+                    return parse_index_postfix(parser, integer_value((long)unique_total));
+                }
+                compact_unreferenced_arrays(parser, NULL);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                array = &parser->arrays[parser->array_count];
+                array->element_count = unique_total;
+                array->scope_depth = parser->scope_depth;
+                array->id = parser->next_array_id;
+                array->under_construction = 0;
+                for (element_index = 0; element_index < unique_total; element_index++) {
+                    array->elements[element_index] = histogram_elements[element_index];
+                }
+                value = array_value(parser->array_count, array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0 || strcmp(name, "median") == 0 || strcmp(name, "variance_sum") == 0 || strcmp(name, "mode") == 0) {
                 struct ArrayValue *array;
                 long selected;
