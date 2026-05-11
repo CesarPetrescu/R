@@ -92,6 +92,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add collection window aggregation helpers to Rustic so showcase programs can use `window_sum(array, n)`, with empty-array behavior, invalid-size diagnostics, composition with `drop(...)`/`take(...)`, and array-slot cleanup.
 - [x] Add collection reshaping helpers to Rustic so showcase programs can use `chunk_count(array, n)` and `rotate(array, n)`, with empty-array behavior, invalid-size diagnostics, composition with `drop(...)`/`take(...)`/`window_sum(...)`, and array-slot cleanup.
 - [x] Add richer collection reshaping helpers to Rustic so showcase programs can use `chunk_sum(array, n)` and `rotate_right(array, n)`, with empty-array behavior, invalid-size diagnostics, composition with `chunk_count(...)`/`rotate(...)`/`window_sum(...)`, and array-slot cleanup.
+- [x] Add cumulative collection statistics helpers to Rustic so showcase programs can use `prefix_sum(array)` and `adjacent_diff(array)`, with empty-array behavior, composition with `chunk_sum(...)`/`rotate_right(...)`/`window_sum(...)`, invalid argument diagnostics, and array-slot cleanup.
 
 ## P2 — project quality
 

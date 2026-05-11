@@ -1648,6 +1648,51 @@ def test_c_hosted_rustic_interpreter_rotates_arrays_right_with_rotate_right_help
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_builds_prefix_sums_with_prefix_sum_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = prefix_sum([2, 3, 5]); len(xs) * 100 + xs[0] * 10 + xs[2]": 330,
+        "len(prefix_sum([]))": 0,
+        "sum(window_sum(prefix_sum(range(5)), 2))": 30,
+        "sum(chunk_sum(prefix_sum(rotate_right(range(6), 2)), 3))": 59,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_builds_adjacent_diffs_with_adjacent_diff_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = adjacent_diff([2, 5, 9]); len(xs) * 100 + xs[0] * 10 + xs[2]": 324,
+        "len(adjacent_diff([]))": 0,
+        "len(adjacent_diff([7]))": 1,
+        "sum(adjacent_diff(prefix_sum([2, 3, 5, 7])))": 17,
+        "sum(window_sum(adjacent_diff(rotate_right(range(6), 2)), 2))": 1,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1713,6 +1758,36 @@ def test_c_hosted_rustic_interpreter_runs_array_reshape_showcase_fixture(tmp_pat
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_statistics_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("let xs = prefix_sum(range(6)); len(xs) * 100 + xs[0] * 10 + xs[5]", 615),
+        ("sum(window_sum(prefix_sum(range(5)), 2))", 30),
+        ("sum(adjacent_diff(prefix_sum([2, 3, 5, 7])))", 17),
+        ("sum(chunk_sum(adjacent_diff(rotate_right(range(6), 2)), 3))", 3),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     cases = {
@@ -1749,6 +1824,10 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "rotate_right([1], [1])": "expected integer",
         "rotate_right([1], -1)": "expected integer",
         "rotate_right([1])": "wrong argument count",
+        "prefix_sum(1)": "expected array",
+        "prefix_sum([1], 2)": "wrong argument count",
+        "adjacent_diff(1)": "expected array",
+        "adjacent_diff([1], 2)": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1776,6 +1855,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + rotate([1, 2], 1)[0]; n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + sum(chunk_sum([1, 2, 3], 2)); n = n + 1; }; total": 390,
         "let n = 0; let total = 0; while n < 65 { total = total + rotate_right([1, 2], 1)[0]; n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + prefix_sum([1, 2])[1]; n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + adjacent_diff([1, 3])[1]; n = n + 1; }; total": 130,
     }
 
     for source, expected in expectations.items():
