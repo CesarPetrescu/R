@@ -1603,6 +1603,51 @@ def test_c_hosted_rustic_interpreter_rotates_arrays_with_rotate_helper(tmp_path)
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_sums_fixed_size_chunks_with_chunk_sum_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = chunk_sum(range(7), 3); len(xs) * 100 + xs[0] * 10 + xs[2]": 336,
+        "sum(chunk_sum([5, 6], 3))": 11,
+        "len(chunk_sum([], 2))": 0,
+        "sum(window_sum(chunk_sum(range(8), 2), 2))": 42,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rotates_arrays_right_with_rotate_right_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "rotate_right([1, 2, 3, 4], 1)[0]": 4,
+        "let xs = rotate_right(range(5), 2); len(xs) * 100 + xs[0] * 10 + xs[4]": 532,
+        "sum(take(rotate_right(range(6), 4), 3))": 9,
+        "len(rotate_right([], 3))": 0,
+        "sum(rotate_right(range(4), 6))": 6,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1652,6 +1697,8 @@ def test_c_hosted_rustic_interpreter_runs_array_reshape_showcase_fixture(tmp_pat
         ("let xs = rotate(drop(range(7), 2), 2); len(xs) * 100 + xs[0] * 10 + xs[4]", 543),
         ("sum(window_sum(rotate(take(range(8), 6), 3), 2))", 25),
         ("chunk_count(rotate(range(5), 4), 2) * 100 + sum(take(rotate(range(5), 1), 3))", 306),
+        ("let xs = chunk_sum(range(8), 3); len(xs) * 100 + xs[0] * 10 + xs[2]", 343),
+        ("sum(window_sum(rotate_right(chunk_sum(range(9), 2), 2), 2))", 50),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1693,6 +1740,15 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "rotate([1], [1])": "expected integer",
         "rotate([1], -1)": "expected integer",
         "rotate([1])": "wrong argument count",
+        "chunk_sum(1, 1)": "expected array",
+        "chunk_sum([1], [1])": "expected integer",
+        "chunk_sum([1], 0)": "expected integer",
+        "chunk_sum([1], -1)": "expected integer",
+        "chunk_sum([1])": "wrong argument count",
+        "rotate_right(1, 1)": "expected array",
+        "rotate_right([1], [1])": "expected integer",
+        "rotate_right([1], -1)": "expected integer",
+        "rotate_right([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1718,6 +1774,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + sum(window_sum([1, 2], 2)); n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + chunk_count([1, 2, 3], 2); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + rotate([1, 2], 1)[0]; n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + sum(chunk_sum([1, 2, 3], 2)); n = n + 1; }; total": 390,
+        "let n = 0; let total = 0; while n < 65 { total = total + rotate_right([1, 2], 1)[0]; n = n + 1; }; total": 130,
     }
 
     for source, expected in expectations.items():
