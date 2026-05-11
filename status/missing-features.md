@@ -80,6 +80,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a bounded `range(n)` array builder to Rustic so showcase programs can construct compact `0..n-1` collections without hand-written push loops while preserving the fixed array cap.
 - [x] Add array transformation helpers to Rustic so showcase programs can use `map(array, fn)` and `filter(array, fn)` over bounded collections without hand-written loops while preserving array-slot cleanup.
 - [x] Add array ordering/slicing helpers to Rustic so showcase programs can use `reverse(array)` and `take(array, n)` over bounded collections while preserving array-slot cleanup.
+- [x] Add array fold/reduction helpers to Rustic so showcase programs can use `fold(array, initial, fn)` over bounded collections with callback arity diagnostics and array-slot cleanup.
 
 ## P2 — project quality
 
