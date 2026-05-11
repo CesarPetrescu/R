@@ -1,0 +1,5 @@
+# Rustic array cumulative/statistical helper showcase
+let xs = prefix_sum(range(6)); len(xs) * 100 + xs[0] * 10 + xs[5] => 615
+sum(window_sum(prefix_sum(range(5)), 2)) => 30
+sum(adjacent_diff(prefix_sum([2, 3, 5, 7]))) => 17
+sum(chunk_sum(adjacent_diff(rotate_right(range(6), 2)), 3)) => 3
