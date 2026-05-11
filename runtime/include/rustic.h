@@ -26,6 +26,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS = 17,
     RUSTIC_ERR_EXPECTED_ARRAY = 18,
     RUSTIC_ERR_EMPTY_ARRAY = 19,
+    RUSTIC_ERR_ARRAY_LENGTH_MISMATCH = 20,
 } RusticStatus;
 
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

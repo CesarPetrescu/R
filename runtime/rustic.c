@@ -1800,6 +1800,37 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
+            if (strcmp(name, "histogram_pairs_score") == 0) {
+                struct ArrayValue *values;
+                struct ArrayValue *counts;
+                long score = 0;
+                size_t element_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                values = array_from_value(parser, arguments[0]);
+                if (values == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                counts = array_from_value(parser, arguments[1]);
+                if (counts == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (values->element_count != counts->element_count) {
+                    parser->status = RUSTIC_ERR_ARRAY_LENGTH_MISMATCH;
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < values->element_count; element_index++) {
+                    score += values->elements[element_index] * counts->elements[element_index];
+                }
+                compact_unreferenced_arrays(parser, NULL);
+                return parse_index_postfix(parser, integer_value(score));
+            }
+
             if (strcmp(name, "clamp") == 0) {
                 struct ArrayValue *array;
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
@@ -3119,6 +3150,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "expected array";
     case RUSTIC_ERR_EMPTY_ARRAY:
         return "empty array";
+    case RUSTIC_ERR_ARRAY_LENGTH_MISMATCH:
+        return "array length mismatch";
     default:
         return "unknown rustic interpreter error";
     }
