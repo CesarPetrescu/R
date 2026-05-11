@@ -1773,14 +1773,42 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "unique_count") == 0 || strcmp(name, "histogram_count") == 0) {
+            if (strcmp(name, "frequency_score") == 0) {
+                struct ArrayValue *array;
+                long target;
+                long matched = 0;
+                size_t element_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &target)) {
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    if (array->elements[element_index] == target) {
+                        matched++;
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
+            if (strcmp(name, "unique_count") == 0 || strcmp(name, "histogram_count") == 0 || strcmp(name, "histogram_values") == 0) {
                 struct ArrayValue *array;
                 long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
-                long histogram_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 size_t element_index;
                 size_t scan_index;
                 size_t unique_total = 0;
                 int building_histogram = strcmp(name, "histogram_count") == 0;
+                int building_values = strcmp(name, "histogram_values") == 0;
 
                 if (argument_count != 1) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1805,13 +1833,13 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
                 for (element_index = 0; element_index < array->element_count; element_index++) {
                     if (element_index == 0 || sorted_elements[element_index] != sorted_elements[element_index - 1]) {
-                        histogram_elements[unique_total] = 1;
+                        result_elements[unique_total] = building_values ? sorted_elements[element_index] : 1;
                         unique_total++;
-                    } else {
-                        histogram_elements[unique_total - 1]++;
+                    } else if (!building_values) {
+                        result_elements[unique_total - 1]++;
                     }
                 }
-                if (!building_histogram) {
+                if (!building_histogram && !building_values) {
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value((long)unique_total));
                 }
@@ -1826,7 +1854,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 array->id = parser->next_array_id;
                 array->under_construction = 0;
                 for (element_index = 0; element_index < unique_total; element_index++) {
-                    array->elements[element_index] = histogram_elements[element_index];
+                    array->elements[element_index] = result_elements[element_index];
                 }
                 value = array_value(parser->array_count, array->id);
                 parser->array_count++;
