@@ -6,3 +6,5 @@ sum(chunk_sum(adjacent_diff(rotate_right(range(6), 2)), 3)) => 3
 sum(moving_average_sum(prefix_sum([2, 3, 5, 7]), 2)) => 23
 sum(adjacent_diff(moving_average_sum(sort([8, 2, 4, 10]), 2))) => 9
 median(sort([9, 1, 5, 3])) + median(dedup([5, 1, 5, 9, 1])) => 9
+variance_sum(sort([9, 1, 5, 3])) + mode(dedup([2, 4, 2, 8, 4])) => 38
+median(moving_average_sum([2, 4, 8, 10], 2)) + variance_sum([1, 2, 3]) + mode([6, 1, 6]) => 14

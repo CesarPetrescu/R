@@ -1773,12 +1773,14 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0 || strcmp(name, "median") == 0) {
+            if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0 || strcmp(name, "median") == 0 || strcmp(name, "variance_sum") == 0 || strcmp(name, "mode") == 0) {
                 struct ArrayValue *array;
                 long selected;
                 size_t element_index;
                 int selecting_min = strcmp(name, "min") == 0;
                 int selecting_median = strcmp(name, "median") == 0;
+                int selecting_variance_sum = strcmp(name, "variance_sum") == 0;
+                int selecting_mode = strcmp(name, "mode") == 0;
 
                 if (argument_count != 1) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1793,7 +1795,7 @@ static struct Value parse_factor(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_EMPTY_ARRAY;
                     return integer_value(0);
                 }
-                if (selecting_median) {
+                if (selecting_median || selecting_mode) {
                     long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                     size_t scan_index;
                     for (element_index = 0; element_index < array->element_count; element_index++) {
@@ -1808,13 +1810,44 @@ static struct Value parse_factor(struct Parser *parser) {
                         }
                         sorted_elements[scan_index] = current;
                     }
-                    if (array->element_count % 2 == 1) {
+                    if (selecting_mode) {
+                        size_t best_count = 1;
+                        size_t current_count = 1;
+                        selected = sorted_elements[0];
+                        for (element_index = 1; element_index < array->element_count; element_index++) {
+                            if (sorted_elements[element_index] == sorted_elements[element_index - 1]) {
+                                current_count++;
+                            } else {
+                                current_count = 1;
+                            }
+                            if (current_count > best_count) {
+                                best_count = current_count;
+                                selected = sorted_elements[element_index];
+                            }
+                        }
+                    } else if (array->element_count % 2 == 1) {
                         selected = sorted_elements[array->element_count / 2];
                     } else {
                         size_t upper_index = array->element_count / 2;
                         selected = (sorted_elements[upper_index - 1] + sorted_elements[upper_index]) / 2;
                     }
+                    compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(selected));
+                }
+                if (selecting_variance_sum) {
+                    long mean;
+                    long total = 0;
+                    long variance_total = 0;
+                    for (element_index = 0; element_index < array->element_count; element_index++) {
+                        total += array->elements[element_index];
+                    }
+                    mean = total / (long)array->element_count;
+                    for (element_index = 0; element_index < array->element_count; element_index++) {
+                        long delta = array->elements[element_index] - mean;
+                        variance_total += delta * delta;
+                    }
+                    compact_unreferenced_arrays(parser, &arguments[0]);
+                    return parse_index_postfix(parser, integer_value(variance_total));
                 }
                 selected = array->elements[0];
                 for (element_index = 1; element_index < array->element_count; element_index++) {

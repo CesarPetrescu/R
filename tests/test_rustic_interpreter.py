@@ -1739,6 +1739,32 @@ def test_c_hosted_rustic_interpreter_finds_array_medians_with_helper(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_array_variance_and_mode_helpers(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "variance_sum([1, 2, 3])": 2,
+        "variance_sum([2, 4, 8, 10])": 40,
+        "variance_sum(sort([9, 1, 5, 3]))": 36,
+        "variance_sum(dedup([5, 1, 5, 9, 1]))": 32,
+        "mode([3, 1, 3, 2])": 3,
+        "mode([2, 1, 2, 1])": 1,
+        "mode(sort([4, 2, 4, 2, 4]))": 4,
+        "median([9, 1, 5]) + mode([2, 7, 2]) + variance_sum([1, 2, 3])": 9,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1823,6 +1849,8 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("sum(moving_average_sum(prefix_sum([2, 3, 5, 7]), 2))", 23),
         ("sum(adjacent_diff(moving_average_sum(sort([8, 2, 4, 10]), 2)))", 9),
         ("median(sort([9, 1, 5, 3])) + median(dedup([5, 1, 5, 9, 1]))", 9),
+        ("variance_sum(sort([9, 1, 5, 3])) + mode(dedup([2, 4, 2, 8, 4]))", 38),
+        ("median(moving_average_sum([2, 4, 8, 10], 2)) + variance_sum([1, 2, 3]) + mode([6, 1, 6])", 14),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1885,6 +1913,12 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "median(1)": "expected array",
         "median([])": "empty array",
         "median([1], 2)": "wrong argument count",
+        "variance_sum(1)": "expected array",
+        "variance_sum([])": "empty array",
+        "variance_sum([1], 2)": "wrong argument count",
+        "mode(1)": "expected array",
+        "mode([])": "empty array",
+        "mode([1], 2)": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1916,6 +1950,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + adjacent_diff([1, 3])[1]; n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + moving_average_sum([1, 3], 2)[0]; n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + median(sort([3, 1, 2])); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + variance_sum(sort([3, 1, 2])); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + mode(sort([3, 1, 3])); n = n + 1; }; total": 195,
     }
 
     for source, expected in expectations.items():

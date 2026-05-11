@@ -95,6 +95,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add cumulative collection statistics helpers to Rustic so showcase programs can use `prefix_sum(array)` and `adjacent_diff(array)`, with empty-array behavior, composition with `chunk_sum(...)`/`rotate_right(...)`/`window_sum(...)`, invalid argument diagnostics, and array-slot cleanup.
 - [x] Add rolling collection statistics helpers to Rustic so showcase programs can use `moving_average_sum(array, n)` for integer sliding-window averages, with empty-array and short-window behavior, composition with `prefix_sum(...)`/`adjacent_diff(...)`/`sort(...)`, invalid-size diagnostics, and array-slot cleanup.
 - [x] Add richer collection statistical helpers to Rustic so showcase programs can use `median(array)` for sorted midpoint summaries, with empty-array diagnostics, composition with `sort(...)`/`dedup(...)`/`moving_average_sum(...)`, invalid argument diagnostics, and array-slot cleanup.
+- [x] Add additional scalar collection statistics to Rustic so showcase programs can use `variance_sum(array)` and `mode(array)`, with empty-array diagnostics, composition with `median(...)`/`sort(...)`/`dedup(...)`, invalid argument diagnostics, deterministic tie behavior, and array-slot cleanup.
 
 ## P2 — project quality
 
