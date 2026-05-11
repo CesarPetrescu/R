@@ -101,6 +101,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add collection ranking/order-statistic helpers to Rustic so showcase programs can use `nth_sorted(array, n)` and `top_count(array, n)`, with empty-array behavior, invalid argument diagnostics, composition with `histogram_values(...)`/`frequency_score(...)`, and array-slot cleanup.
 - [x] Add richer collection ranking/comparison helpers to Rustic so showcase programs can use `rank_of(array, value)` and `top_sum(array, n)`, with empty-array behavior, invalid argument diagnostics, composition with `nth_sorted(...)`/`top_count(...)`, and array-slot cleanup.
 - [x] Add collection distribution shaping helpers to Rustic so showcase programs can use `clamp(array, min, max)`, with empty-array behavior, invalid argument diagnostics, composition with `rank_of(...)`/`top_sum(...)`, and array-slot cleanup.
+- [x] Add collection histogram pair scoring helpers to Rustic so showcase programs can use `histogram_pairs_score(values, counts)` for scalar weighted-frequency validation, with empty-array behavior, invalid argument diagnostics, composition with `histogram_values(...)`/`histogram_count(...)`, length-mismatch diagnostics, and array-slot cleanup.
 
 ## P2 — project quality
 
