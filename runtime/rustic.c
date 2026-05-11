@@ -993,20 +993,22 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0) {
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
-                long take_count = 0;
+                long slice_count = 0;
                 size_t source_count;
                 size_t result_count;
+                size_t slice_start = 0;
                 size_t element_index;
                 int taking = strcmp(name, "take") == 0;
+                int dropping = strcmp(name, "drop") == 0;
                 int sorting = strcmp(name, "sort") == 0;
                 int deduplicating = strcmp(name, "dedup") == 0;
 
-                if (argument_count != (taking ? 2 : 1)) {
+                if (argument_count != ((taking || dropping) ? 2 : 1)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1015,11 +1017,11 @@ static struct Value parse_factor(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
                     return integer_value(0);
                 }
-                if (taking) {
-                    if (!value_as_integer(parser, arguments[1], &take_count)) {
+                if (taking || dropping) {
+                    if (!value_as_integer(parser, arguments[1], &slice_count)) {
                         return integer_value(0);
                     }
-                    if (take_count < 0) {
+                    if (slice_count < 0) {
                         parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
                         return integer_value(0);
                     }
@@ -1029,8 +1031,11 @@ static struct Value parse_factor(struct Parser *parser) {
                 for (element_index = 0; element_index < source_count; element_index++) {
                     source_elements[element_index] = source_array->elements[element_index];
                 }
-                if (taking && (size_t)take_count < source_count) {
-                    result_count = (size_t)take_count;
+                if (taking && (size_t)slice_count < source_count) {
+                    result_count = (size_t)slice_count;
+                } else if (dropping) {
+                    slice_start = (size_t)slice_count < source_count ? (size_t)slice_count : source_count;
+                    result_count = source_count - slice_start;
                 } else {
                     result_count = source_count;
                 }
@@ -1078,8 +1083,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 result_array->id = parser->next_array_id;
                 result_array->under_construction = 0;
                 for (element_index = 0; element_index < result_count; element_index++) {
-                    if (taking) {
-                        result_array->elements[element_index] = source_elements[element_index];
+                    if (taking || dropping) {
+                        result_array->elements[element_index] = source_elements[slice_start + element_index];
                     } else if (sorting || deduplicating) {
                         result_array->elements[element_index] = result_elements[element_index];
                     } else {
@@ -1187,6 +1192,51 @@ static struct Value parse_factor(struct Parser *parser) {
                 parser->array_count++;
                 parser->next_array_id++;
                 return parse_index_postfix(parser, value);
+            }
+
+            if (strcmp(name, "partition_count") == 0) {
+                struct ArrayValue *source_array;
+                struct Function *predicate;
+                long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t source_count;
+                size_t element_index;
+                long matched_count = 0;
+                long predicate_result;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                predicate = function_from_value(parser, arguments[1]);
+                if (predicate == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+                if (predicate->parameter_count != 1) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+
+                source_count = source_array->element_count;
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    source_elements[element_index] = source_array->elements[element_index];
+                }
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    struct Value predicate_value = call_unary_function(parser, predicate, source_elements[element_index]);
+                    if (parser->status != RUSTIC_OK || !value_as_integer(parser, predicate_value, &predicate_result)) {
+                        return integer_value(0);
+                    }
+                    if (predicate_result != 0) {
+                        matched_count++;
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(matched_count));
             }
 
             if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0 || strcmp(name, "map_indexed") == 0 || strcmp(name, "filter_indexed") == 0) {

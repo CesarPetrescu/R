@@ -1490,6 +1490,83 @@ def test_c_hosted_rustic_interpreter_takes_array_prefixes_with_take_helper(tmp_p
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_drops_array_prefixes_with_drop_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "sum(drop(range(6), 3))": 12,
+        "len(drop([8, 9], 2))": 0,
+        "let xs = drop(reverse(range(6)), 2); len(xs) * 100 + xs[0] * 10 + xs[3]": 430,
+        "sum(drop(range(3), 9))": 0,
+        "sum(difference(drop([1, 2, 3, 4], 1), [3]))": 6,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_counts_partitions_with_callback_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn even(x) { x % 2 == 0 }; partition_count(range(7), even)": 4,
+        "fn positive(x) { x > 0 }; partition_count([], positive)": 0,
+        "fn keep(x) { x > 2 && x < 6 }; partition_count(difference(range(8), [4]), keep)": 2,
+        "fn every(x) { 1 }; partition_count(drop([5, 6, 7], 1), every)": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("sum(drop(range(6), 3))", 12),
+        ("fn odd(x) { x % 2 == 1 }; partition_count(drop(range(8), 2), odd)", 3),
+        (
+            "fn keep(x) { x > 1 }; let xs = difference(drop([0, 1, 2, 3, 4], 1), [3]); partition_count(xs, keep) * 100 + sum(xs)",
+            207,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     cases = {
@@ -1499,6 +1576,10 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "take([1], [1])": "expected integer",
         "take([1], -1)": "expected integer",
         "take([1])": "wrong argument count",
+        "drop(1, 1)": "expected array",
+        "drop([1], [1])": "expected integer",
+        "drop([1], -1)": "expected integer",
+        "drop([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1520,6 +1601,7 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
     expectations = {
         "let n = 0; let total = 0; while n < 65 { total = total + reverse([1])[0]; n = n + 1; }; total": 65,
         "let n = 0; let total = 0; while n < 65 { total = total + len(take([1, 2], 1)); n = n + 1; }; total": 65,
+        "let n = 0; let total = 0; while n < 65 { total = total + len(drop([1, 2], 1)); n = n + 1; }; total": 65,
     }
 
     for source, expected in expectations.items():
@@ -1659,14 +1741,17 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_map_filter_arguments(tmp_pa
     cases = {
         "fn id(x) { x }; map(1, id)": "expected array",
         "fn id(x) { x }; filter(1, id)": "expected array",
+        "fn id(x) { x }; partition_count(1, id)": "expected array",
         "fn both(i, x) { x }; map_indexed(1, both)": "expected array",
         "fn both(i, x) { x }; filter_indexed(1, both)": "expected array",
         "map([1], 1)": "undefined identifier",
         "filter([1], 1)": "undefined identifier",
+        "partition_count([1], 1)": "undefined identifier",
         "map_indexed([1], 1)": "undefined identifier",
         "filter_indexed([1], 1)": "undefined identifier",
         "fn bad(x, y) { x }; map([1], bad)": "wrong argument count",
         "fn bad(x, y) { x }; filter([1], bad)": "wrong argument count",
+        "fn bad(x, y) { x }; partition_count([1], bad)": "wrong argument count",
         "fn bad(x) { x }; map_indexed([1], bad)": "wrong argument count",
         "fn bad(x) { x }; filter_indexed([1], bad)": "wrong argument count",
         "fn bad(x) { [x] }; map([1], bad)": "expected integer",
@@ -1692,6 +1777,7 @@ def test_c_hosted_rustic_interpreter_releases_map_filter_temporaries(tmp_path):
     expectations = {
         "fn id(x) { x }; let n = 0; let total = 0; while n < 65 { total = total + sum(map([1], id)); n = n + 1; }; total": 65,
         "fn yes(x) { 1 }; let n = 0; let total = 0; while n < 65 { total = total + len(filter([1], yes)); n = n + 1; }; total": 65,
+        "fn yes(x) { 1 }; let n = 0; let total = 0; while n < 65 { total = total + partition_count([1], yes); n = n + 1; }; total": 65,
         "fn plus_index(i, x) { i + x }; let n = 0; let total = 0; while n < 65 { total = total + sum(map_indexed([1], plus_index)); n = n + 1; }; total": 65,
         "fn yes(i, x) { i == 0 && x == 1 }; let n = 0; let total = 0; while n < 65 { total = total + len(filter_indexed([1], yes)); n = n + 1; }; total": 65,
     }

@@ -88,6 +88,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add collection ordering/comparison helpers to Rustic so showcase programs can use `sort(array)` and `dedup(array)`, with empty-array behavior, composition with `find`/`contains_any`, and array-slot cleanup.
 - [x] Add richer collection comparison helpers to Rustic so showcase programs can use `equals(array, array)` and `starts_with(array, prefix)`, with empty-array behavior, sorted/deduped composition, argument diagnostics, nested temporary preservation, and array-slot cleanup.
 - [x] Add richer collection set operations to Rustic so showcase programs can use `intersection_count(array, array)` and `difference(left, right)`, with empty-array behavior, sorted/deduped composition, argument diagnostics, and array-slot cleanup.
+- [x] Add collection split/partition helpers to Rustic so showcase programs can use `drop(array, n)` and `partition_count(array, fn)`, with empty-array behavior, callback diagnostics, composition with `difference(...)`, and array-slot cleanup.
 
 ## P2 — project quality
 
