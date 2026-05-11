@@ -1535,6 +1535,28 @@ def test_c_hosted_rustic_interpreter_counts_partitions_with_callback_helper(tmp_
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_sums_sliding_windows_with_window_sum_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "sum(window_sum(range(6), 3))": 30,
+        "len(window_sum([8, 9], 3))": 0,
+        "let xs = window_sum(take(range(6), 5), 2); len(xs) * 100 + xs[0] * 10 + xs[3]": 417,
+        "sum(drop(window_sum(range(6), 2), 2))": 21,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1549,6 +1571,7 @@ def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture
     assert cases == [
         ("sum(drop(range(6), 3))", 12),
         ("fn odd(x) { x % 2 == 1 }; partition_count(drop(range(8), 2), odd)", 3),
+        ("sum(window_sum(take(range(7), 6), 3))", 30),
         (
             "fn keep(x) { x > 1 }; let xs = difference(drop([0, 1, 2, 3, 4], 1), [3]); partition_count(xs, keep) * 100 + sum(xs)",
             207,
@@ -1580,6 +1603,11 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "drop([1], [1])": "expected integer",
         "drop([1], -1)": "expected integer",
         "drop([1])": "wrong argument count",
+        "window_sum(1, 1)": "expected array",
+        "window_sum([1], [1])": "expected integer",
+        "window_sum([1], 0)": "expected integer",
+        "window_sum([1], -1)": "expected integer",
+        "window_sum([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1602,6 +1630,7 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + reverse([1])[0]; n = n + 1; }; total": 65,
         "let n = 0; let total = 0; while n < 65 { total = total + len(take([1, 2], 1)); n = n + 1; }; total": 65,
         "let n = 0; let total = 0; while n < 65 { total = total + len(drop([1, 2], 1)); n = n + 1; }; total": 65,
+        "let n = 0; let total = 0; while n < 65 { total = total + sum(window_sum([1, 2], 2)); n = n + 1; }; total": 195,
     }
 
     for source, expected in expectations.items():

@@ -993,12 +993,13 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0) {
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0 || strcmp(name, "window_sum") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long slice_count = 0;
+                long window_size = 0;
                 size_t source_count;
                 size_t result_count;
                 size_t slice_start = 0;
@@ -1007,8 +1008,9 @@ static struct Value parse_factor(struct Parser *parser) {
                 int dropping = strcmp(name, "drop") == 0;
                 int sorting = strcmp(name, "sort") == 0;
                 int deduplicating = strcmp(name, "dedup") == 0;
+                int windowing = strcmp(name, "window_sum") == 0;
 
-                if (argument_count != ((taking || dropping) ? 2 : 1)) {
+                if (argument_count != ((taking || dropping || windowing) ? 2 : 1)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1026,6 +1028,15 @@ static struct Value parse_factor(struct Parser *parser) {
                         return integer_value(0);
                     }
                 }
+                if (windowing) {
+                    if (!value_as_integer(parser, arguments[1], &window_size)) {
+                        return integer_value(0);
+                    }
+                    if (window_size <= 0) {
+                        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                        return integer_value(0);
+                    }
+                }
 
                 source_count = source_array->element_count;
                 for (element_index = 0; element_index < source_count; element_index++) {
@@ -1036,6 +1047,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 } else if (dropping) {
                     slice_start = (size_t)slice_count < source_count ? (size_t)slice_count : source_count;
                     result_count = source_count - slice_start;
+                } else if (windowing) {
+                    result_count = (size_t)window_size <= source_count ? source_count - (size_t)window_size + 1 : 0;
                 } else {
                     result_count = source_count;
                 }
@@ -1070,6 +1083,16 @@ static struct Value parse_factor(struct Parser *parser) {
                             result_count++;
                         }
                     }
+                } else if (windowing) {
+                    size_t window_index;
+                    size_t offset;
+                    for (window_index = 0; window_index < result_count; window_index++) {
+                        long total = 0;
+                        for (offset = 0; offset < (size_t)window_size; offset++) {
+                            total += source_elements[window_index + offset];
+                        }
+                        result_elements[window_index] = total;
+                    }
                 }
 
                 compact_unreferenced_arrays(parser, &arguments[0]);
@@ -1085,7 +1108,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 for (element_index = 0; element_index < result_count; element_index++) {
                     if (taking || dropping) {
                         result_array->elements[element_index] = source_elements[slice_start + element_index];
-                    } else if (sorting || deduplicating) {
+                    } else if (sorting || deduplicating || windowing) {
                         result_array->elements[element_index] = result_elements[element_index];
                     } else {
                         result_array->elements[element_index] = source_elements[source_count - element_index - 1];
