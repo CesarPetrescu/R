@@ -1800,15 +1800,18 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "nth_sorted") == 0 || strcmp(name, "top_count") == 0) {
+            if (strcmp(name, "nth_sorted") == 0 || strcmp(name, "top_count") == 0 || strcmp(name, "rank_of") == 0 || strcmp(name, "top_sum") == 0) {
                 struct ArrayValue *array;
                 long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long requested_count;
+                long scalar_result = 0;
                 size_t element_index;
                 size_t scan_index;
                 size_t result_count;
                 int building_top_count = strcmp(name, "top_count") == 0;
+                int finding_rank = strcmp(name, "rank_of") == 0;
+                int summing_top = strcmp(name, "top_sum") == 0;
 
                 if (argument_count != 2) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1822,15 +1825,15 @@ static struct Value parse_factor(struct Parser *parser) {
                 if (!value_as_integer(parser, arguments[1], &requested_count)) {
                     return integer_value(0);
                 }
-                if (requested_count < 0) {
+                if (!finding_rank && requested_count < 0) {
                     parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
                     return integer_value(0);
                 }
-                if (!building_top_count && array->element_count == 0) {
+                if (!building_top_count && !finding_rank && !summing_top && array->element_count == 0) {
                     parser->status = RUSTIC_ERR_EMPTY_ARRAY;
                     return integer_value(0);
                 }
-                if (!building_top_count && (size_t)requested_count >= array->element_count) {
+                if (!building_top_count && !finding_rank && !summing_top && (size_t)requested_count >= array->element_count) {
                     parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
                     return integer_value(0);
                 }
@@ -1845,6 +1848,28 @@ static struct Value parse_factor(struct Parser *parser) {
                         scan_index--;
                     }
                     sorted_elements[scan_index] = current;
+                }
+                if (finding_rank) {
+                    scalar_result = -1;
+                    for (element_index = 0; element_index < array->element_count; element_index++) {
+                        if (sorted_elements[element_index] == requested_count) {
+                            scalar_result = (long)element_index;
+                            break;
+                        }
+                    }
+                    compact_unreferenced_arrays(parser, &arguments[0]);
+                    return parse_index_postfix(parser, integer_value(scalar_result));
+                }
+                if (summing_top) {
+                    result_count = (size_t)requested_count;
+                    if (result_count > array->element_count) {
+                        result_count = array->element_count;
+                    }
+                    for (element_index = 0; element_index < result_count; element_index++) {
+                        scalar_result += sorted_elements[array->element_count - element_index - 1];
+                    }
+                    compact_unreferenced_arrays(parser, &arguments[0]);
+                    return parse_index_postfix(parser, integer_value(scalar_result));
                 }
                 if (!building_top_count) {
                     long selected = sorted_elements[(size_t)requested_count];
