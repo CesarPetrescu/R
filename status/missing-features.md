@@ -97,6 +97,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add richer collection statistical helpers to Rustic so showcase programs can use `median(array)` for sorted midpoint summaries, with empty-array diagnostics, composition with `sort(...)`/`dedup(...)`/`moving_average_sum(...)`, invalid argument diagnostics, and array-slot cleanup.
 - [x] Add additional scalar collection statistics to Rustic so showcase programs can use `variance_sum(array)` and `mode(array)`, with empty-array diagnostics, composition with `median(...)`/`sort(...)`/`dedup(...)`, invalid argument diagnostics, deterministic tie behavior, and array-slot cleanup.
 - [x] Add higher-level collection distribution helpers to Rustic so showcase programs can use `unique_count(array)` and `histogram_count(array)`, with empty-array behavior, composition with `mode(...)`/`dedup(...)`, invalid argument diagnostics, and array-slot cleanup.
+- [x] Add richer collection frequency helpers to Rustic so showcase programs can use `histogram_values(array)` and `frequency_score(array, value)`, with empty-array behavior, composition with `histogram_count(...)`/`unique_count(...)`, invalid argument diagnostics, and array-slot cleanup.
 
 ## P2 — project quality
 

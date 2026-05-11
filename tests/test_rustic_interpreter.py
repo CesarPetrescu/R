@@ -1775,6 +1775,12 @@ def test_c_hosted_rustic_interpreter_computes_array_distribution_helpers(tmp_pat
         "len(histogram_count([]))": 0,
         "sum(histogram_count(dedup([4, 2, 4, 1])))": 3,
         "max(histogram_count([2, 2, 1, 3, 3, 3])) + unique_count(dedup([7, 7, 8]))": 5,
+        "let xs = histogram_values([3, 1, 3, 2, 1, 3]); len(xs) * 100 + xs[0] * 10 + xs[2]": 313,
+        "len(histogram_values([]))": 0,
+        "sum(histogram_values([3, 1, 3, 2, 1, 3])) + sum(histogram_count([3, 1, 3, 2, 1, 3]))": 12,
+        "frequency_score([3, 1, 3, 2, 1, 3], 3)": 3,
+        "frequency_score([], 3)": 0,
+        "frequency_score(histogram_count([2, 2, 1, 3, 3, 3]), 1)": 1,
     }
 
     for source, expected in expectations.items():
@@ -1877,6 +1883,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("variance_sum(sort([9, 1, 5, 3])) + mode(dedup([2, 4, 2, 8, 4]))", 38),
         ("median(moving_average_sum([2, 4, 8, 10], 2)) + variance_sum([1, 2, 3]) + mode([6, 1, 6])", 14),
         ("unique_count(sort([5, 1, 5, 9, 1])) + max(histogram_count([2, 2, 1, 3, 3, 3]))", 6),
+        ("sum(histogram_values([3, 1, 3, 2, 1, 3])) + frequency_score([3, 1, 3, 2, 1, 3], 1)", 8),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1949,6 +1956,11 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "unique_count([1], 2)": "wrong argument count",
         "histogram_count(1)": "expected array",
         "histogram_count([1], 2)": "wrong argument count",
+        "histogram_values(1)": "expected array",
+        "histogram_values([1], 2)": "wrong argument count",
+        "frequency_score(1, 1)": "expected array",
+        "frequency_score([1], [1])": "expected integer",
+        "frequency_score([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1984,6 +1996,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + mode(sort([3, 1, 3])); n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + unique_count(sort([3, 1, 3])); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_count([3, 1, 3])); n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + sum(histogram_values([3, 1, 3])); n = n + 1; }; total": 260,
+        "let n = 0; let total = 0; while n < 65 { total = total + frequency_score([3, 1, 3], 3); n = n + 1; }; total": 130,
     }
 
     for source, expected in expectations.items():
