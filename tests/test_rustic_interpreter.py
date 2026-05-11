@@ -1278,6 +1278,129 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_range_helper_arguments(tmp_
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_reverses_arrays_with_reverse_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "reverse([1, 2, 3])[0]": 3,
+        "let xs = reverse(range(5)); len(xs) * 100 + xs[0] * 10 + xs[4]": 540,
+        "sum(push(reverse([1, 2]), 9))": 12,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_takes_array_prefixes_with_take_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "sum(take(range(6), 3))": 3,
+        "len(take([8, 9], 0))": 0,
+        "let xs = take(reverse(range(6)), 4); len(xs) * 100 + xs[0] * 10 + xs[3]": 452,
+        "sum(take(range(3), 9))": 3,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "reverse(1)": "expected array",
+        "reverse([1], 2)": "wrong argument count",
+        "take(1, 1)": "expected array",
+        "take([1], [1])": "expected integer",
+        "take([1], -1)": "expected integer",
+        "take([1])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let n = 0; let total = 0; while n < 65 { total = total + reverse([1])[0]; n = n + 1; }; total": 65,
+        "let n = 0; let total = 0; while n < 65 { total = total + len(take([1, 2], 1)); n = n + 1; }; total": 65,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_ordering_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_ordering_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("let xs = reverse(range(6)); len(xs) * 100 + xs[0] * 10 + xs[5]", 650),
+        (
+            "fn odd(x) { x % 2 == 1 }; let xs = take(reverse(filter(range(10), odd)), 3); len(xs) * 100 + sum(xs)",
+            321,
+        ),
+        (
+            "fn shift(x) { x + 1 }; let xs = reverse(map(take(range(5), 4), shift)); xs[0] * 100 + xs[3]",
+            401,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_transforms_arrays_with_map_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
