@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer collection reshaping helpers to Rustic, such as `chunk_count(array, n)` for fixed-size group counts or `rotate(array, n)` for bounded cyclic ordering, with tests proving empty-array behavior, invalid-size diagnostics, composition with `drop(...)`/`take(...)`/`window_sum(...)`, and array-slot cleanup.
+1. Add richer collection reshaping helpers to Rustic such as `chunk_sum(array, n)` or `rotate_right(array, n)`, with tests proving empty-array behavior, invalid-size diagnostics, composition with `chunk_count(...)`/`rotate(...)`/`window_sum(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
