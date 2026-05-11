@@ -741,6 +741,58 @@ static struct Value call_unary_function(struct Parser *parser, struct Function *
     return value;
 }
 
+static struct Value call_binary_function(struct Parser *parser, struct Function *function, long left, long right) {
+    const char *call_return;
+    size_t saved_loop_depth;
+    enum LoopControl saved_loop_control;
+    struct Value value;
+
+    if (function->parameter_count != 2) {
+        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+        return integer_value(0);
+    }
+
+    call_return = parser->cursor;
+    parser->cursor = function->body_start;
+    saved_loop_depth = parser->loop_depth;
+    saved_loop_control = parser->loop_control;
+    parser->loop_depth = 0;
+    parser->loop_control = LOOP_CONTROL_NONE;
+    push_scope(parser);
+    add_binding(parser, function->parameters[0], integer_value(left));
+    add_binding(parser, function->parameters[1], integer_value(right));
+    if (parser->status != RUSTIC_OK) {
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+
+    value = parse_statement_sequence(parser, '}');
+    if (parser->status != RUSTIC_OK) {
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+    skip_spaces(parser);
+    if (parser->cursor != function->body_end) {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        pop_scope(parser);
+        parser->cursor = call_return;
+        parser->loop_depth = saved_loop_depth;
+        parser->loop_control = saved_loop_control;
+        return integer_value(0);
+    }
+    pop_scope_preserving_value(parser, &value);
+    parser->cursor = call_return;
+    parser->loop_depth = saved_loop_depth;
+    parser->loop_control = saved_loop_control;
+    return value;
+}
+
 static struct Value parse_factor(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
@@ -1016,6 +1068,51 @@ static struct Value parse_factor(struct Parser *parser) {
                 parser->array_count++;
                 parser->next_array_id++;
                 return parse_index_postfix(parser, value);
+            }
+
+            if (strcmp(name, "fold") == 0) {
+                struct ArrayValue *source_array;
+                struct Function *reducer;
+                long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t source_count;
+                size_t element_index;
+                long accumulator;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &accumulator)) {
+                    return integer_value(0);
+                }
+                reducer = function_from_value(parser, arguments[2]);
+                if (reducer == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+                if (reducer->parameter_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+
+                source_count = source_array->element_count;
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    source_elements[element_index] = source_array->elements[element_index];
+                }
+
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    struct Value folded_value = call_binary_function(parser, reducer, accumulator, source_elements[element_index]);
+                    if (parser->status != RUSTIC_OK || !value_as_integer(parser, folded_value, &accumulator)) {
+                        return integer_value(0);
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(accumulator));
             }
 
             if (strcmp(name, "sum") == 0) {

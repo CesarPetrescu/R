@@ -1,0 +1,4 @@
+# Rustic array fold reduction showcase programs
+fn add(acc, x) { acc + x }; fold(range(6), 0, add) => 15
+fn odd(x) { x % 2 == 1 }; fn add_square(acc, x) { acc + x * x }; fold(filter(range(8), odd), 0, add_square) => 84
+fn step(acc, x) { acc * 10 + x }; fold(take(reverse(range(6)), 4), 0, step) => 5432

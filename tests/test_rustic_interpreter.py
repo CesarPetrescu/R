@@ -1489,6 +1489,103 @@ def test_c_hosted_rustic_interpreter_releases_map_filter_temporaries(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_folds_arrays_with_accumulator_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn add(acc, x) { acc + x }; fold([1, 2, 3], 0, add)": 6,
+        "fn step(acc, x) { acc * 10 + x }; fold(range(4), 1, step)": 10123,
+        "fn keep_even_total(acc, x) { if x % 2 == 0 { acc + x } else { acc } }; fold(range(7), 0, keep_even_total)": 12,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_fold_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "fn add(acc, x) { acc + x }; fold(1, 0, add)": "expected array",
+        "fn add(acc, x) { acc + x }; fold([1], [0], add)": "expected integer",
+        "fold([1], 0, 1)": "undefined identifier",
+        "fn bad(x) { x }; fold([1], 0, bad)": "wrong argument count",
+        "fn bad(acc, x) { [x] }; fold([1], 0, bad)": "expected integer",
+        "fn add(acc, x) { acc + x }; fold([1], 0)": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_fold_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn add(acc, x) { acc + x }; let n = 0; let total = 0; while n < 65 { total = total + fold([1], 0, add); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_fold_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_fold_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("fn add(acc, x) { acc + x }; fold(range(6), 0, add)", 15),
+        (
+            "fn odd(x) { x % 2 == 1 }; fn add_square(acc, x) { acc + x * x }; fold(filter(range(8), odd), 0, add_square)",
+            84,
+        ),
+        (
+            "fn step(acc, x) { acc * 10 + x }; fold(take(reverse(range(6)), 4), 0, step)",
+            5432,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_transform_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_transform_showcase.txt"
