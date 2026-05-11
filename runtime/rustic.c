@@ -1376,6 +1376,68 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matches));
             }
 
+            if (strcmp(name, "find") == 0) {
+                struct ArrayValue *array;
+                long target;
+                long found_index = -1;
+                size_t element_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &target)) {
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    if (array->elements[element_index] == target) {
+                        found_index = (long)element_index;
+                        break;
+                    }
+                }
+                return parse_index_postfix(parser, integer_value(found_index));
+            }
+
+            if (strcmp(name, "contains_any") == 0) {
+                struct ArrayValue *left_array;
+                struct ArrayValue *right_array;
+                long matched = 0;
+                size_t left_index;
+                size_t right_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                left_array = array_from_value(parser, arguments[0]);
+                if (left_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                right_array = array_from_value(parser, arguments[1]);
+                if (right_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                for (left_index = 0; left_index < left_array->element_count; left_index++) {
+                    for (right_index = 0; right_index < right_array->element_count; right_index++) {
+                        if (left_array->elements[left_index] == right_array->elements[right_index]) {
+                            matched = 1;
+                            break;
+                        }
+                    }
+                    if (matched) {
+                        break;
+                    }
+                }
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
             if (strcmp(name, "any") == 0 || strcmp(name, "all") == 0) {
                 struct ArrayValue *array;
                 long target;

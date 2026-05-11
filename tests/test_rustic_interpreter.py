@@ -1232,6 +1232,92 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_any_all_helper_arguments(tm
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_finds_array_values(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "find([4, 5, 4], 4)": 0,
+        "find([4, 5, 4], 5)": 1,
+        "find([4, 5, 4], 9)": -1,
+        "find([], 9)": -1,
+        "fn even(x) { x % 2 == 0 }; find(concat([9], filter([1, 2, 3, 4], even)), 4)": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_checks_cross_array_membership(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "contains_any([1, 2, 3], [9, 2])": 1,
+        "contains_any([1, 2, 3], [9, 8])": 0,
+        "contains_any([], [1]) + contains_any([1], [])": 0,
+        "fn even(x) { x % 2 == 0 }; contains_any(filter(range(6), even), concat([7], [5, 4]))": 1,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_search_helper_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "find(1, 1)": "expected array",
+        "find([1], [1])": "expected integer",
+        "find([1])": "wrong argument count",
+        "contains_any(1, [1])": "expected array",
+        "contains_any([1], 1)": "expected array",
+        "contains_any([1])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_search_helper_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + find(concat([9], [n % 3]), 2) + contains_any(concat([n], [7]), [7]); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 42\n"
+
+
 def test_c_hosted_rustic_interpreter_builds_bounded_ranges(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
@@ -1776,6 +1862,42 @@ def test_c_hosted_rustic_interpreter_runs_array_repeat_concat_showcase_fixture(t
         (
             "fn add(acc, x) { acc + x }; fold(concat(take(range(5), 2), repeat(5, 3)), 0, add)",
             16,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_search_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_search_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("find([4, 5, 4], 5)", 1),
+        (
+            "fn even(x) { x % 2 == 0 }; find(concat([9], filter([1, 2, 3, 4], even)), 4)",
+            2,
+        ),
+        ("contains_any([1, 2, 3], [9, 2])", 1),
+        (
+            "fn even(x) { x % 2 == 0 }; contains_any(filter(range(6), even), concat([7], [5, 4]))",
+            1,
         ),
     ]
     for source, expected in cases:
