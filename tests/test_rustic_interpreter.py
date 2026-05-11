@@ -1996,6 +1996,93 @@ def test_c_hosted_rustic_interpreter_runs_array_search_showcase_fixture(tmp_path
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_compares_arrays_with_equals_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "equals([1, 2, 3], [1, 2, 3])": 1,
+        "equals([1, 2], [1, 2, 3])": 0,
+        "equals([1, 2, 4], [1, 2, 3])": 0,
+        "equals([], [])": 1,
+        "equals(sort([3, 1, 2]), dedup(sort([1, 2, 2, 3])))": 1,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_compares_array_prefixes_with_starts_with_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "starts_with([1, 2, 3], [1, 2])": 1,
+        "starts_with([1, 2], [1, 2, 3])": 0,
+        "starts_with([1, 9, 3], [1, 2])": 0,
+        "starts_with([4, 5], [])": 1,
+        "starts_with(dedup(sort([3, 1, 3, 2])), [1, 2])": 1,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_array_comparison_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "equals(1, [1])": "expected array",
+        "equals([1], 1)": "expected array",
+        "equals([1])": "wrong argument count",
+        "starts_with(1, [1])": "expected array",
+        "starts_with([1], 1)": "expected array",
+        "starts_with([1])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_array_comparison_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + equals(sort([2, 1]), [1, 2]) + starts_with(dedup([1, 1, 2]), [1]); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 130\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_order_compare_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_order_compare_showcase.txt"
@@ -2018,6 +2105,8 @@ def test_c_hosted_rustic_interpreter_runs_array_order_compare_showcase_fixture(t
             123,
         ),
         ("contains_any(dedup(sort([8, 4, 8, 2])), [4]) + find(sort([7, 1, 7]), 7)", 2),
+        ("equals(sort([3, 1, 2]), dedup(sort([1, 2, 2, 3])))", 1),
+        ("starts_with(dedup(sort([4, 2, 4, 1])), [1, 2])", 1),
     ]
     for source, expected in cases:
         result = subprocess.run(

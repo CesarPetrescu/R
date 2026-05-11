@@ -12,6 +12,7 @@
 #define RUSTIC_MAX_ARRAY_ELEMENTS 16
 #define RUSTIC_MAX_PARAMETERS 8
 #define RUSTIC_MAX_STEPS 512
+#define RUSTIC_MAX_ARRAY_ROOTS 64
 
 enum ValueKind {
     VALUE_INTEGER,
@@ -900,9 +901,27 @@ static struct Value parse_factor(struct Parser *parser) {
                     {
                         struct Value *saved_array_roots = parser->array_roots;
                         size_t saved_array_root_count = parser->array_root_count;
-                        parser->array_roots = arguments;
-                        parser->array_root_count = argument_count;
+                        struct Value combined_roots[RUSTIC_MAX_ARRAY_ROOTS];
+                        size_t root_index;
+                        if (saved_array_root_count + argument_count > RUSTIC_MAX_ARRAY_ROOTS) {
+                            parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                            return integer_value(0);
+                        }
+                        for (root_index = 0; root_index < saved_array_root_count; root_index++) {
+                            combined_roots[root_index] = saved_array_roots[root_index];
+                        }
+                        for (root_index = 0; root_index < argument_count; root_index++) {
+                            combined_roots[saved_array_root_count + root_index] = arguments[root_index];
+                        }
+                        parser->array_roots = combined_roots;
+                        parser->array_root_count = saved_array_root_count + argument_count;
                         arguments[argument_count] = parse_expression(parser);
+                        for (root_index = 0; root_index < saved_array_root_count; root_index++) {
+                            saved_array_roots[root_index] = combined_roots[root_index];
+                        }
+                        for (root_index = 0; root_index < argument_count; root_index++) {
+                            arguments[root_index] = combined_roots[saved_array_root_count + root_index];
+                        }
                         parser->array_roots = saved_array_roots;
                         parser->array_root_count = saved_array_root_count;
                     }
@@ -1440,12 +1459,14 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(found_index));
             }
 
-            if (strcmp(name, "contains_any") == 0) {
+            if (strcmp(name, "contains_any") == 0 || strcmp(name, "equals") == 0 || strcmp(name, "starts_with") == 0) {
                 struct ArrayValue *left_array;
                 struct ArrayValue *right_array;
-                long matched = 0;
+                long matched;
                 size_t left_index;
                 size_t right_index;
+                int checking_any = strcmp(name, "contains_any") == 0;
+                int checking_equals = strcmp(name, "equals") == 0;
 
                 if (argument_count != 2) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1461,17 +1482,37 @@ static struct Value parse_factor(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
                     return integer_value(0);
                 }
-                for (left_index = 0; left_index < left_array->element_count; left_index++) {
-                    for (right_index = 0; right_index < right_array->element_count; right_index++) {
-                        if (left_array->elements[left_index] == right_array->elements[right_index]) {
-                            matched = 1;
+
+                if (checking_any) {
+                    matched = 0;
+                    for (left_index = 0; left_index < left_array->element_count; left_index++) {
+                        for (right_index = 0; right_index < right_array->element_count; right_index++) {
+                            if (left_array->elements[left_index] == right_array->elements[right_index]) {
+                                matched = 1;
+                                break;
+                            }
+                        }
+                        if (matched) {
                             break;
                         }
                     }
-                    if (matched) {
-                        break;
+                } else {
+                    size_t required_count = checking_equals ? left_array->element_count : right_array->element_count;
+                    matched = 1;
+                    if (checking_equals && left_array->element_count != right_array->element_count) {
+                        matched = 0;
+                    } else if (required_count > left_array->element_count) {
+                        matched = 0;
+                    } else {
+                        for (left_index = 0; left_index < required_count; left_index++) {
+                            if (left_array->elements[left_index] != right_array->elements[left_index]) {
+                                matched = 0;
+                                break;
+                            }
+                        }
                     }
                 }
+                compact_unreferenced_arrays(parser, NULL);
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
