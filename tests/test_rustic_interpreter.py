@@ -1593,6 +1593,92 @@ def test_c_hosted_rustic_interpreter_zips_arrays_with_binary_helper(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_repeats_integer_values(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "sum(repeat(4, 3))": 12,
+        "len(repeat(9, 0))": 0,
+        "fn add(x, y) { x + y }; sum(zip_with(repeat(2, 4), range(4), add))": 14,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_concatenates_arrays(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = concat([1, 2], [3, 4]); len(xs) * 100 + sum(xs)": 410,
+        "concat([], [7, 8])[1]": 8,
+        "fn add(acc, x) { acc + x }; fold(concat(take(range(5), 2), repeat(5, 3)), 0, add)": 16,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_repeat_concat_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "repeat([1], 2)": "expected integer",
+        "repeat(1, [2])": "expected integer",
+        "repeat(1, -1)": "expected integer",
+        "repeat(1, 17)": "too many bindings",
+        "repeat(1)": "wrong argument count",
+        "concat(1, [2])": "expected array",
+        "concat([1], 2)": "expected array",
+        "concat(range(9), range(8))": "too many bindings",
+        "concat([1])": "wrong argument count",
+    }
+
+    for source, expected_error in cases.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert expected_error in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_releases_repeat_concat_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + sum(concat(repeat(1, 2), [3])); n = n + 1; }; total"
+
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 325\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_invalid_zip_with_arguments(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     cases = {
@@ -1654,6 +1740,42 @@ def test_c_hosted_rustic_interpreter_runs_array_zip_showcase_fixture(tmp_path):
         (
             "fn product(x, y) { x * y }; let xs = zip_with(take(range(5), 3), reverse(range(5)), product); len(xs) * 100 + sum(xs)",
             307,
+        ),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_repeat_concat_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_repeat_concat_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("sum(repeat(4, 3))", 12),
+        ("fn add(x, y) { x + y }; sum(zip_with(repeat(2, 4), range(4), add))", 14),
+        (
+            "let xs = concat(repeat(7, 2), take(range(5), 3)); len(xs) * 100 + sum(xs)",
+            517,
+        ),
+        (
+            "fn add(acc, x) { acc + x }; fold(concat(take(range(5), 2), repeat(5, 3)), 0, add)",
+            16,
         ),
     ]
     for source, expected in cases:

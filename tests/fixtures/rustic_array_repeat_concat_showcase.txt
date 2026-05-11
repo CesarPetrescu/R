@@ -1,0 +1,6 @@
+# Rustic bounded collection construction showcase fixtures.
+# Format: <program> => <expected integer>
+sum(repeat(4, 3)) => 12
+fn add(x, y) { x + y }; sum(zip_with(repeat(2, 4), range(4), add)) => 14
+let xs = concat(repeat(7, 2), take(range(5), 3)); len(xs) * 100 + sum(xs) => 517
+fn add(acc, x) { acc + x }; fold(concat(take(range(5), 2), repeat(5, 3)), 0, add) => 16

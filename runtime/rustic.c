@@ -1036,6 +1036,103 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
+            if (strcmp(name, "repeat") == 0) {
+                struct ArrayValue *array;
+                long repeated_value;
+                long repeat_count;
+                size_t element_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[0], &repeated_value)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &repeat_count)) {
+                    return integer_value(0);
+                }
+                if (repeat_count < 0) {
+                    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                    return integer_value(0);
+                }
+                compact_unreferenced_arrays(parser, NULL);
+                if ((size_t)repeat_count > RUSTIC_MAX_ARRAY_ELEMENTS || parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+
+                array = &parser->arrays[parser->array_count];
+                array->element_count = (size_t)repeat_count;
+                array->scope_depth = parser->scope_depth;
+                array->id = parser->next_array_id;
+                array->under_construction = 0;
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    array->elements[element_index] = repeated_value;
+                }
+                value = array_value(parser->array_count, array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
+            if (strcmp(name, "concat") == 0) {
+                struct ArrayValue *left_array;
+                struct ArrayValue *right_array;
+                struct ArrayValue *result_array;
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t left_count;
+                size_t right_count;
+                size_t result_count;
+                size_t element_index;
+
+                if (argument_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                left_array = array_from_value(parser, arguments[0]);
+                if (left_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                right_array = array_from_value(parser, arguments[1]);
+                if (right_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                left_count = left_array->element_count;
+                right_count = right_array->element_count;
+                result_count = left_count + right_count;
+                if (result_count > RUSTIC_MAX_ARRAY_ELEMENTS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < left_count; element_index++) {
+                    result_elements[element_index] = left_array->elements[element_index];
+                }
+                for (element_index = 0; element_index < right_count; element_index++) {
+                    result_elements[left_count + element_index] = right_array->elements[element_index];
+                }
+
+                compact_unreferenced_arrays(parser, NULL);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                result_array = &parser->arrays[parser->array_count];
+                result_array->element_count = result_count;
+                result_array->scope_depth = parser->scope_depth;
+                result_array->id = parser->next_array_id;
+                result_array->under_construction = 0;
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    result_array->elements[element_index] = result_elements[element_index];
+                }
+                value = array_value(parser->array_count, result_array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0 || strcmp(name, "map_indexed") == 0 || strcmp(name, "filter_indexed") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;

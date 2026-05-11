@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer collection construction showcase helpers to Rustic, such as `repeat(value, n)` or `concat(array, array)` for bounded collection assembly without hand-written push loops, with tests proving cap behavior, argument diagnostics, composition with `zip_with`/`fold`, and array-slot cleanup.
+1. Add collection comparison/search helpers to Rustic, such as `find(array, value)` returning the first index or `-1`, and `contains_any(left, right)` for compact set-like guards, with tests proving empty-array behavior, argument diagnostics, composition with `concat`/`filter`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
