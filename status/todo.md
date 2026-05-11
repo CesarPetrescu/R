@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer collection rolling/statistical helpers to Rustic such as `moving_average_sum(array, n)` or `median(array)`, with tests proving empty-array behavior, composition with `prefix_sum(...)`/`adjacent_diff(...)`/`sort(...)`, invalid argument diagnostics, and array-slot cleanup.
+1. Add richer collection statistical helpers to Rustic such as `median(array)`, with tests proving empty-array diagnostics or behavior, composition with `sort(...)`/`dedup(...)`/`moving_average_sum(...)`, invalid argument diagnostics, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
