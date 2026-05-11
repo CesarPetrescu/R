@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add collection distribution shaping helpers such as `histogram_pairs_score(values, counts)`-style scalar validations or a bounded `clamp(array, min, max)` helper, with empty-array behavior, invalid argument diagnostics, composition with `rank_of(...)`/`top_sum(...)`, and array-slot cleanup.
+1. Add additional collection validation/scoring helpers such as `histogram_pairs_score(values, counts)`-style scalar validations, with empty-array behavior, invalid argument diagnostics, composition with `histogram_values(...)`/`histogram_count(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

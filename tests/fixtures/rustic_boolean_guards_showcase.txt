@@ -1,4 +1,4 @@
 # Compound boolean guard examples for the C-hosted Rustic interpreter.
 let n = 1; let total = 0; while n <= 10 { if n % 2 == 0 && n % 3 == 0 { total = total + n } else { 0 }; n = n + 1; }; total => 6
-fn clamp(n) { if n < 0 || n > 10 { 0 } else { n } }; clamp(7) + clamp(12) => 7
+fn limit(n) { if n < 0 || n > 10 { 0 } else { n } }; limit(7) + limit(12) => 7
 let x = 1; if x == 1 || missing { x } else { 0 } => 1
