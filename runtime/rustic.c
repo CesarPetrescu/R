@@ -974,15 +974,18 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0) {
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long take_count = 0;
                 size_t source_count;
                 size_t result_count;
                 size_t element_index;
                 int taking = strcmp(name, "take") == 0;
+                int sorting = strcmp(name, "sort") == 0;
+                int deduplicating = strcmp(name, "dedup") == 0;
 
                 if (argument_count != (taking ? 2 : 1)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1013,6 +1016,38 @@ static struct Value parse_factor(struct Parser *parser) {
                     result_count = source_count;
                 }
 
+                if (sorting) {
+                    size_t scan_index;
+                    for (element_index = 0; element_index < source_count; element_index++) {
+                        result_elements[element_index] = source_elements[element_index];
+                    }
+                    for (element_index = 1; element_index < source_count; element_index++) {
+                        long current = result_elements[element_index];
+                        scan_index = element_index;
+                        while (scan_index > 0 && result_elements[scan_index - 1] > current) {
+                            result_elements[scan_index] = result_elements[scan_index - 1];
+                            scan_index--;
+                        }
+                        result_elements[scan_index] = current;
+                    }
+                } else if (deduplicating) {
+                    size_t candidate_index;
+                    result_count = 0;
+                    for (element_index = 0; element_index < source_count; element_index++) {
+                        int seen = 0;
+                        for (candidate_index = 0; candidate_index < result_count; candidate_index++) {
+                            if (result_elements[candidate_index] == source_elements[element_index]) {
+                                seen = 1;
+                                break;
+                            }
+                        }
+                        if (!seen) {
+                            result_elements[result_count] = source_elements[element_index];
+                            result_count++;
+                        }
+                    }
+                }
+
                 compact_unreferenced_arrays(parser, &arguments[0]);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
@@ -1026,6 +1061,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 for (element_index = 0; element_index < result_count; element_index++) {
                     if (taking) {
                         result_array->elements[element_index] = source_elements[element_index];
+                    } else if (sorting || deduplicating) {
+                        result_array->elements[element_index] = result_elements[element_index];
                     } else {
                         result_array->elements[element_index] = source_elements[source_count - element_index - 1];
                     }
