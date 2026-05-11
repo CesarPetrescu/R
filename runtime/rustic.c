@@ -73,6 +73,8 @@ struct Parser {
     size_t steps_remaining;
     size_t loop_depth;
     enum LoopControl loop_control;
+    struct Value *array_roots;
+    size_t array_root_count;
 };
 
 static struct Value integer_value(long integer) {
@@ -272,6 +274,29 @@ static int binding_references_array(const struct Parser *parser, size_t array_id
     return 0;
 }
 
+static int parser_roots_reference_array(const struct Parser *parser, size_t array_id) {
+    size_t index;
+
+    for (index = 0; index < parser->array_root_count; index++) {
+        const struct Value *root = &parser->array_roots[index];
+        if (root->kind == VALUE_ARRAY && root->array_id == array_id) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void remap_parser_root_array_indices(struct Parser *parser, size_t array_id, size_t array_index) {
+    size_t index;
+
+    for (index = 0; index < parser->array_root_count; index++) {
+        struct Value *root = &parser->array_roots[index];
+        if (root->kind == VALUE_ARRAY && root->array_id == array_id) {
+            root->array_index = array_index;
+        }
+    }
+}
+
 static void remap_binding_array_indices(struct Parser *parser, size_t array_id, size_t array_index) {
     size_t index;
 
@@ -291,13 +316,15 @@ static void compact_unreferenced_arrays(struct Parser *parser, struct Value *val
         struct ArrayValue array = parser->arrays[read_index];
         int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
         int preserve_binding = binding_references_array(parser, array.id);
+        int preserve_root = parser_roots_reference_array(parser, array.id);
         int preserve_under_construction = array.under_construction;
 
-        if (preserve_returned || preserve_binding || preserve_under_construction) {
+        if (preserve_returned || preserve_binding || preserve_root || preserve_under_construction) {
             if (preserve_returned) {
                 value->array_index = write_index;
             }
             remap_binding_array_indices(parser, array.id, write_index);
+            remap_parser_root_array_indices(parser, array.id, write_index);
             parser->arrays[write_index] = array;
             write_index++;
         }
@@ -314,16 +341,18 @@ static void compact_arrays_after_scope_pop(struct Parser *parser, struct Value *
         struct ArrayValue array = parser->arrays[read_index];
         int preserve_returned = value != NULL && value->kind == VALUE_ARRAY && value->array_id == array.id;
         int preserve_binding = binding_references_array(parser, array.id);
+        int preserve_root = parser_roots_reference_array(parser, array.id);
         int preserve_under_construction = array.under_construction;
 
-        if (array.scope_depth != parser->scope_depth || preserve_returned || preserve_binding || preserve_under_construction) {
-            if (array.scope_depth == parser->scope_depth && (preserve_returned || preserve_binding)) {
+        if (array.scope_depth != parser->scope_depth || preserve_returned || preserve_binding || preserve_root || preserve_under_construction) {
+            if (array.scope_depth == parser->scope_depth && (preserve_returned || preserve_binding || preserve_root)) {
                 array.scope_depth = parent_scope_depth;
             }
             if (preserve_returned) {
                 value->array_index = write_index;
             }
             remap_binding_array_indices(parser, array.id, write_index);
+            remap_parser_root_array_indices(parser, array.id, write_index);
             parser->arrays[write_index] = array;
             write_index++;
         }
@@ -868,7 +897,15 @@ static struct Value parse_factor(struct Parser *parser) {
                         parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                         return integer_value(0);
                     }
-                    arguments[argument_count] = parse_expression(parser);
+                    {
+                        struct Value *saved_array_roots = parser->array_roots;
+                        size_t saved_array_root_count = parser->array_root_count;
+                        parser->array_roots = arguments;
+                        parser->array_root_count = argument_count;
+                        arguments[argument_count] = parse_expression(parser);
+                        parser->array_roots = saved_array_roots;
+                        parser->array_root_count = saved_array_root_count;
+                    }
                     argument_count++;
                     if (parser->status != RUSTIC_OK) {
                         return integer_value(0);
@@ -1058,6 +1095,81 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
 
                 compact_unreferenced_arrays(parser, &arguments[0]);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                result_array = &parser->arrays[parser->array_count];
+                result_array->element_count = result_count;
+                result_array->scope_depth = parser->scope_depth;
+                result_array->id = parser->next_array_id;
+                result_array->under_construction = 0;
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    result_array->elements[element_index] = result_elements[element_index];
+                }
+                value = array_value(parser->array_count, result_array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
+            if (strcmp(name, "zip_with") == 0) {
+                struct ArrayValue *left_array;
+                struct ArrayValue *right_array;
+                struct ArrayValue *result_array;
+                struct Function *zipper;
+                long left_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long right_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t left_count;
+                size_t right_count;
+                size_t result_count;
+                size_t element_index;
+                long combined;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                left_array = array_from_value(parser, arguments[0]);
+                if (left_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                right_array = array_from_value(parser, arguments[1]);
+                if (right_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                zipper = function_from_value(parser, arguments[2]);
+                if (zipper == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+                if (zipper->parameter_count != 2) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+
+                left_count = left_array->element_count;
+                right_count = right_array->element_count;
+                result_count = left_count < right_count ? left_count : right_count;
+                for (element_index = 0; element_index < left_count; element_index++) {
+                    left_elements[element_index] = left_array->elements[element_index];
+                }
+                for (element_index = 0; element_index < right_count; element_index++) {
+                    right_elements[element_index] = right_array->elements[element_index];
+                }
+
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    struct Value combined_value = call_binary_function(parser, zipper, left_elements[element_index], right_elements[element_index]);
+                    if (parser->status != RUSTIC_OK || !value_as_integer(parser, combined_value, &combined)) {
+                        return integer_value(0);
+                    }
+                    result_elements[element_index] = combined;
+                }
+
+                compact_unreferenced_arrays(parser, NULL);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);
@@ -2184,6 +2296,8 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.steps_remaining = RUSTIC_MAX_STEPS;
     parser.loop_depth = 0;
     parser.loop_control = LOOP_CONTROL_NONE;
+    parser.array_roots = NULL;
+    parser.array_root_count = 0;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
