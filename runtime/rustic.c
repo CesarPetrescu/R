@@ -993,13 +993,15 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0 || strcmp(name, "window_sum") == 0) {
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0 || strcmp(name, "window_sum") == 0 || strcmp(name, "chunk_count") == 0 || strcmp(name, "rotate") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long result_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
                 long slice_count = 0;
                 long window_size = 0;
+                long chunk_size = 0;
+                long rotation_count = 0;
                 size_t source_count;
                 size_t result_count;
                 size_t slice_start = 0;
@@ -1009,8 +1011,10 @@ static struct Value parse_factor(struct Parser *parser) {
                 int sorting = strcmp(name, "sort") == 0;
                 int deduplicating = strcmp(name, "dedup") == 0;
                 int windowing = strcmp(name, "window_sum") == 0;
+                int chunking = strcmp(name, "chunk_count") == 0;
+                int rotating = strcmp(name, "rotate") == 0;
 
-                if (argument_count != ((taking || dropping || windowing) ? 2 : 1)) {
+                if (argument_count != ((taking || dropping || windowing || chunking || rotating) ? 2 : 1)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1037,6 +1041,24 @@ static struct Value parse_factor(struct Parser *parser) {
                         return integer_value(0);
                     }
                 }
+                if (chunking) {
+                    if (!value_as_integer(parser, arguments[1], &chunk_size)) {
+                        return integer_value(0);
+                    }
+                    if (chunk_size <= 0) {
+                        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                        return integer_value(0);
+                    }
+                }
+                if (rotating) {
+                    if (!value_as_integer(parser, arguments[1], &rotation_count)) {
+                        return integer_value(0);
+                    }
+                    if (rotation_count < 0) {
+                        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                        return integer_value(0);
+                    }
+                }
 
                 source_count = source_array->element_count;
                 for (element_index = 0; element_index < source_count; element_index++) {
@@ -1051,6 +1073,14 @@ static struct Value parse_factor(struct Parser *parser) {
                     result_count = (size_t)window_size <= source_count ? source_count - (size_t)window_size + 1 : 0;
                 } else {
                     result_count = source_count;
+                }
+
+                if (chunking) {
+                    long chunks = 0;
+                    if (source_count > 0) {
+                        chunks = (long)((source_count + (size_t)chunk_size - 1) / (size_t)chunk_size);
+                    }
+                    return parse_index_postfix(parser, integer_value(chunks));
                 }
 
                 if (sorting) {
@@ -1093,6 +1123,11 @@ static struct Value parse_factor(struct Parser *parser) {
                         }
                         result_elements[window_index] = total;
                     }
+                } else if (rotating && source_count > 0) {
+                    size_t offset = (size_t)rotation_count % source_count;
+                    for (element_index = 0; element_index < result_count; element_index++) {
+                        result_elements[element_index] = source_elements[(element_index + offset) % source_count];
+                    }
                 }
 
                 compact_unreferenced_arrays(parser, &arguments[0]);
@@ -1108,7 +1143,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 for (element_index = 0; element_index < result_count; element_index++) {
                     if (taking || dropping) {
                         result_array->elements[element_index] = source_elements[slice_start + element_index];
-                    } else if (sorting || deduplicating || windowing) {
+                    } else if (sorting || deduplicating || windowing || rotating) {
                         result_array->elements[element_index] = result_elements[element_index];
                     } else {
                         result_array->elements[element_index] = source_elements[source_count - element_index - 1];

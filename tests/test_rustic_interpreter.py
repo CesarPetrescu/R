@@ -1557,6 +1557,52 @@ def test_c_hosted_rustic_interpreter_sums_sliding_windows_with_window_sum_helper
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_counts_fixed_size_chunks_with_chunk_count_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "chunk_count(range(6), 2)": 3,
+        "chunk_count(range(5), 2)": 3,
+        "chunk_count([], 3)": 0,
+        "chunk_count(drop(range(7), 1), 4)": 2,
+        "chunk_count(window_sum(range(6), 2), 3)": 2,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rotates_arrays_with_rotate_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "rotate([1, 2, 3, 4], 1)[0]": 2,
+        "let xs = rotate(range(5), 2); len(xs) * 100 + xs[0] * 10 + xs[4]": 521,
+        "sum(take(rotate(range(6), 4), 3))": 9,
+        "len(rotate([], 3))": 0,
+        "sum(rotate(range(4), 6))": 6,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1590,6 +1636,36 @@ def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_runs_array_reshape_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_reshape_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("chunk_count(range(8), 3)", 3),
+        ("let xs = rotate(drop(range(7), 2), 2); len(xs) * 100 + xs[0] * 10 + xs[4]", 543),
+        ("sum(window_sum(rotate(take(range(8), 6), 3), 2))", 25),
+        ("chunk_count(rotate(range(5), 4), 2) * 100 + sum(take(rotate(range(5), 1), 3))", 306),
+    ]
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     cases = {
@@ -1608,6 +1684,15 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "window_sum([1], 0)": "expected integer",
         "window_sum([1], -1)": "expected integer",
         "window_sum([1])": "wrong argument count",
+        "chunk_count(1, 1)": "expected array",
+        "chunk_count([1], [1])": "expected integer",
+        "chunk_count([1], 0)": "expected integer",
+        "chunk_count([1], -1)": "expected integer",
+        "chunk_count([1])": "wrong argument count",
+        "rotate(1, 1)": "expected array",
+        "rotate([1], [1])": "expected integer",
+        "rotate([1], -1)": "expected integer",
+        "rotate([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1631,6 +1716,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + len(take([1, 2], 1)); n = n + 1; }; total": 65,
         "let n = 0; let total = 0; while n < 65 { total = total + len(drop([1, 2], 1)); n = n + 1; }; total": 65,
         "let n = 0; let total = 0; while n < 65 { total = total + sum(window_sum([1, 2], 2)); n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + chunk_count([1, 2, 3], 2); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + rotate([1, 2], 1)[0]; n = n + 1; }; total": 130,
     }
 
     for source, expected in expectations.items():
