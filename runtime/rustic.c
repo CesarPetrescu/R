@@ -1831,6 +1831,67 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(score));
             }
 
+            if (strcmp(name, "histogram_distance_score") == 0) {
+                struct ArrayValue *values;
+                struct ArrayValue *counts;
+                struct ArrayValue *expected;
+                long score = 0;
+                size_t value_index;
+                size_t expected_index;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                values = array_from_value(parser, arguments[0]);
+                if (values == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                counts = array_from_value(parser, arguments[1]);
+                if (counts == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                expected = array_from_value(parser, arguments[2]);
+                if (expected == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (values->element_count != counts->element_count) {
+                    parser->status = RUSTIC_ERR_ARRAY_LENGTH_MISMATCH;
+                    return integer_value(0);
+                }
+                for (value_index = 0; value_index < values->element_count; value_index++) {
+                    long expected_count = 0;
+                    long difference;
+                    for (expected_index = 0; expected_index < expected->element_count; expected_index++) {
+                        if (expected->elements[expected_index] == values->elements[value_index]) {
+                            expected_count++;
+                        }
+                    }
+                    difference = counts->elements[value_index] - expected_count;
+                    if (difference < 0) {
+                        difference = -difference;
+                    }
+                    score += difference;
+                }
+                for (expected_index = 0; expected_index < expected->element_count; expected_index++) {
+                    int present = 0;
+                    for (value_index = 0; value_index < values->element_count; value_index++) {
+                        if (expected->elements[expected_index] == values->elements[value_index]) {
+                            present = 1;
+                            break;
+                        }
+                    }
+                    if (!present) {
+                        score++;
+                    }
+                }
+                compact_unreferenced_arrays(parser, NULL);
+                return parse_index_postfix(parser, integer_value(score));
+            }
+
             if (strcmp(name, "weighted_score") == 0) {
                 struct ArrayValue *source_array;
                 struct Function *weighter;
