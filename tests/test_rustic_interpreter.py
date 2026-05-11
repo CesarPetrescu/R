@@ -1808,6 +1808,14 @@ def test_c_hosted_rustic_interpreter_computes_array_ranking_helpers(tmp_path):
         "len(top_count(range(4), 0))": 0,
         "sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2))": 5,
         "nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)": 4,
+        "rank_of([9, 1, 5, 3], 5)": 2,
+        "rank_of([9, 1, 5, 3], 7)": -1,
+        "rank_of([], 7)": -1,
+        "rank_of(histogram_values([3, 1, 3, 2, 1]), 2) + nth_sorted([9, 1, 5, 3], 1)": 4,
+        "top_sum([5, 1, 9, 3], 2)": 14,
+        "top_sum([5, 1, 9, 3], 8)": 18,
+        "top_sum([], 3)": 0,
+        "top_sum(histogram_count([2, 2, 1, 3, 3, 3]), 2) + rank_of([9, 1, 5, 3], 9)": 8,
     }
 
     for source, expected in expectations.items():
@@ -1913,6 +1921,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("sum(histogram_values([3, 1, 3, 2, 1, 3])) + frequency_score([3, 1, 3, 2, 1, 3], 1)", 8),
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
+        ("rank_of(histogram_values([3, 1, 3, 2, 1]), 2) + top_sum(histogram_count([2, 2, 1, 3, 3, 3]), 2)", 6),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -2000,6 +2009,13 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "top_count([1], [1])": "expected integer",
         "top_count([1], -1)": "expected integer",
         "top_count([1])": "wrong argument count",
+        "rank_of(1, 1)": "expected array",
+        "rank_of([1], [1])": "expected integer",
+        "rank_of([1])": "wrong argument count",
+        "top_sum(1, 1)": "expected array",
+        "top_sum([1], [1])": "expected integer",
+        "top_sum([1], -1)": "expected integer",
+        "top_sum([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -2039,6 +2055,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + frequency_score([3, 1, 3], 3); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + nth_sorted([3, 1, 2], 1); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + top_count([3, 1, 2], 2)[0]; n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + rank_of([3, 1, 2], 3); n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + top_sum([3, 1, 2], 2); n = n + 1; }; total": 325,
     }
 
     for source, expected in expectations.items():
