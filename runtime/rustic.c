@@ -993,7 +993,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
-            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0 || strcmp(name, "window_sum") == 0 || strcmp(name, "chunk_count") == 0 || strcmp(name, "chunk_sum") == 0 || strcmp(name, "rotate") == 0 || strcmp(name, "rotate_right") == 0 || strcmp(name, "prefix_sum") == 0 || strcmp(name, "adjacent_diff") == 0) {
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0 || strcmp(name, "drop") == 0 || strcmp(name, "sort") == 0 || strcmp(name, "dedup") == 0 || strcmp(name, "window_sum") == 0 || strcmp(name, "moving_average_sum") == 0 || strcmp(name, "chunk_count") == 0 || strcmp(name, "chunk_sum") == 0 || strcmp(name, "rotate") == 0 || strcmp(name, "rotate_right") == 0 || strcmp(name, "prefix_sum") == 0 || strcmp(name, "adjacent_diff") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;
                 long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
@@ -1011,6 +1011,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 int sorting = strcmp(name, "sort") == 0;
                 int deduplicating = strcmp(name, "dedup") == 0;
                 int windowing = strcmp(name, "window_sum") == 0;
+                int moving_averaging = strcmp(name, "moving_average_sum") == 0;
                 int chunking = strcmp(name, "chunk_count") == 0;
                 int chunk_summing = strcmp(name, "chunk_sum") == 0;
                 int rotating = strcmp(name, "rotate") == 0;
@@ -1018,7 +1019,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 int prefixing = strcmp(name, "prefix_sum") == 0;
                 int differencing = strcmp(name, "adjacent_diff") == 0;
 
-                if (argument_count != ((taking || dropping || windowing || chunking || chunk_summing || rotating || rotating_right) ? 2 : 1)) {
+                if (argument_count != ((taking || dropping || windowing || moving_averaging || chunking || chunk_summing || rotating || rotating_right) ? 2 : 1)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1036,7 +1037,7 @@ static struct Value parse_factor(struct Parser *parser) {
                         return integer_value(0);
                     }
                 }
-                if (windowing) {
+                if (windowing || moving_averaging) {
                     if (!value_as_integer(parser, arguments[1], &window_size)) {
                         return integer_value(0);
                     }
@@ -1073,7 +1074,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 } else if (dropping) {
                     slice_start = (size_t)slice_count < source_count ? (size_t)slice_count : source_count;
                     result_count = source_count - slice_start;
-                } else if (windowing) {
+                } else if (windowing || moving_averaging) {
                     result_count = (size_t)window_size <= source_count ? source_count - (size_t)window_size + 1 : 0;
                 } else if (chunk_summing) {
                     result_count = source_count > 0 ? (source_count + (size_t)chunk_size - 1) / (size_t)chunk_size : 0;
@@ -1119,7 +1120,7 @@ static struct Value parse_factor(struct Parser *parser) {
                             result_count++;
                         }
                     }
-                } else if (windowing) {
+                } else if (windowing || moving_averaging) {
                     size_t window_index;
                     size_t offset;
                     for (window_index = 0; window_index < result_count; window_index++) {
@@ -1127,7 +1128,7 @@ static struct Value parse_factor(struct Parser *parser) {
                         for (offset = 0; offset < (size_t)window_size; offset++) {
                             total += source_elements[window_index + offset];
                         }
-                        result_elements[window_index] = total;
+                        result_elements[window_index] = moving_averaging ? total / window_size : total;
                     }
                 } else if (chunk_summing) {
                     size_t chunk_index;
@@ -1183,7 +1184,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 for (element_index = 0; element_index < result_count; element_index++) {
                     if (taking || dropping) {
                         result_array->elements[element_index] = source_elements[slice_start + element_index];
-                    } else if (sorting || deduplicating || windowing || chunk_summing || rotating || rotating_right || prefixing || differencing) {
+                    } else if (sorting || deduplicating || windowing || moving_averaging || chunk_summing || rotating || rotating_right || prefixing || differencing) {
                         result_array->elements[element_index] = result_elements[element_index];
                     } else {
                         result_array->elements[element_index] = source_elements[source_count - element_index - 1];

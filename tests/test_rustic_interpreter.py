@@ -1693,6 +1693,29 @@ def test_c_hosted_rustic_interpreter_builds_adjacent_diffs_with_adjacent_diff_he
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_builds_moving_average_sums_with_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let xs = moving_average_sum([2, 4, 8, 10], 2); len(xs) * 100 + xs[0] * 10 + xs[2]": 339,
+        "len(moving_average_sum([], 3))": 0,
+        "len(moving_average_sum([1, 2], 3))": 0,
+        "sum(moving_average_sum(prefix_sum([2, 3, 5, 7]), 2))": 23,
+        "sum(adjacent_diff(moving_average_sum(sort([8, 2, 4, 10]), 2)))": 9,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1774,6 +1797,8 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("sum(window_sum(prefix_sum(range(5)), 2))", 30),
         ("sum(adjacent_diff(prefix_sum([2, 3, 5, 7])))", 17),
         ("sum(chunk_sum(adjacent_diff(rotate_right(range(6), 2)), 3))", 3),
+        ("sum(moving_average_sum(prefix_sum([2, 3, 5, 7]), 2))", 23),
+        ("sum(adjacent_diff(moving_average_sum(sort([8, 2, 4, 10]), 2)))", 9),
     ]
     for source, expected in cases:
         result = subprocess.run(
@@ -1828,6 +1853,11 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "prefix_sum([1], 2)": "wrong argument count",
         "adjacent_diff(1)": "expected array",
         "adjacent_diff([1], 2)": "wrong argument count",
+        "moving_average_sum(1, 1)": "expected array",
+        "moving_average_sum([1], [1])": "expected integer",
+        "moving_average_sum([1], 0)": "expected integer",
+        "moving_average_sum([1], -1)": "expected integer",
+        "moving_average_sum([1])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -1857,6 +1887,7 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + rotate_right([1, 2], 1)[0]; n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + prefix_sum([1, 2])[1]; n = n + 1; }; total": 195,
         "let n = 0; let total = 0; while n < 65 { total = total + adjacent_diff([1, 3])[1]; n = n + 1; }; total": 130,
+        "let n = 0; let total = 0; while n < 65 { total = total + moving_average_sum([1, 3], 2)[0]; n = n + 1; }; total": 130,
     }
 
     for source, expected in expectations.items():

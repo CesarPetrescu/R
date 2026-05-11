@@ -3,3 +3,5 @@ let xs = prefix_sum(range(6)); len(xs) * 100 + xs[0] * 10 + xs[5] => 615
 sum(window_sum(prefix_sum(range(5)), 2)) => 30
 sum(adjacent_diff(prefix_sum([2, 3, 5, 7]))) => 17
 sum(chunk_sum(adjacent_diff(rotate_right(range(6), 2)), 3)) => 3
+sum(moving_average_sum(prefix_sum([2, 3, 5, 7]), 2)) => 23
+sum(adjacent_diff(moving_average_sum(sort([8, 2, 4, 10]), 2))) => 9
