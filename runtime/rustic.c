@@ -885,6 +885,68 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
+            if (strcmp(name, "reverse") == 0 || strcmp(name, "take") == 0) {
+                struct ArrayValue *source_array;
+                struct ArrayValue *result_array;
+                long source_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                long take_count = 0;
+                size_t source_count;
+                size_t result_count;
+                size_t element_index;
+                int taking = strcmp(name, "take") == 0;
+
+                if (argument_count != (taking ? 2 : 1)) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                source_array = array_from_value(parser, arguments[0]);
+                if (source_array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (taking) {
+                    if (!value_as_integer(parser, arguments[1], &take_count)) {
+                        return integer_value(0);
+                    }
+                    if (take_count < 0) {
+                        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                        return integer_value(0);
+                    }
+                }
+
+                source_count = source_array->element_count;
+                for (element_index = 0; element_index < source_count; element_index++) {
+                    source_elements[element_index] = source_array->elements[element_index];
+                }
+                if (taking && (size_t)take_count < source_count) {
+                    result_count = (size_t)take_count;
+                } else {
+                    result_count = source_count;
+                }
+
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                result_array = &parser->arrays[parser->array_count];
+                result_array->element_count = result_count;
+                result_array->scope_depth = parser->scope_depth;
+                result_array->id = parser->next_array_id;
+                result_array->under_construction = 0;
+                for (element_index = 0; element_index < result_count; element_index++) {
+                    if (taking) {
+                        result_array->elements[element_index] = source_elements[element_index];
+                    } else {
+                        result_array->elements[element_index] = source_elements[source_count - element_index - 1];
+                    }
+                }
+                value = array_value(parser->array_count, result_array->id);
+                parser->array_count++;
+                parser->next_array_id++;
+                return parse_index_postfix(parser, value);
+            }
+
             if (strcmp(name, "map") == 0 || strcmp(name, "filter") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *result_array;

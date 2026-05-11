@@ -1,0 +1,4 @@
+# Rustic array ordering/slicing showcase rows.
+let xs = reverse(range(6)); len(xs) * 100 + xs[0] * 10 + xs[5] => 650
+fn odd(x) { x % 2 == 1 }; let xs = take(reverse(filter(range(10), odd)), 3); len(xs) * 100 + sum(xs) => 321
+fn shift(x) { x + 1 }; let xs = reverse(map(take(range(5), 4), shift)); xs[0] * 100 + xs[3] => 401
