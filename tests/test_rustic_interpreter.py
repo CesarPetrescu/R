@@ -1443,16 +1443,65 @@ def test_c_hosted_rustic_interpreter_filters_arrays_with_filter_helper(tmp_path)
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_transforms_arrays_with_indexed_map_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn offset(i, x) { i * 10 + x }; sum(map_indexed([5, 6, 7], offset))": 48,
+        "fn pairish(i, x) { i * 100 + x }; map_indexed(range(4), pairish)[3]": 303,
+        "fn weight(i, x) { (i + 1) * x }; let xs = map_indexed([3, 4, 5], weight); len(xs) * 100 + sum(xs)": 326,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_filters_arrays_with_indexed_filter_helper(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "fn odd_index(i, x) { i % 2 == 1 }; sum(filter_indexed([10, 20, 30, 40], odd_index))": 60,
+        "fn keep(i, x) { i < 3 && x > 1 }; let xs = filter_indexed([0, 2, 4, 6], keep); len(xs) * 100 + sum(xs)": 206,
+        "fn none(i, x) { i > 9 }; len(filter_indexed(range(4), none))": 0,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_invalid_map_filter_arguments(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     cases = {
         "fn id(x) { x }; map(1, id)": "expected array",
         "fn id(x) { x }; filter(1, id)": "expected array",
+        "fn both(i, x) { x }; map_indexed(1, both)": "expected array",
+        "fn both(i, x) { x }; filter_indexed(1, both)": "expected array",
         "map([1], 1)": "undefined identifier",
         "filter([1], 1)": "undefined identifier",
+        "map_indexed([1], 1)": "undefined identifier",
+        "filter_indexed([1], 1)": "undefined identifier",
         "fn bad(x, y) { x }; map([1], bad)": "wrong argument count",
         "fn bad(x, y) { x }; filter([1], bad)": "wrong argument count",
+        "fn bad(x) { x }; map_indexed([1], bad)": "wrong argument count",
+        "fn bad(x) { x }; filter_indexed([1], bad)": "wrong argument count",
         "fn bad(x) { [x] }; map([1], bad)": "expected integer",
+        "fn bad(i, x) { [x] }; map_indexed([1], bad)": "expected integer",
     }
 
     for source, expected_error in cases.items():
@@ -1474,9 +1523,43 @@ def test_c_hosted_rustic_interpreter_releases_map_filter_temporaries(tmp_path):
     expectations = {
         "fn id(x) { x }; let n = 0; let total = 0; while n < 65 { total = total + sum(map([1], id)); n = n + 1; }; total": 65,
         "fn yes(x) { 1 }; let n = 0; let total = 0; while n < 65 { total = total + len(filter([1], yes)); n = n + 1; }; total": 65,
+        "fn plus_index(i, x) { i + x }; let n = 0; let total = 0; while n < 65 { total = total + sum(map_indexed([1], plus_index)); n = n + 1; }; total": 65,
+        "fn yes(i, x) { i == 0 && x == 1 }; let n = 0; let total = 0; while n < 65 { total = total + len(filter_indexed([1], yes)); n = n + 1; }; total": 65,
     }
 
     for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_array_indexed_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_indexed_showcase.txt"
+
+    cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected_text = line.rsplit(" => ", 1)
+        cases.append((source, int(expected_text)))
+
+    assert cases == [
+        ("fn weight(i, x) { (i + 1) * x }; sum(map_indexed([3, 4, 5], weight))", 26),
+        ("fn odd_index(i, x) { i % 2 == 1 }; sum(filter_indexed([10, 20, 30, 40], odd_index))", 60),
+        (
+            "fn pairish(i, x) { i * 10 + x }; fn odd_index(i, x) { i % 2 == 1 }; fn add(acc, x) { acc + x }; fold(filter_indexed(map_indexed(range(6), pairish), odd_index), 0, add)",
+            99,
+        ),
+    ]
+    for source, expected in cases:
         result = subprocess.run(
             [str(binary), source],
             text=True,
