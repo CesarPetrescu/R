@@ -1773,11 +1773,12 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0) {
+            if (strcmp(name, "min") == 0 || strcmp(name, "max") == 0 || strcmp(name, "median") == 0) {
                 struct ArrayValue *array;
                 long selected;
                 size_t element_index;
                 int selecting_min = strcmp(name, "min") == 0;
+                int selecting_median = strcmp(name, "median") == 0;
 
                 if (argument_count != 1) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1791,6 +1792,29 @@ static struct Value parse_factor(struct Parser *parser) {
                 if (array->element_count == 0) {
                     parser->status = RUSTIC_ERR_EMPTY_ARRAY;
                     return integer_value(0);
+                }
+                if (selecting_median) {
+                    long sorted_elements[RUSTIC_MAX_ARRAY_ELEMENTS];
+                    size_t scan_index;
+                    for (element_index = 0; element_index < array->element_count; element_index++) {
+                        sorted_elements[element_index] = array->elements[element_index];
+                    }
+                    for (element_index = 1; element_index < array->element_count; element_index++) {
+                        long current = sorted_elements[element_index];
+                        scan_index = element_index;
+                        while (scan_index > 0 && sorted_elements[scan_index - 1] > current) {
+                            sorted_elements[scan_index] = sorted_elements[scan_index - 1];
+                            scan_index--;
+                        }
+                        sorted_elements[scan_index] = current;
+                    }
+                    if (array->element_count % 2 == 1) {
+                        selected = sorted_elements[array->element_count / 2];
+                    } else {
+                        size_t upper_index = array->element_count / 2;
+                        selected = (sorted_elements[upper_index - 1] + sorted_elements[upper_index]) / 2;
+                    }
+                    return parse_index_postfix(parser, integer_value(selected));
                 }
                 selected = array->elements[0];
                 for (element_index = 1; element_index < array->element_count; element_index++) {
