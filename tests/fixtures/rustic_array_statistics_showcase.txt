@@ -20,6 +20,7 @@ threshold_run_count(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_streak(clamp([9, 
 threshold_run_score(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_count(clamp([9, 1, 5, 3], 2, 6), 3, 5) => 17
 sum(threshold_run_lengths(clamp([9, 1, 5, 3], 2, 6), 2, 6)) + sum(outlier_run_lengths(clamp([9, 1, 5, 3], 2, 6), 3, 5)) => 6
 threshold_run_length_score(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_length_score(clamp([9, 1, 5, 3], 2, 6), 3, 5) => 20
+threshold_longest_run(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_shortest_run(clamp([9, 1, 5, 3], 2, 6), 3, 5) => 6
 fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square) => 14
 nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1) => 4
 sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2) => 10
