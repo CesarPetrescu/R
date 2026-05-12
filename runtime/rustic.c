@@ -1932,6 +1932,54 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0) {
+                struct ArrayValue *array;
+                long lower_bound;
+                long upper_bound;
+                long matched = 0;
+                long current_streak = 0;
+                size_t element_index;
+                int measuring_outliers = strcmp(name, "outlier_streak") == 0;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &lower_bound)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[2], &upper_bound)) {
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    int in_range = array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound;
+                    if (measuring_outliers) {
+                        if (!in_range) {
+                            current_streak++;
+                            if (current_streak > matched) {
+                                matched = current_streak;
+                            }
+                        } else {
+                            current_streak = 0;
+                        }
+                    } else if (in_range) {
+                        if (current_streak == 0) {
+                            matched++;
+                        }
+                        current_streak = 1;
+                    } else {
+                        current_streak = 0;
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
             if (strcmp(name, "histogram_distance_score") == 0 || strcmp(name, "histogram_within_distance") == 0) {
                 struct ArrayValue *values;
                 struct ArrayValue *counts;
