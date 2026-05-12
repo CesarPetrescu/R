@@ -1831,15 +1831,48 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(score));
             }
 
-            if (strcmp(name, "histogram_distance_score") == 0) {
+            if (strcmp(name, "threshold_count") == 0) {
+                struct ArrayValue *array;
+                long lower_bound;
+                long upper_bound;
+                long matched = 0;
+                size_t element_index;
+
+                if (argument_count != 3) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &lower_bound)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[2], &upper_bound)) {
+                    return integer_value(0);
+                }
+                for (element_index = 0; element_index < array->element_count; element_index++) {
+                    if (array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound) {
+                        matched++;
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
+            if (strcmp(name, "histogram_distance_score") == 0 || strcmp(name, "histogram_within_distance") == 0) {
                 struct ArrayValue *values;
                 struct ArrayValue *counts;
                 struct ArrayValue *expected;
                 long score = 0;
+                long limit = 0;
                 size_t value_index;
                 size_t expected_index;
+                int checking_limit = strcmp(name, "histogram_within_distance") == 0;
 
-                if (argument_count != 3) {
+                if (argument_count != (checking_limit ? 4 : 3)) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                     return integer_value(0);
                 }
@@ -1857,6 +1890,15 @@ static struct Value parse_factor(struct Parser *parser) {
                 if (expected == NULL) {
                     parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
                     return integer_value(0);
+                }
+                if (checking_limit) {
+                    if (!value_as_integer(parser, arguments[3], &limit)) {
+                        return integer_value(0);
+                    }
+                    if (limit < 0) {
+                        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                        return integer_value(0);
+                    }
                 }
                 if (values->element_count != counts->element_count) {
                     parser->status = RUSTIC_ERR_ARRAY_LENGTH_MISMATCH;
@@ -1889,6 +1931,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                 }
                 compact_unreferenced_arrays(parser, NULL);
+                if (checking_limit) {
+                    return parse_index_postfix(parser, integer_value(score <= limit ? 1 : 0));
+                }
                 return parse_index_postfix(parser, integer_value(score));
             }
 
