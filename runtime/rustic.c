@@ -1932,16 +1932,21 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
                 long matched = 0;
                 long current_streak = 0;
+                long run_lengths[RUSTIC_MAX_ARRAY_ELEMENTS];
+                size_t run_count = 0;
                 size_t element_index;
                 int measuring_outlier_streak = strcmp(name, "outlier_streak") == 0;
                 int measuring_outlier_runs = strcmp(name, "outlier_run_count") == 0;
                 int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0;
+                int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
+                int collecting_outlier_lengths = strcmp(name, "outlier_run_lengths") == 0;
+                int collecting_lengths = collecting_threshold_lengths || collecting_outlier_lengths;
 
                 if (argument_count != 3) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1978,16 +1983,54 @@ static struct Value parse_factor(struct Parser *parser) {
                         } else {
                             current_streak = 0;
                         }
+                    } else if (collecting_outlier_lengths) {
+                        if (!in_range) {
+                            current_streak++;
+                        } else if (current_streak > 0) {
+                            run_lengths[run_count] = current_streak;
+                            run_count++;
+                            current_streak = 0;
+                        }
                     } else if (in_range) {
                         current_streak++;
                     } else {
                         if (scoring_threshold_runs) {
                             matched += current_streak * current_streak;
+                        } else if (collecting_threshold_lengths) {
+                            if (current_streak > 0) {
+                                run_lengths[run_count] = current_streak;
+                                run_count++;
+                            }
                         } else if (current_streak > 0) {
                             matched++;
                         }
                         current_streak = 0;
                     }
+                }
+                if (collecting_lengths) {
+                    struct ArrayValue *result_array;
+                    struct Value value;
+                    if (current_streak > 0) {
+                        run_lengths[run_count] = current_streak;
+                        run_count++;
+                    }
+                    compact_unreferenced_arrays(parser, &arguments[0]);
+                    if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                        return integer_value(0);
+                    }
+                    result_array = &parser->arrays[parser->array_count];
+                    result_array->element_count = run_count;
+                    result_array->scope_depth = parser->scope_depth;
+                    result_array->id = parser->next_array_id;
+                    result_array->under_construction = 0;
+                    for (element_index = 0; element_index < run_count; element_index++) {
+                        result_array->elements[element_index] = run_lengths[element_index];
+                    }
+                    value = array_value(parser->array_count, result_array->id);
+                    parser->array_count++;
+                    parser->next_array_id++;
+                    return parse_index_postfix(parser, value);
                 }
                 if (scoring_threshold_runs) {
                     matched += current_streak * current_streak;
