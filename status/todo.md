@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer threshold run-length extrema helpers such as `threshold_longest_run(array, min, max)` and `outlier_shortest_run(array, min, max)` that consume the same run segmentation as `threshold_run_lengths(...)`/`outlier_run_lengths(...)`, with empty-array behavior, invalid argument diagnostics, composition with `threshold_run_length_score(...)`, and array-slot cleanup.
+1. Add complementary threshold run-length extrema helpers such as `threshold_shortest_run(array, min, max)` and `outlier_longest_run(array, min, max)` that consume the same run segmentation as `threshold_longest_run(...)`/`outlier_shortest_run(...)`, with empty-array/no-run behavior, invalid argument diagnostics, composition with run-length score helpers, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

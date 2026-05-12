@@ -1932,7 +1932,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1943,6 +1943,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 size_t element_index;
                 int measuring_outlier_streak = strcmp(name, "outlier_streak") == 0;
                 int measuring_outlier_runs = strcmp(name, "outlier_run_count") == 0;
+                int measuring_threshold_longest = strcmp(name, "threshold_longest_run") == 0;
+                int measuring_outlier_shortest = strcmp(name, "outlier_shortest_run") == 0;
                 int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0 || strcmp(name, "threshold_run_length_score") == 0;
                 int scoring_outlier_runs = strcmp(name, "outlier_run_length_score") == 0;
                 int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
@@ -1966,7 +1968,25 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
                 for (element_index = 0; element_index < array->element_count; element_index++) {
                     int in_range = array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound;
-                    if (measuring_outlier_streak) {
+                    if (measuring_threshold_longest) {
+                        if (in_range) {
+                            current_streak++;
+                            if (current_streak > matched) {
+                                matched = current_streak;
+                            }
+                        } else {
+                            current_streak = 0;
+                        }
+                    } else if (measuring_outlier_shortest) {
+                        if (!in_range) {
+                            current_streak++;
+                        } else if (current_streak > 0) {
+                            if (matched == 0 || current_streak < matched) {
+                                matched = current_streak;
+                            }
+                            current_streak = 0;
+                        }
+                    } else if (measuring_outlier_streak) {
                         if (!in_range) {
                             current_streak++;
                             if (current_streak > matched) {
@@ -2039,7 +2059,11 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
                 if (scoring_threshold_runs || scoring_outlier_runs) {
                     matched += current_streak * current_streak;
-                } else if (!measuring_outlier_streak && !measuring_outlier_runs && current_streak > 0) {
+                } else if (measuring_outlier_shortest && current_streak > 0) {
+                    if (matched == 0 || current_streak < matched) {
+                        matched = current_streak;
+                    }
+                } else if (!measuring_outlier_streak && !measuring_outlier_runs && !measuring_threshold_longest && current_streak > 0) {
                     matched++;
                 }
                 compact_unreferenced_arrays(parser, &arguments[0]);
