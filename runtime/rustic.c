@@ -1831,7 +1831,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(score));
             }
 
-            if (strcmp(name, "threshold_count") == 0 || strcmp(name, "threshold_all") == 0 || strcmp(name, "outlier_count") == 0) {
+            if (strcmp(name, "threshold_count") == 0 || strcmp(name, "threshold_all") == 0 || strcmp(name, "outlier_count") == 0 || strcmp(name, "outlier_score") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1839,6 +1839,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 size_t element_index;
                 int requiring_all = strcmp(name, "threshold_all") == 0;
                 int counting_outliers = strcmp(name, "outlier_count") == 0;
+                int scoring_outliers = strcmp(name, "outlier_score") == 0;
 
                 if (argument_count != 3) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1867,8 +1868,64 @@ static struct Value parse_factor(struct Parser *parser) {
                         if (!in_range) {
                             matched++;
                         }
+                    } else if (scoring_outliers) {
+                        if (array->elements[element_index] < lower_bound) {
+                            matched += lower_bound - array->elements[element_index];
+                        } else if (array->elements[element_index] > upper_bound) {
+                            matched += array->elements[element_index] - upper_bound;
+                        }
                     } else if (in_range) {
                         matched++;
+                    }
+                }
+                compact_unreferenced_arrays(parser, &arguments[0]);
+                return parse_index_postfix(parser, integer_value(matched));
+            }
+
+            if (strcmp(name, "threshold_window_count") == 0) {
+                struct ArrayValue *array;
+                long lower_bound;
+                long upper_bound;
+                long window_size;
+                long matched = 0;
+                size_t window_start;
+                size_t offset;
+
+                if (argument_count != 4) {
+                    parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                    return integer_value(0);
+                }
+                array = array_from_value(parser, arguments[0]);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[1], &lower_bound)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[2], &upper_bound)) {
+                    return integer_value(0);
+                }
+                if (!value_as_integer(parser, arguments[3], &window_size)) {
+                    return integer_value(0);
+                }
+                if (window_size <= 0) {
+                    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                    return integer_value(0);
+                }
+                if ((size_t)window_size <= array->element_count) {
+                    for (window_start = 0; window_start + (size_t)window_size <= array->element_count; window_start++) {
+                        int window_in_range = 1;
+                        for (offset = 0; offset < (size_t)window_size; offset++) {
+                            long element = array->elements[window_start + offset];
+                            if (element < lower_bound || element > upper_bound) {
+                                window_in_range = 0;
+                                break;
+                            }
+                        }
+                        if (window_in_range) {
+                            matched++;
+                        }
                     }
                 }
                 compact_unreferenced_arrays(parser, &arguments[0]);
