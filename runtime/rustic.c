@@ -1932,7 +1932,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1943,7 +1943,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 size_t element_index;
                 int measuring_outlier_streak = strcmp(name, "outlier_streak") == 0;
                 int measuring_outlier_runs = strcmp(name, "outlier_run_count") == 0;
-                int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0;
+                int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0 || strcmp(name, "threshold_run_length_score") == 0;
+                int scoring_outlier_runs = strcmp(name, "outlier_run_length_score") == 0;
                 int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
                 int collecting_outlier_lengths = strcmp(name, "outlier_run_lengths") == 0;
                 int collecting_lengths = collecting_threshold_lengths || collecting_outlier_lengths;
@@ -1983,12 +1984,16 @@ static struct Value parse_factor(struct Parser *parser) {
                         } else {
                             current_streak = 0;
                         }
-                    } else if (collecting_outlier_lengths) {
+                    } else if (collecting_outlier_lengths || scoring_outlier_runs) {
                         if (!in_range) {
                             current_streak++;
                         } else if (current_streak > 0) {
-                            run_lengths[run_count] = current_streak;
-                            run_count++;
+                            if (scoring_outlier_runs) {
+                                matched += current_streak * current_streak;
+                            } else {
+                                run_lengths[run_count] = current_streak;
+                                run_count++;
+                            }
                             current_streak = 0;
                         }
                     } else if (in_range) {
@@ -2032,7 +2037,7 @@ static struct Value parse_factor(struct Parser *parser) {
                     parser->next_array_id++;
                     return parse_index_postfix(parser, value);
                 }
-                if (scoring_threshold_runs) {
+                if (scoring_threshold_runs || scoring_outlier_runs) {
                     matched += current_streak * current_streak;
                 } else if (!measuring_outlier_streak && !measuring_outlier_runs && current_streak > 0) {
                     matched++;
