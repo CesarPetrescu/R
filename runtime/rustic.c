@@ -1831,12 +1831,14 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(score));
             }
 
-            if (strcmp(name, "threshold_count") == 0) {
+            if (strcmp(name, "threshold_count") == 0 || strcmp(name, "threshold_all") == 0 || strcmp(name, "outlier_count") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
                 long matched = 0;
                 size_t element_index;
+                int requiring_all = strcmp(name, "threshold_all") == 0;
+                int counting_outliers = strcmp(name, "outlier_count") == 0;
 
                 if (argument_count != 3) {
                     parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
@@ -1853,8 +1855,19 @@ static struct Value parse_factor(struct Parser *parser) {
                 if (!value_as_integer(parser, arguments[2], &upper_bound)) {
                     return integer_value(0);
                 }
+                matched = requiring_all ? 1 : 0;
                 for (element_index = 0; element_index < array->element_count; element_index++) {
-                    if (array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound) {
+                    int in_range = array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound;
+                    if (requiring_all) {
+                        if (!in_range) {
+                            matched = 0;
+                            break;
+                        }
+                    } else if (counting_outliers) {
+                        if (!in_range) {
+                            matched++;
+                        }
+                    } else if (in_range) {
                         matched++;
                     }
                 }
