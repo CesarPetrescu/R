@@ -107,6 +107,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add thresholded collection validation helpers to Rustic so showcase programs can use `threshold_count(array, min, max)` and `histogram_within_distance(values, counts, expected, limit)`, with empty-array behavior, invalid argument diagnostics, composition with `histogram_distance_score(...)`/`weighted_score(...)`, length-mismatch diagnostics, and array-slot cleanup.
 - [x] Add richer thresholded collection validation helpers to Rustic so showcase programs can use `threshold_all(array, min, max)` and `outlier_count(array, min, max)`, with empty-array behavior, invalid argument diagnostics, composition with `threshold_count(...)`/`histogram_within_distance(...)`, and array-slot cleanup.
 - [x] Add richer distribution-shape validation helpers to Rustic so showcase programs can use `threshold_window_count(array, min, max, n)` and `outlier_score(array, min, max)`, with empty-array/short-window behavior, invalid argument diagnostics, composition with `threshold_all(...)`/`outlier_count(...)`/`clamp(...)`, and array-slot cleanup.
+- [x] Add threshold trend validation helpers to Rustic so showcase programs can use `threshold_run_count(array, min, max)` and `outlier_streak(array, min, max)`, with empty-array behavior, invalid argument diagnostics, composition with `threshold_window_count(...)`/`outlier_score(...)`/`clamp(...)`, and array-slot cleanup.
 
 ## P2 — project quality
 
