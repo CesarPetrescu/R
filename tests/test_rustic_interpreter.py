@@ -1863,6 +1863,32 @@ def test_c_hosted_rustic_interpreter_computes_array_clamp_helper(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_array_threshold_validation_helpers(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "threshold_count([1, 3, 5, 7], 3, 6)": 2,
+        "threshold_count([], 0, 9)": 0,
+        "threshold_count(clamp([9, 1, 5, 3], 2, 6), 2, 5) + weighted_score([1, 2], fn_boost)": 10,
+        "histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3, 1], 1)": 1,
+        "histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3], 0)": 0,
+        "histogram_within_distance(histogram_values([]), histogram_count([]), [], 0)": 1,
+        "histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), clamp([3, 3, 1, 9], 1, 3), 1) + threshold_count(histogram_count([3, 1, 3]), 1, 2)": 3,
+    }
+
+    for source, expected in expectations.items():
+        helper_prefix = "fn fn_boost(x) { x + 2 }; " if "fn_boost" in source else ""
+        result = subprocess.run(
+            [str(binary), f"{helper_prefix}{source}"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{helper_prefix}{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_array_split_partition_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_array_split_partition_showcase.txt"
@@ -1953,6 +1979,8 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("sum(histogram_values([3, 1, 3, 2, 1, 3])) + frequency_score([3, 1, 3, 2, 1, 3], 1)", 8),
         ("histogram_pairs_score(histogram_values([3, 1, 3, 2, 1, 3]), histogram_count([3, 1, 3, 2, 1, 3]))", 13),
         ("histogram_distance_score(histogram_values([3, 1, 3, 2]), histogram_count([3, 1, 3, 2]), [3, 2, 2])", 3),
+        ("histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3, 1], 1)", 1),
+        ("threshold_count(clamp([9, 1, 5, 3], 2, 6), 2, 5) + histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3], 0)", 3),
         ("fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square)", 14),
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
@@ -2070,6 +2098,17 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "clamp([1], [0], 1)": "expected integer",
         "clamp([1], 0, [1])": "expected integer",
         "clamp([1], 0)": "wrong argument count",
+        "threshold_count(1, 0, 1)": "expected array",
+        "threshold_count([1], [0], 1)": "expected integer",
+        "threshold_count([1], 0, [1])": "expected integer",
+        "threshold_count([1], 0)": "wrong argument count",
+        "histogram_within_distance(1, [], [], 0)": "expected array",
+        "histogram_within_distance([], 1, [], 0)": "expected array",
+        "histogram_within_distance([], [], 1, 0)": "expected array",
+        "histogram_within_distance([1], [1, 2], [], 0)": "array length mismatch",
+        "histogram_within_distance([], [], [], [0])": "expected integer",
+        "histogram_within_distance([], [], [], -1)": "expected integer",
+        "histogram_within_distance([], [], [])": "wrong argument count",
     }
 
     for source, expected_error in cases.items():
@@ -2115,6 +2154,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + rank_of([3, 1, 2], 3); n = n + 1; }; total": 130,
         "let n = 0; let total = 0; while n < 65 { total = total + top_sum([3, 1, 2], 2); n = n + 1; }; total": 325,
         "let n = 0; let total = 0; while n < 65 { total = total + sum(clamp([3, 1, 5], 2, 4)); n = n + 1; }; total": 585,
+        "let n = 0; let total = 0; while n < 65 { total = total + threshold_count(clamp([3, 1, 5], 2, 4), 2, 4); n = n + 1; }; total": 195,
+        "let n = 0; let total = 0; while n < 65 { total = total + histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3, 1], 1); n = n + 1; }; total": 65,
     }
 
     for source, expected in expectations.items():
