@@ -1,60 +1,35 @@
 # R
 
-Project **R** is an automation showcase for building and presenting interpreted Rust inside C. The repo still includes a repository-readiness toolkit, but that tooling is infrastructure: it exists to prove the automation loop is working, keep autonomous changes safe, and make the Rust-in-C interpreter work visible instead of becoming the product itself.
+Project **R** is an automation showcase for an automated worker building interpreted Rust inside C.
 
-Automation-facing material is collected under [`automations/`](automations/) as the proper home for agent workflows, verification surfaces, and the interpreted Rust inside C showcase plan. The older checked docs under `docs/` remain as executable verification inputs until their commands are migrated behind the automation folder.
+The core artifact is `runtime/rustic.c`: a C-hosted Rust-like interpreter. The Hermes worker is part of the showcase: it repeatedly chooses real interpreter work, writes tests, verifies in Docker, opens reviewed PRs, and grows the runtime safely.
 
-The repository is maintained by a Hermes autonomous agent. The agent is expected to implement concrete, tested features that demonstrate the automation working toward the interpreted Rust inside C goal, not merely perform vague improvements or sell the readiness tooling as the main project.
+Automation-facing material is collected under [`automations/`](automations/) as the proper home for worker workflow docs and verification surfaces. Older checked docs under `docs/` remain as executable verification inputs until their commands are migrated behind the automation folder.
+
+## What this repo is
+
+R has two connected parts:
+
+1. **The product:** a small Rust-like interpreter implemented in C under `runtime/`.
+2. **The showcase:** an automated Hermes worker keeps improving that interpreter through tested pull requests.
+
+The point is not to sell generic repository-readiness tooling. The point is to show an autonomous worker repeatedly choosing real interpreter work, writing tests, verifying locally and in Docker, opening PRs, getting review, and safely growing interpreted Rust inside C.
+
+## Why Python is here
+
+Python is support tooling only. It exists because it is convenient for the worker and tests:
+
+- `tests/` uses pytest to compile and exercise the C interpreter.
+- `src/r_project/` contains small reporting/checking helpers for the autonomous workflow.
+- docs/status guard commands help the worker avoid stale examples and unsafe releases.
+
+The core runtime remains C. New product work should focus on `runtime/rustic.c`, its C API, language features, diagnostics, and interpreter tests.
 
 ## License
 
-R is licensed under the GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`). See `LICENSE` for the full text. This strong copyleft license is intended to keep distributed and network-served modified versions open-source.
+R is licensed under the GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`). See `LICENSE` for the full text.
 
-## Current product scaffold
-
-The first scaffold is a Python package, `r_project`, with a CLI that analyzes an R checkout and reports:
-
-- project name from `README.md`
-- completed/open backlog item counts from `status/missing-features.md`
-- the next unchecked backlog item
-- per-priority backlog summaries (P0/P1/P2 completed/open counts and next item)
-- active blockers from `status/stuck.md`
-- JSON for automation or Markdown for human-readable status pages
-- a README example drift check that exits nonzero when documented JSON/Markdown
-  output no longer matches the current analyzer, plus generator, writer, and
-  dry-run writer commands that emit, preview, or patch refreshed README
-  JSON/Markdown example fences from current analyzer output, and a compact
-  memory-overlap JSON Schema README drift check and writer for dashboard docs
-- README-style path overrides for report example drift checks and writers when
-  dashboard-ready usage examples move into standalone docs
-- optional nonzero exit status when active blockers are present
-- README-style path overrides for compact memory-overlap JSON Schema drift checks and writers when dashboard docs move out of the main README, plus a standalone checked `docs/dashboard-schema.md` schema surface for dashboard consumers
-- an on-demand CHANGELOG/README version drift guard that checks documented release notes mention the current `pyproject.toml` package version
-- an on-demand release tag checklist command that confirms a candidate tag matches the current `pyproject.toml` package version, Docker verification evidence is present, and the git working tree is clean before publishing, plus fixture drift check and writer commands with root-relative path overrides for the machine-readable checklist JSON
-- a standalone release-example fixture index that can be audited against Docker coverage, a release example section registry and release section writer matrix with row generator and writer dry-run commands for independently named Markdown snippets, a release automation index row generator/writer for release-only link and command rows with configurable preview versions and named profile-section guards, a dashboard automation index row generator/writer for dashboard-only link and command rows with configurable preview variants, a dashboard example fixture registry with row generator and writer dry-run commands, a dashboard section writer matrix with configurable variant-preview checks plus variant row generator and writer dry-run commands for new dashboard preview labels, a release examples path-safety audit guard for Markdown path override modes, an automation command index guard for combined docs, and an automation command fixture index guard for split-doc command coverage
-- a lightweight Python syntax lint command for source and test files
-- a small vector memory-layout helper that includes alignment padding in
-  payload offsets and total byte size calculations
-- optional symbolic field tags in struct memory-map renderers so future runtime
-  objects can retain source-level provenance, opt-in recursive child layout
-  expansion for tagged nested object traceability, optional half-open byte
-  span summaries for quick runtime overlap checks, recursive flattened byte
-  spans for fully qualified nested range comparisons, span filtering by
-  qualified names and tags for narrowed diagnostics, a stable overlap
-  detector for intersecting runtime ranges, Markdown overlap reports for
-  human-readable runtime diagnostics, grouped overlap reports by shared
-  provenance tag or qualified-name prefix, compact grouped overlap totals
-  for larger trace dashboards, Markdown grouped-total tables for PR
-  comments and dashboards, fixture-backed Markdown and JSON CLI demo output
-  for compact grouped total summaries, JSON Schema definitions and an on-demand fixture drift
-  check for the memory overlap demo payloads, threshold helpers that flag grouped
-  totals above dashboard overlap-count or intersecting-byte budgets, Markdown
-  threshold violation tables for PR comments and dashboard gates, and a
-  fixture-backed CLI demo with Markdown and JSON output for stable threshold
-  threshold violation output, custom threshold budgets for dashboard gates,
-  CLI fixture filters by qualified-name prefix or provenance tag for scoped
-  demos, and scoped grouped-overlap totals and threshold violations by qualified-name
-  prefix depth for dashboards that need component-level summaries
+## Interpreter runtime
 
 The first Rust-in-C runtime slice lives under `runtime/`. It exposes a tiny C API,
 `rustic_eval_expression(...)`, that parses and evaluates Rust-like integer

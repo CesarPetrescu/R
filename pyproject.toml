@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "r-project"
 version = "0.1.0"
-description = "Repository readiness reporting tools for autonomous project R maintenance."
+description = "Automated worker showcase for building a C-hosted Rust-like interpreter."
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
 
