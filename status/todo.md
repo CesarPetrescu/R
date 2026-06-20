@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add threshold run ratio helpers such as `threshold_run_ratio_score(array, min, max)` or `outlier_run_ratio_score(array, min, max)` that compare total in-range/outlier run mass against run counts without division, with empty-array/no-run behavior, invalid argument diagnostics, composition with `threshold_run_delta(...)`/`outlier_run_delta(...)`, and array-slot cleanup.
+1. Add collection run transition helpers such as `threshold_transition_count(array, min, max)` or `outlier_transition_count(array, min, max)` that count range-state changes across adjacent values, with empty/single-element behavior, invalid argument diagnostics, composition with `threshold_run_ratio_score(...)`/`outlier_run_ratio_score(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 

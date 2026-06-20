@@ -1932,7 +1932,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0 || strcmp(name, "threshold_run_ratio_score") == 0 || strcmp(name, "outlier_run_ratio_score") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1950,6 +1950,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 int measuring_outlier_shortest = strcmp(name, "outlier_shortest_run") == 0;
                 int measuring_threshold_delta = strcmp(name, "threshold_run_delta") == 0;
                 int measuring_outlier_delta = strcmp(name, "outlier_run_delta") == 0;
+                int measuring_threshold_ratio = strcmp(name, "threshold_run_ratio_score") == 0;
+                int measuring_outlier_ratio = strcmp(name, "outlier_run_ratio_score") == 0;
                 int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0 || strcmp(name, "threshold_run_length_score") == 0;
                 int scoring_outlier_runs = strcmp(name, "outlier_run_length_score") == 0;
                 int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
@@ -2012,6 +2014,13 @@ static struct Value parse_factor(struct Parser *parser) {
                             }
                             current_streak = 0;
                         }
+                    } else if (measuring_outlier_ratio) {
+                        if (!in_range) {
+                            current_streak++;
+                        } else if (current_streak > 0) {
+                            matched += current_streak - 1;
+                            current_streak = 0;
+                        }
                     } else if (measuring_outlier_streak) {
                         if (!in_range) {
                             current_streak++;
@@ -2052,6 +2061,13 @@ static struct Value parse_factor(struct Parser *parser) {
                             if (shortest_run == 0 || current_streak < shortest_run) {
                                 shortest_run = current_streak;
                             }
+                            current_streak = 0;
+                        }
+                    } else if (measuring_threshold_ratio) {
+                        if (in_range) {
+                            current_streak++;
+                        } else if (current_streak > 0) {
+                            matched += current_streak - 1;
                             current_streak = 0;
                         }
                     } else if (in_range) {
@@ -2107,13 +2123,15 @@ static struct Value parse_factor(struct Parser *parser) {
                     if (longest_run > 0 && shortest_run > 0) {
                         matched = longest_run - shortest_run;
                     }
+                } else if ((measuring_threshold_ratio || measuring_outlier_ratio) && current_streak > 0) {
+                    matched += current_streak - 1;
                 } else if (scoring_threshold_runs || scoring_outlier_runs) {
                     matched += current_streak * current_streak;
                 } else if ((measuring_outlier_shortest || measuring_threshold_shortest) && current_streak > 0) {
                     if (matched == 0 || current_streak < matched) {
                         matched = current_streak;
                     }
-                } else if (!measuring_outlier_streak && !measuring_outlier_runs && !measuring_threshold_longest && !measuring_threshold_shortest && current_streak > 0) {
+                } else if (!measuring_outlier_streak && !measuring_outlier_runs && !measuring_threshold_longest && !measuring_threshold_shortest && !measuring_threshold_ratio && !measuring_outlier_ratio && current_streak > 0) {
                     matched++;
                 }
                 compact_unreferenced_arrays(parser, &arguments[0]);
