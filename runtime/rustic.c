@@ -1932,7 +1932,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0 || strcmp(name, "threshold_run_ratio_score") == 0 || strcmp(name, "outlier_run_ratio_score") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0 || strcmp(name, "threshold_run_ratio_score") == 0 || strcmp(name, "outlier_run_ratio_score") == 0 || strcmp(name, "threshold_transition_count") == 0 || strcmp(name, "outlier_transition_count") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1943,6 +1943,8 @@ static struct Value parse_factor(struct Parser *parser) {
                 long run_lengths[RUSTIC_MAX_ARRAY_ELEMENTS];
                 size_t run_count = 0;
                 size_t element_index;
+                int has_previous_range_state = 0;
+                int previous_in_range = 0;
                 int measuring_outlier_streak = strcmp(name, "outlier_streak") == 0 || strcmp(name, "outlier_longest_run") == 0;
                 int measuring_outlier_runs = strcmp(name, "outlier_run_count") == 0;
                 int measuring_threshold_longest = strcmp(name, "threshold_longest_run") == 0;
@@ -1952,6 +1954,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 int measuring_outlier_delta = strcmp(name, "outlier_run_delta") == 0;
                 int measuring_threshold_ratio = strcmp(name, "threshold_run_ratio_score") == 0;
                 int measuring_outlier_ratio = strcmp(name, "outlier_run_ratio_score") == 0;
+                int measuring_transition_count = strcmp(name, "threshold_transition_count") == 0 || strcmp(name, "outlier_transition_count") == 0;
                 int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0 || strcmp(name, "threshold_run_length_score") == 0;
                 int scoring_outlier_runs = strcmp(name, "outlier_run_length_score") == 0;
                 int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
@@ -1975,7 +1978,13 @@ static struct Value parse_factor(struct Parser *parser) {
                 }
                 for (element_index = 0; element_index < array->element_count; element_index++) {
                     int in_range = array->elements[element_index] >= lower_bound && array->elements[element_index] <= upper_bound;
-                    if (measuring_threshold_longest) {
+                    if (measuring_transition_count) {
+                        if (has_previous_range_state && previous_in_range != in_range) {
+                            matched++;
+                        }
+                        previous_in_range = in_range;
+                        has_previous_range_state = 1;
+                    } else if (measuring_threshold_longest) {
                         if (in_range) {
                             current_streak++;
                             if (current_streak > matched) {
@@ -2131,7 +2140,7 @@ static struct Value parse_factor(struct Parser *parser) {
                     if (matched == 0 || current_streak < matched) {
                         matched = current_streak;
                     }
-                } else if (!measuring_outlier_streak && !measuring_outlier_runs && !measuring_threshold_longest && !measuring_threshold_shortest && !measuring_threshold_ratio && !measuring_outlier_ratio && current_streak > 0) {
+                } else if (!measuring_transition_count && !measuring_outlier_streak && !measuring_outlier_runs && !measuring_threshold_longest && !measuring_threshold_shortest && !measuring_threshold_ratio && !measuring_outlier_ratio && current_streak > 0) {
                     matched++;
                 }
                 compact_unreferenced_arrays(parser, &arguments[0]);
