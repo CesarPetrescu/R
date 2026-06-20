@@ -115,6 +115,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add complementary threshold run-length extrema helpers to Rustic so showcase programs can use `threshold_shortest_run(array, min, max)` and `outlier_longest_run(array, min, max)`, with empty-array/no-run behavior, invalid argument diagnostics, composition with run-length score helpers, and array-slot cleanup.
 - [x] Add threshold run balance helpers to Rustic so showcase programs can use `threshold_run_delta(array, min, max)` and `outlier_run_delta(array, min, max)`, with empty-array/no-run behavior, invalid argument diagnostics, composition with run-length extrema, and array-slot cleanup.
 - [x] Add threshold run ratio helpers to Rustic so showcase programs can use `threshold_run_ratio_score(array, min, max)` and `outlier_run_ratio_score(array, min, max)`, with empty-array/no-run behavior, invalid argument diagnostics, composition with threshold/outlier run balance helpers, and array-slot cleanup.
+- [x] Add collection run transition helpers to Rustic so showcase programs can use `threshold_transition_count(array, min, max)` and `outlier_transition_count(array, min, max)` to count adjacent range-state changes, with empty/single-element behavior, invalid argument diagnostics, composition with run ratio helpers, and array-slot cleanup.
 
 ## P2 — project quality
 
