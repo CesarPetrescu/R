@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add collection transition density helpers such as `threshold_transition_density(array, min, max)` or `outlier_transition_density(array, min, max)` that normalize transition scores against matching run mass, with empty/single-element behavior, invalid argument diagnostics, composition with `threshold_transition_score(...)`/`outlier_transition_score(...)`, and array-slot cleanup.
+1. Add collection transition balance helpers such as `threshold_transition_balance(array, min, max)` and `outlier_transition_balance(array, min, max)` that compare transition density against run continuity, with empty/single-element/no-match behavior, invalid argument diagnostics, composition with `threshold_transition_density(...)`/`outlier_transition_density(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
