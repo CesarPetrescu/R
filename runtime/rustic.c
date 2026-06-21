@@ -1932,7 +1932,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 return parse_index_postfix(parser, integer_value(matched));
             }
 
-            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0 || strcmp(name, "threshold_run_ratio_score") == 0 || strcmp(name, "outlier_run_ratio_score") == 0 || strcmp(name, "threshold_transition_count") == 0 || strcmp(name, "outlier_transition_count") == 0 || strcmp(name, "threshold_transition_score") == 0 || strcmp(name, "outlier_transition_score") == 0 || strcmp(name, "threshold_transition_density") == 0 || strcmp(name, "outlier_transition_density") == 0) {
+            if (strcmp(name, "threshold_run_count") == 0 || strcmp(name, "outlier_streak") == 0 || strcmp(name, "threshold_run_score") == 0 || strcmp(name, "outlier_run_count") == 0 || strcmp(name, "threshold_run_lengths") == 0 || strcmp(name, "outlier_run_lengths") == 0 || strcmp(name, "threshold_run_length_score") == 0 || strcmp(name, "outlier_run_length_score") == 0 || strcmp(name, "threshold_longest_run") == 0 || strcmp(name, "threshold_shortest_run") == 0 || strcmp(name, "outlier_shortest_run") == 0 || strcmp(name, "outlier_longest_run") == 0 || strcmp(name, "threshold_run_delta") == 0 || strcmp(name, "outlier_run_delta") == 0 || strcmp(name, "threshold_run_ratio_score") == 0 || strcmp(name, "outlier_run_ratio_score") == 0 || strcmp(name, "threshold_transition_count") == 0 || strcmp(name, "outlier_transition_count") == 0 || strcmp(name, "threshold_transition_score") == 0 || strcmp(name, "outlier_transition_score") == 0 || strcmp(name, "threshold_transition_density") == 0 || strcmp(name, "outlier_transition_density") == 0 || strcmp(name, "threshold_transition_balance") == 0 || strcmp(name, "outlier_transition_balance") == 0) {
                 struct ArrayValue *array;
                 long lower_bound;
                 long upper_bound;
@@ -1959,7 +1959,9 @@ static struct Value parse_factor(struct Parser *parser) {
                 int measuring_outlier_transition_score = strcmp(name, "outlier_transition_score") == 0;
                 int measuring_threshold_transition_density = strcmp(name, "threshold_transition_density") == 0;
                 int measuring_outlier_transition_density = strcmp(name, "outlier_transition_density") == 0;
-                int measuring_transition_score = measuring_threshold_transition_score || measuring_outlier_transition_score || measuring_threshold_transition_density || measuring_outlier_transition_density;
+                int measuring_threshold_transition_balance = strcmp(name, "threshold_transition_balance") == 0;
+                int measuring_outlier_transition_balance = strcmp(name, "outlier_transition_balance") == 0;
+                int measuring_transition_score = measuring_threshold_transition_score || measuring_outlier_transition_score || measuring_threshold_transition_density || measuring_outlier_transition_density || measuring_threshold_transition_balance || measuring_outlier_transition_balance;
                 int scoring_threshold_runs = strcmp(name, "threshold_run_score") == 0 || strcmp(name, "threshold_run_length_score") == 0;
                 int scoring_outlier_runs = strcmp(name, "outlier_run_length_score") == 0;
                 int collecting_threshold_lengths = strcmp(name, "threshold_run_lengths") == 0;
@@ -1984,6 +1986,7 @@ static struct Value parse_factor(struct Parser *parser) {
                 if (measuring_transition_score) {
                     size_t run_start = 0;
                     long matching_mass = 0;
+                    long continuity_score = 0;
                     while (run_start < array->element_count) {
                         size_t run_end = run_start + 1;
                         int run_in_range = array->elements[run_start] >= lower_bound && array->elements[run_start] <= upper_bound;
@@ -1997,16 +2000,20 @@ static struct Value parse_factor(struct Parser *parser) {
                             run_end++;
                         }
                         right_transition = run_end < array->element_count;
-                        if (((measuring_threshold_transition_score || measuring_threshold_transition_density) && run_in_range) || ((measuring_outlier_transition_score || measuring_outlier_transition_density) && !run_in_range)) {
+                        if (((measuring_threshold_transition_score || measuring_threshold_transition_density || measuring_threshold_transition_balance) && run_in_range) || ((measuring_outlier_transition_score || measuring_outlier_transition_density || measuring_outlier_transition_balance) && !run_in_range)) {
                             long boundary_count = (left_transition ? 1 : 0) + (right_transition ? 1 : 0);
                             long run_length = (long)(run_end - run_start);
                             matched += run_length * boundary_count;
                             matching_mass += run_length;
+                            continuity_score += run_length - 1;
                         }
                         run_start = run_end;
                     }
-                    if (measuring_threshold_transition_density || measuring_outlier_transition_density) {
+                    if (measuring_threshold_transition_density || measuring_outlier_transition_density || measuring_threshold_transition_balance || measuring_outlier_transition_balance) {
                         matched = matching_mass > 0 ? matched / matching_mass : 0;
+                    }
+                    if (measuring_threshold_transition_balance || measuring_outlier_transition_balance) {
+                        matched = matching_mass > 0 ? matched - continuity_score : 0;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
