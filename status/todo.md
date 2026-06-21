@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add richer threshold-run signal helpers such as `threshold_run_signal_score(array, min, max)` and `outlier_run_signal_score(array, min, max)` that combine contrast-delta and ratio/continuity scores into one scalar summary, with empty/single-element/no-match behavior, invalid argument diagnostics, composition with `threshold_run_contrast_delta(...)`/`outlier_run_contrast_delta(...)`, and array-slot cleanup.
+1. Add richer threshold-run normalization helpers such as `threshold_run_signal_density(array, min, max)` and `outlier_run_signal_density(array, min, max)` that normalize signal score by matching run mass, with empty/single-element/no-match behavior, invalid argument diagnostics, composition with `threshold_run_signal_score(...)`/`outlier_run_signal_score(...)`, and array-slot cleanup.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
