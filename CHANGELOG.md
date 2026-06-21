@@ -4,6 +4,7 @@ All notable user-visible changes to R are tracked here. Releases should follow t
 
 ## Unreleased
 
+- Added `threshold_run_signal_density_ratio(array, min, max)` and `outlier_run_signal_density_ratio(array, min, max)` normalized threshold-run contrast helpers to the C-hosted Rustic interpreter, with direct, composed, diagnostic, and looped cleanup fixture coverage.
 - Added `threshold_run_signal_density_delta(array, min, max)` and `outlier_run_signal_density_delta(array, min, max)` normalized threshold-run balance helpers to the C-hosted Rustic interpreter, with direct, composed, diagnostic, and looped cleanup fixture coverage.
 - Added `count(array, value)` value-frequency helper support to the C-hosted Rustic interpreter, with loop-built, rebuilt, and function-returned collection showcase fixtures plus non-array, non-integer, and wrong-argument diagnostics.
 - Added `sum(array)` compact array summary support to the C-hosted Rustic interpreter, with loop-built, rebuilt, and function-returned collection showcase fixtures plus non-array and wrong-argument diagnostics.
