@@ -2,7 +2,7 @@
 
 ## Active blockers
 
-- None verified.
+- 2026-06-22: `/usr/local/bin/r-bot-git-push ai/r/rustic-band-span-gap-ratio` failed after local commit `d200d54` with GitHub 403: `Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`. Local verification, including Docker, passed before the push attempt; PR/reviewer/merge steps are blocked until app push permissions recover.
 
 ## Resolved blockers
 
