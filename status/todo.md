@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add another concrete Rustic product-depth helper pair that extends the signal-density band family beyond `threshold_run_signal_density_band_span_gap_delta_balance_alloy(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffixes: `fuse` or another short metallurgy-themed suffix after re-checking identifier length.
+1. Add another concrete Rustic product-depth helper pair that extends the signal-density band family beyond `threshold_run_signal_density_band_span_gap_delta_balance_fuse(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffixes after re-checking identifier length: `braze` (threshold length 62), `meld` (61), `weld` (61), or `solder` (63).
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
