@@ -439,7 +439,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 303, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 239, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 304, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 240, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -451,7 +451,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 303 |
+| Completed backlog items | 304 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -460,7 +460,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 239 | 0 | None |
+| P1 | 240 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
