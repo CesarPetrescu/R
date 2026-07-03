@@ -92,7 +92,7 @@ comparison-heavy loop showcase fixtures combining nested blocks, block-local hel
 array reshaping/statistics showcase fixtures combining `chunk_count(...)`, `chunk_sum(...)`, `rotate(...)`, `rotate_right(...)`, `drop(...)`, `take(...)`, `window_sum(...)`, `prefix_sum(...)`, `adjacent_diff(...)`, `median(...)`, `variance_sum(...)`, `mode(...)`, `unique_count(...)`, `histogram_count(...)`, `histogram_values(...)`, `frequency_score(...)`, `histogram_pairs_score(...)`, `histogram_distance_score(...)`, `histogram_within_distance(...)`, `threshold_count(...)`, `threshold_all(...)`, `outlier_count(...)`, `threshold_window_count(...)`, `outlier_score(...)`, `threshold_run_count(...)`, `outlier_streak(...)`, `threshold_run_score(...)`, `outlier_run_count(...)`, `threshold_run_lengths(...)`, `outlier_run_lengths(...)`, `threshold_run_length_score(...)`, `outlier_run_length_score(...)`, `threshold_longest_run(...)`, `threshold_shortest_run(...)`, `outlier_shortest_run(...)`, `outlier_longest_run(...)`, `threshold_run_delta(...)`, `outlier_run_delta(...)`, `threshold_run_ratio_score(...)`, `outlier_run_ratio_score(...)`, `threshold_transition_count(...)`, `outlier_transition_count(...)`, `threshold_transition_score(...)`, `outlier_transition_score(...)`, `threshold_transition_density(...)`, `outlier_transition_density(...)`, `threshold_transition_balance(...)`, `outlier_transition_balance(...)`, `threshold_run_contrast(...)`, `outlier_run_contrast(...)`, `threshold_run_contrast_delta(...)`, `outlier_run_contrast_delta(...)`, `threshold_run_signal_score(...)`, `outlier_run_signal_score(...)`, `threshold_run_signal_density(...)`, `outlier_run_signal_density(...)`, `threshold_run_signal_density_delta(...)`, `outlier_run_signal_density_delta(...)`, `threshold_run_signal_density_ratio(...)`, `outlier_run_signal_density_ratio(...)`, `threshold_run_signal_density_gap(...)`, `outlier_run_signal_density_gap(...)`, `threshold_run_signal_density_band(...)`, `outlier_run_signal_density_band(...)`, `threshold_run_signal_density_band_ratio(...)`, `outlier_run_signal_density_band_ratio(...)`, `threshold_run_signal_density_band_gap(...)`, `outlier_run_signal_density_band_gap(...)`, `threshold_run_signal_density_band_gap_ratio(...)`, `outlier_run_signal_density_band_gap_ratio(...)`, `threshold_run_signal_density_band_span(...)`, `outlier_run_signal_density_band_span(...)`, `threshold_run_signal_density_band_span_ratio(...)`, `outlier_run_signal_density_band_span_ratio(...)`, `threshold_run_signal_density_band_span_gap(...)`, `outlier_run_signal_density_band_span_gap(...)`, `threshold_run_signal_density_band_span_gap_ratio(...)`, `outlier_run_signal_density_band_span_gap_ratio(...)`, `threshold_run_signal_density_band_span_gap_delta(...)`, `threshold_run_signal_density_band_span_gap_delta_ratio(...)`, `outlier_run_signal_density_band_span_gap_delta(...)`, `outlier_run_signal_density_band_span_gap_delta_ratio(...)`, `weighted_score(...)`, `nth_sorted(...)`, `top_count(...)`, `rank_of(...)`, `top_sum(...)`, and `clamp(...)`,
 array ordering/comparison showcase fixtures for exact equality and prefix comparisons over sorted/deduped compositions,
 and runaway loop/recursion
-safety before larger statement forms or runtime objects are added. Recent signal-density band helpers also include `threshold_run_signal_density_band_span_gap_delta_balance_jewel(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_jewel(array, min, max)` for longest-run plus matching-run-count jewel pressure on top of the balance-gem score.
+safety before larger statement forms or runtime objects are added. Recent signal-density band helpers also include `threshold_run_signal_density_band_span_gap_delta_balance_facet(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_facet(array, min, max)` for shortest-run plus transition-count facet pressure on top of the balance-jewel score.
 
 The package also includes `r_project.memory.struct_layout(...)`, a tested
 helper for C-like structure layouts that aligns each field offset and rounds
@@ -439,7 +439,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 297, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 233, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 298, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 234, "next_item": null, "open": 0}, "P2": {"completed": 60, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -451,7 +451,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 297 |
+| Completed backlog items | 298 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -460,7 +460,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 233 | 0 | None |
+| P1 | 234 | 0 | None |
 | P2 | 60 | 0 | None |
 
 ## Next backlog item
