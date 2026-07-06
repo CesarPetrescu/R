@@ -2,7 +2,7 @@
 
 ## Active blockers
 
-- None verified.
+- 2026-07-06: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-crag` failed after local commit `97de2ea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). The branch is locally verified but not pushed; PR/reviewer/merge are blocked until bot push permission or credentials are restored.
 
 ## Resolved blockers
 
