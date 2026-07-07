@@ -20,7 +20,7 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
 ## JSON readiness report
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 342, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 84, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 343, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 85, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ## Markdown readiness report
@@ -30,7 +30,7 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 342 |
+| Completed backlog items | 343 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -40,7 +40,7 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 254 | 0 | None |
-| P2 | 84 | 0 | None |
+| P2 | 85 | 0 | None |
 
 ## Next backlog item
 
