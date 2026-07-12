@@ -1939,6 +1939,10 @@ static struct Value parse_factor(struct Parser *parser) {
             int measuring_signal_density_band_span_gap_delta_balance_harbor = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_harbor") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_harbor") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_inlet = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_inlet") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_inlet") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_port = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_port") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_port") == 0;
+            int measuring_signal_density_band_span_gap_delta_balance_dock = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_dock") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_dock") == 0;
+            if (measuring_signal_density_band_span_gap_delta_balance_dock) {
+                measuring_signal_density_band_span_gap_delta_balance_port = 1;
+            }
             if (measuring_signal_density_band_span_gap_delta_balance_port) {
                 measuring_signal_density_band_span_gap_delta_balance_inlet = 1;
             }
@@ -2871,6 +2875,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                     if (measuring_signal_density_band_span_gap_delta_balance_port && matching_mass > 1) {
                         matched -= matching_mass + transition_count;
+                    }
+                    if (measuring_signal_density_band_span_gap_delta_balance_dock && matching_mass > 1 && longest_run > 0) {
+                        matched -= matching_mass + longest_run;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
