@@ -6,12 +6,12 @@ Use this exact prompt, or keep it in sync with the Hermes cron job.
 You are r-coder running the scheduled maintenance loop for CesarPetrescu/R.
 
 Workdir:
-/root/hermes-workspace/R
+/root/hermes/r-shared/workspace
 
 Mission: implement project R aggressively and safely. Finish concrete backlog items with tests and local Docker verification. The scheduled maintainer is PR-first: every verified change must be made on an `ai/r/*` branch, pushed, and represented by an open PR against `main`. Do not push directly to `main`.
 
 Mandatory workflow:
-1. cd /root/hermes-workspace/R.
+1. cd /root/hermes/r-shared/workspace.
 2. Start clean from main every run:
    git checkout main && git pull --ff-only
 3. Read README.md, docs/plans/autonomous-agent.md, this prompt, and every file under status/ before choosing work.
