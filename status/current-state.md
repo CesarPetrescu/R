@@ -4,7 +4,7 @@ Last updated: 2026-07-13
 
 ## Repository
 
-- Path: `/root/hermes-workspace/R`
+- Path: `/root/hermes/r-shared/workspace`
 - Remote: `git@github.com-r:CesarPetrescu/R.git`
 - Branch: `main`
 - Product direction: automation showcase for building and presenting interpreted Rust inside C; repository-readiness tooling remains support infrastructure for proving the autonomous loop works safely.
