@@ -1,10 +1,10 @@
 # R Autonomous Agent Plan
 
-> **For Hermes:** Operating specification for recurring autonomous development on `/root/hermes-workspace/R`.
+> **For Hermes:** Operating specification for recurring autonomous development on `/root/hermes/r-shared/workspace`.
 
 **Goal:** Build project R aggressively and safely by finishing concrete backlog items each run. R's product direction is an automation showcase for interpreted Rust inside C: the agent should use the readiness tooling to make autonomous progress observable, but the interpreter/runtime demonstration is the main product story. The automation must not stop at vague "improvements" when implementation work is possible.
 
-**Architecture:** A Hermes cron job runs in `/root/hermes-workspace/R`. Each run pulls first, reads `status/`, ideates concrete product/backlog-completion tasks, evaluates impact/safety/testability, chooses the highest-impact finishable work package, researches with official docs/web/man pages as needed, creates or reuses an `ai/r/*` branch, implements with tests first when behavior changes, verifies locally including Docker, pushes the branch, opens/updates a PR, obtains or confirms AI reviewer verdict, and may merge to `main` only when the reviewer has cleared the PR and it is safe/mergeable.
+**Architecture:** A Hermes cron job runs in `/root/hermes/r-shared/workspace`. Each run pulls first, reads `status/`, ideates concrete product/backlog-completion tasks, evaluates impact/safety/testability, chooses the highest-impact finishable work package, researches with official docs/web/man pages as needed, creates or reuses an `ai/r/*` branch, implements with tests first when behavior changes, verifies locally including Docker, pushes the branch, opens/updates a PR, obtains or confirms AI reviewer verdict, and may merge to `main` only when the reviewer has cleared the PR and it is safe/mergeable.
 
 ## Operating Principles
 
