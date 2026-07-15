@@ -273,6 +273,7 @@ threshold_run_signal_density_band_span_gap_delta_balance_stride(clamp([9, 1, 5, 
 threshold_run_signal_density_band_span_gap_delta_balance_pace(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_pace(clamp([9, 1, 5, 3], 2, 6), 3, 5) => -1934
 threshold_run_signal_density_band_span_gap_delta_balance_gait(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_gait(clamp([9, 1, 5, 3], 2, 6), 3, 5) => -1942
 threshold_run_signal_density_band_span_gap_delta_balance_tempo(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_tempo(clamp([9, 1, 5, 3], 2, 6), 3, 5) => -1954
+threshold_run_signal_density_band_span_gap_delta_balance_rhythm(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_rhythm(clamp([9, 1, 5, 3], 2, 6), 3, 5) => -1961
 fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square) => 14
 nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1) => 4
 sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2) => 10
