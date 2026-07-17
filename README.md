@@ -25,7 +25,7 @@ Python is support tooling only. It exists because it is convenient for the worke
 
 The core runtime remains C. New product work should focus on `runtime/rustic.c`, its C API, language features, diagnostics, and interpreter tests.
 
-The newest array-statistics helpers are `threshold_run_signal_density_band_span_gap_delta_balance_rerun(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_rerun(array, min, max)`. They extend replay pressure with matching-mass plus longest-run pressure and return `0` for empty, single-element, or no-match inputs.
+The newest array-statistics helpers are `threshold_run_signal_density_band_span_gap_delta_balance_repeat(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_repeat(array, min, max)`. They extend rerun pressure with matching-mass plus shortest-run pressure and return `0` for empty, single-element, or no-match inputs.
 
 ## License
 
@@ -441,7 +441,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 435, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 177, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 436, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 178, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -453,7 +453,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 435 |
+| Completed backlog items | 436 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -463,7 +463,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 254 | 0 | None |
-| P2 | 177 | 0 | None |
+| P2 | 178 | 0 | None |
 
 ## Next backlog item
 
