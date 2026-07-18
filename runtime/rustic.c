@@ -2001,6 +2001,10 @@ static struct Value parse_factor(struct Parser *parser) {
             int measuring_signal_density_band_span_gap_delta_balance_eddy = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_eddy") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_eddy") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_gyre = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_gyre") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_gyre") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_spiral = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_spiral") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_spiral") == 0;
+            int measuring_signal_density_band_span_gap_delta_balance_helix = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_helix") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_helix") == 0;
+            if (measuring_signal_density_band_span_gap_delta_balance_helix) {
+                measuring_signal_density_band_span_gap_delta_balance_spiral = 1;
+            }
             if (measuring_signal_density_band_span_gap_delta_balance_spiral) {
                 measuring_signal_density_band_span_gap_delta_balance_gyre = 1;
             }
@@ -3305,6 +3309,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                     if (measuring_signal_density_band_span_gap_delta_balance_spiral && matching_mass > 1 && matching_run_count > 0) {
                         matched -= matching_mass + matching_run_count;
+                    }
+                    if (measuring_signal_density_band_span_gap_delta_balance_helix && matching_mass > 1) {
+                        matched -= matching_mass + transition_count;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
