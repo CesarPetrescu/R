@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add another concrete Rustic product-depth helper pair that extends `threshold_run_signal_density_band_span_gap_delta_balance_vortex(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffix: `eddy` (`threshold_...` length 61, `outlier_...` length 59); consider matching-mass plus longest-run pressure and calculate composed fixture values from the transformed sequence.
+1. Add another concrete Rustic product-depth helper pair that extends `threshold_run_signal_density_band_span_gap_delta_balance_eddy(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffix: `gyre` (`threshold_...` length 61, `outlier_...` length 59); consider matching-mass plus shortest-run pressure and calculate composed fixture values from the transformed sequence.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
