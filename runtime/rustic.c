@@ -2029,6 +2029,10 @@ static struct Value parse_factor(struct Parser *parser) {
             int measuring_signal_density_band_span_gap_delta_balance_energy = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_energy") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_energy") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_heat = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_heat") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_heat") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_warm = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_warm") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_warm") == 0;
+            int measuring_signal_density_band_span_gap_delta_balance_hot = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_hot") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_hot") == 0;
+            if (measuring_signal_density_band_span_gap_delta_balance_hot) {
+                measuring_signal_density_band_span_gap_delta_balance_warm = 1;
+            }
             if (measuring_signal_density_band_span_gap_delta_balance_warm) {
                 measuring_signal_density_band_span_gap_delta_balance_heat = 1;
             }
@@ -3501,6 +3505,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                     if (measuring_signal_density_band_span_gap_delta_balance_warm && matching_mass > 1 && matching_run_count > 0) {
                         matched -= matching_mass + matching_run_count;
+                    }
+                    if (measuring_signal_density_band_span_gap_delta_balance_hot && matching_mass > 1) {
+                        matched -= matching_mass + transition_count;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
