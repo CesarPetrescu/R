@@ -2035,6 +2035,10 @@ static struct Value parse_factor(struct Parser *parser) {
             int measuring_signal_density_band_span_gap_delta_balance_coal = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_coal") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_coal") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_coke = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_coke") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_coke") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_fuel = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_fuel") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_fuel") == 0;
+            int measuring_signal_density_band_span_gap_delta_balance_gas = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_gas") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_gas") == 0;
+            if (measuring_signal_density_band_span_gap_delta_balance_gas) {
+                measuring_signal_density_band_span_gap_delta_balance_fuel = 1;
+            }
             if (measuring_signal_density_band_span_gap_delta_balance_fuel) {
                 measuring_signal_density_band_span_gap_delta_balance_coke = 1;
             }
@@ -2337,6 +2341,9 @@ static struct Value parse_factor(struct Parser *parser) {
             }
             if (measuring_signal_density_band_span_gap_delta_balance_cove) {
                 measuring_signal_density_band_span_gap_delta_balance_pool = 1;
+            }
+            if (measuring_signal_density_band_span_gap_delta_balance_gas) {
+                strcpy(name, strncmp(name, "threshold", 9) == 0 ? "threshold_run_signal_density_band_span_gap_delta_balance_fuel" : "outlier_run_signal_density_band_span_gap_delta_balance_fuel");
             }
             if (measuring_signal_density_band_span_gap_delta_balance_fuel) {
                 strcpy(name, strncmp(name, "threshold", 9) == 0 ? "threshold_run_signal_density_band_span_gap_delta_balance_coke" : "outlier_run_signal_density_band_span_gap_delta_balance_coke");
@@ -3552,6 +3559,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                     if (measuring_signal_density_band_span_gap_delta_balance_fuel && matching_mass > 1 && longest_run > 0) {
                         matched -= matching_mass + longest_run;
+                    }
+                    if (measuring_signal_density_band_span_gap_delta_balance_gas && matching_mass > 1 && shortest_run > 0) {
+                        matched -= matching_mass + shortest_run;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
