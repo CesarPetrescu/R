@@ -7,6 +7,7 @@ R's main goal is to showcase automation working while it builds and presents int
 ## Contents
 
 - `interpreted-rust-in-c.md` — product/showcase direction for the Rust-in-C interpreter work.
+- `public-github-trust-boundary.md` — deterministic owner/bot intake and authenticated-review requirements for public issues and pull requests.
 - Existing executable automation docs currently live under `docs/` and are linked here until their checked commands can migrate safely:
   - `docs/automation-index.md`
   - `docs/dashboard-automation-index.md`
