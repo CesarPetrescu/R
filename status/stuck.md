@@ -4,6 +4,11 @@
 
 - None verified.
 
+## Deferred external merge gates
+
+- 2026-07-31: PR #534 reached current head `1e97e366de8b00ed73116af0927c5dec1b36a05f` and received a reviewer verdict, but `/usr/local/bin/r-verify-ai-review 534` failed closed with exit `1` and `{"ok":false,"reason":"review_gate_disabled_pending_isolated_reviewer_identity"}`. Keep the PR open and do not merge until the authenticated verifier returns exit `0` with `{"ok":true}` for the current head.
+- 2026-07-31: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-secure` rejected local commit `cc39aea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`); the branch already has the verified implementation pushed, but the external-gate evidence commit remains local until authentication recovers.
+
 ## Resolved blockers
 
 - 2026-07-06: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-crag` initially failed after local commit `97de2ea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch after blocker recording, so this is no longer an active blocker.
