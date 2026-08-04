@@ -8,16 +8,18 @@ R's main goal is to showcase automation working while it builds and presents int
 
 - `interpreted-rust-in-c.md` — product/showcase direction for the Rust-in-C interpreter work.
 - `public-github-trust-boundary.md` — deterministic owner/bot intake and authenticated-review requirements for public issues and pull requests.
-- Existing executable automation docs currently live under `docs/` and are linked here until their checked commands can migrate safely:
-  - `docs/automation-index.md`
-  - `docs/dashboard-automation-index.md`
-  - `docs/release-automation-index.md`
-  - `docs/automation-command-fixtures.md`
+- Canonical automation indexes and command fixtures now live here:
+  - `automations/automation-index.md`
+  - `automations/dashboard-automation-index.md`
+  - `automations/release-automation-index.md`
+  - `automations/automation-command-fixtures.md`
+- Existing executable supporting docs remain under `docs/` until their checked commands can migrate safely:
   - `docs/dashboard-example-fixtures.md`
   - `docs/dashboard-section-writer-matrix.md`
   - `docs/release-example-fixtures.md`
   - `docs/release-example-sections.md`
   - `docs/release-section-writer-matrix.md`
+- Legacy compatibility copies of the four moved indexes remain under `docs/`; pass the corresponding `--*-path docs/...` override when validating one explicitly.
 
 ## Rule for future work
 
