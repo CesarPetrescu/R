@@ -146,11 +146,11 @@ PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-r
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
-PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path automations/automation-index.md --readme-examples-section 'Embedded readiness report example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
-PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
-PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
-PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path automations/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path automations/automation-index.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path automations/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
@@ -181,8 +181,8 @@ PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-r
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path docs/release-examples.md
-PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
-PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
+PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
@@ -359,11 +359,11 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 r-project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
-r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
+r-project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path automations/automation-index.md --readme-examples-section 'Embedded readiness report example'
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
-r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
-r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
-r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
+r-project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path automations/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
+r-project --root . --check-readme-examples --readme-examples-path automations/automation-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path automations/automation-index.md
 r-project --root . --write-readme-examples
 r-project --memory-threshold-demo
 r-project --memory-threshold-demo --json
@@ -394,8 +394,8 @@ r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --r
 r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
-r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
-r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --check-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
@@ -441,7 +441,7 @@ r-project-lint --root .
 Example output:
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 533, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 275, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 534, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 276, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -453,7 +453,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 533 |
+| Completed backlog items | 534 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -463,7 +463,7 @@ Markdown output starts with a compact report suitable for PR comments, issue upd
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
 | P1 | 254 | 0 | None |
-| P2 | 275 | 0 | None |
+| P2 | 276 | 0 | None |
 
 ## Next backlog item
 
@@ -495,11 +495,11 @@ verified by host tests and Docker as a dashboard landing page. [`docs/dashboard-
 indexes those dashboard example guard commands against Docker coverage so future
 split dashboard docs stay auditable. [`docs/dashboard-section-writer-matrix.md`](docs/dashboard-section-writer-matrix.md)
 proves each indexed dashboard readiness/schema surface has a Docker-covered writer dry-run and can preview or append variant-labeled writer rows from the fixture registry.
-[`docs/dashboard-automation-index.md`](docs/dashboard-automation-index.md)
+[`automations/dashboard-automation-index.md`](automations/dashboard-automation-index.md)
 keeps dashboard-only automation links and commands auditable against Docker coverage and can be refreshed with generated link/command rows before publishing new dashboard surfaces.
-[`docs/automation-index.md`](docs/automation-index.md)
+[`automations/automation-index.md`](automations/automation-index.md)
 embeds checked readiness and compact schema examples while linking the dashboard
-and release automation surfaces from one combined index. [`docs/automation-command-fixtures.md`](docs/automation-command-fixtures.md)
+and release automation surfaces from one combined index. [`automations/automation-command-fixtures.md`](automations/automation-command-fixtures.md)
 indexes the combined automation commands and Docker harness coverage so future
 split-doc command lists stay auditable.
 
@@ -580,11 +580,11 @@ PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-r
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/usage-examples.md
 PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
-PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'
+PYTHONPATH=src python3 -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path automations/automation-index.md --readme-examples-section 'Embedded readiness report example'
 PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
-PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
-PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
-PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
+PYTHONPATH=src python3 -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path automations/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'
+PYTHONPATH=src python3 -m r_project --root . --check-readme-examples --readme-examples-path automations/automation-index.md
+PYTHONPATH=src python3 -m r_project --root . --check-readme-schema-examples --readme-schema-path automations/automation-index.md
 PYTHONPATH=src python3 -m r_project --root . --write-readme-examples
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo
 PYTHONPATH=src python3 -m r_project --memory-threshold-demo --json
@@ -615,8 +615,8 @@ PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-r
 PYTHONPATH=src python3 -m r_project --root . --write-release-tag-fixture --dry-run-release-tag-fixture --release-tag-fixture-path tests/fixtures/release-tag-checklist.json
 PYTHONPATH=src python3 -m r_project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
 PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path docs/release-examples.md
-PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
-PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+PYTHONPATH=src python3 -m r_project --root . --check-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
+PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/release-examples.md
 PYTHONPATH=src python3 -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
@@ -675,7 +675,7 @@ The package version is currently `0.1.0` in `pyproject.toml`. R follows semantic
 
 Before cutting a release, update `CHANGELOG.md` with the user-visible changes, verify the commands in the Development section (including Docker), and tag the release as `vX.Y.Z` to match `pyproject.toml`. External release automation can run `r-project --root . --json --check-release-tag v0.1.0 --docker-verified` to get a machine-readable checklist with `tag_matches_version`, `docker_verified`, `git_clean`, and overall `ready` fields before publishing. If automation relies on the frozen checklist fixture, run `r-project --root . --check-release-tag-fixture` to confirm `tests/fixtures/release-tag-checklist.json` still matches current CLI output, or `r-project --root . --write-release-tag-fixture --dry-run-release-tag-fixture` to preview a refreshed fixture before writing it with `r-project --root . --write-release-tag-fixture`. Add `--release-tag-fixture-version X.Y.Z` to either fixture command when preparing or validating a future-version checklist before `pyproject.toml` is bumped. Add `--release-tag-fixture-path docs/release/checklist.json` when external release automation stores its frozen checklist under another root-relative path.
 
-The standalone [`docs/release-checklist.md`](docs/release-checklist.md) page documents that external fixture-path workflow and the checked [`docs/release/checklist.json`](docs/release/checklist.json) fixture for release automation consumers. [`docs/release-examples.md`](docs/release-examples.md) keeps a checked README-style release checklist JSON fence for dashboards that need embedded snippets. Add `--release-examples-version X.Y.Z` to the release example checker or writer when release docs need to preview a non-current tag before `pyproject.toml` changes. [`docs/release-example-fixtures.md`](docs/release-example-fixtures.md) indexes the release-example smoke fixtures and Docker commands that exercise them; run `r-project --root . --check-release-example-fixtures` to verify every indexed fixture command has matching Docker harness coverage. [`docs/release-example-sections.md`](docs/release-example-sections.md) registers independently checked release checklist Markdown sections; run `r-project --root . --check-release-example-sections` to verify every registered section command has matching Docker harness coverage. [`docs/release-section-writer-matrix.md`](docs/release-section-writer-matrix.md) maps those registered sections to current-version and configurable future-version writer dry-runs; run `r-project --root . --check-release-section-writer-matrix` to verify the matrix covers each section and Docker exercises every writer command, add `--release-section-writer-matrix-version X.Y.Z` when release docs need a different future preview target, run `r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version X.Y.Z` to emit registry-derived current/future writer rows before appending them to the matrix, or run `r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version X.Y.Z` to preview safe append/idempotence updates before omitting the dry-run flag. [`docs/release-automation-index.md`](docs/release-automation-index.md) keeps release-only automation links and commands auditable against Docker coverage and can be refreshed with generated link/command rows before publishing new release surfaces. [`docs/dashboard-example-fixtures.md`](docs/dashboard-example-fixtures.md) indexes independently checked dashboard readiness/schema docs; run `r-project --root . --check-dashboard-example-fixtures` to verify every indexed dashboard command has matching Docker harness coverage. Run `r-project --root . --check-automation-index-links` to verify [`docs/automation-index.md`](docs/automation-index.md) links every standalone dashboard and release automation surface before publishing combined automation docs. Run `r-project --root . --check-automation-command-fixtures` to verify [`docs/automation-command-fixtures.md`](docs/automation-command-fixtures.md) keeps split-doc automation commands covered by Docker. [`docs/release-index.md`](docs/release-index.md) links those release fixture docs with the version/tag guard commands as a single release readiness entry point. [`docs/automation-index.md`](docs/automation-index.md) combines the dashboard readiness/schema docs and release readiness docs as one automation navigation page.
+The standalone [`docs/release-checklist.md`](docs/release-checklist.md) page documents that external fixture-path workflow and the checked [`docs/release/checklist.json`](docs/release/checklist.json) fixture for release automation consumers. [`docs/release-examples.md`](docs/release-examples.md) keeps a checked README-style release checklist JSON fence for dashboards that need embedded snippets. Add `--release-examples-version X.Y.Z` to the release example checker or writer when release docs need to preview a non-current tag before `pyproject.toml` changes. [`docs/release-example-fixtures.md`](docs/release-example-fixtures.md) indexes the release-example smoke fixtures and Docker commands that exercise them; run `r-project --root . --check-release-example-fixtures` to verify every indexed fixture command has matching Docker harness coverage. [`docs/release-example-sections.md`](docs/release-example-sections.md) registers independently checked release checklist Markdown sections; run `r-project --root . --check-release-example-sections` to verify every registered section command has matching Docker harness coverage. [`docs/release-section-writer-matrix.md`](docs/release-section-writer-matrix.md) maps those registered sections to current-version and configurable future-version writer dry-runs; run `r-project --root . --check-release-section-writer-matrix` to verify the matrix covers each section and Docker exercises every writer command, add `--release-section-writer-matrix-version X.Y.Z` when release docs need a different future preview target, run `r-project --root . --generate-release-section-writer-matrix --release-section-writer-matrix-version X.Y.Z` to emit registry-derived current/future writer rows before appending them to the matrix, or run `r-project --root . --write-release-section-writer-matrix --dry-run-release-section-writer-matrix --release-section-writer-matrix-version X.Y.Z` to preview safe append/idempotence updates before omitting the dry-run flag. [`automations/release-automation-index.md`](automations/release-automation-index.md) keeps release-only automation links and commands auditable against Docker coverage and can be refreshed with generated link/command rows before publishing new release surfaces. [`docs/dashboard-example-fixtures.md`](docs/dashboard-example-fixtures.md) indexes independently checked dashboard readiness/schema docs; run `r-project --root . --check-dashboard-example-fixtures` to verify every indexed dashboard command has matching Docker harness coverage. Run `r-project --root . --check-automation-index-links` to verify [`automations/automation-index.md`](automations/automation-index.md) links every standalone dashboard and release automation surface before publishing combined automation docs. Run `r-project --root . --check-automation-command-fixtures` to verify [`automations/automation-command-fixtures.md`](automations/automation-command-fixtures.md) keeps split-doc automation commands covered by Docker. [`docs/release-index.md`](docs/release-index.md) links those release fixture docs with the version/tag guard commands as a single release readiness entry point. [`automations/automation-index.md`](automations/automation-index.md) combines the dashboard readiness/schema docs and release readiness docs as one automation navigation page.
 
 ## License
 

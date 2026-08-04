@@ -299,15 +299,16 @@ Prioritized backlog for autonomous implementation.
 - [x] Add a combined dashboard/release automation index so consumers have one docs entry point across readiness reports, schema examples, and release fixtures.
 - [x] Add standalone release checklist examples backed by a README-style drift guard for release automation consumers.
 - [x] Add a release checklist example future-version flag so Markdown release docs can preview a non-current tag before `pyproject.toml` changes.
+- [x] Move automation-facing indexes and command fixtures to canonical `automations/` paths, keep explicit legacy `docs/` path compatibility, and update checked Docker/readiness coverage.
 - [x] Add embedded automation-index readiness and schema examples backed by alternate README-style drift checks for combined dashboard/release automation consumers.
 - [x] Add an embedded automation-index release checklist example backed by a scoped README-style release drift check for combined automation consumers.
-- [x] Add a scoped release-example writer smoke test for `docs/automation-index.md` so Docker verification previews in-place release snippet refreshes for combined automation docs.
+- [x] Add a scoped release-example writer smoke test for `automations/automation-index.md` so Docker verification previews in-place release snippet refreshes for combined automation docs.
 - [x] Add a release-docs smoke fixture that verifies the scoped automation-index writer output preserves surrounding readiness/schema examples unchanged.
 - [x] Add a compact future-version release example dry-run smoke fixture so preview mode proves current-version docs stay unchanged.
 - [x] Add a standalone release-example fixture index so release smoke fixtures and Docker coverage can be audited from one page.
 - [x] Add a release-example fixture index guard so Docker coverage drift is caught automatically when fixture rows change.
-- [x] Add a release automation docs guard that validates `docs/automation-index.md` links every standalone dashboard and release automation surface.
-- [x] Add an automation docs command index guard that verifies every `r-project` command documented in `docs/automation-index.md` is represented in Docker verification.
+- [x] Add a release automation docs guard that validates `automations/automation-index.md` links every standalone dashboard and release automation surface.
+- [x] Add an automation docs command index guard that verifies every `r-project` command documented in `automations/automation-index.md` is represented in Docker verification.
 - [x] Add a release examples path safety audit guard so Markdown release example path override checks stay enforced in host and Docker verification.
 - [x] Add an automation command fixture index so future split automation command docs stay auditable against Docker verification.
 - [x] Add a release example section registry so future release docs can embed multiple independently named checklist snippets in one Markdown file.
