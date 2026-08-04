@@ -126,14 +126,14 @@ def test_release_example_fixture_index_links_each_fixture_and_docker_command():
 
 
 def test_automation_command_fixture_index_lists_index_commands_and_docker_coverage():
-    index_doc = ROOT / "docs" / "automation-command-fixtures.md"
+    index_doc = ROOT / "automations" / "automation-command-fixtures.md"
     compose_text = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
 
     assert index_doc.exists()
     text = index_doc.read_text(encoding="utf-8")
     assert "# Automation Command Fixture Index" in text
     assert "[Automation index](automation-index.md)" in text
-    assert "r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in text
+    assert "r-project --root . --check-readme-examples --readme-examples-path automations/automation-index.md" in text
     assert "r-project --root . --check-release-example-fixtures" in text
     assert "r-project --root . --check-release-section-writer-matrix" in text
     assert "r-project --root . --check-release-section-writer-matrix --release-section-writer-matrix-version 0.2.0" in text
@@ -149,8 +149,8 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
     for command in (
         "--check-readme-examples --readme-examples-path docs/dashboard-index.md",
         "--check-readme-schema-examples --readme-schema-path docs/dashboard-index.md",
-        "--check-readme-examples --readme-examples-path docs/automation-index.md",
-        "--check-readme-schema-examples --readme-schema-path docs/automation-index.md",
+        "--check-readme-examples --readme-examples-path automations/automation-index.md",
+        "--check-readme-schema-examples --readme-schema-path automations/automation-index.md",
         "--generate-dashboard-automation-index",
         "--write-dashboard-automation-index --dry-run-dashboard-automation-index",
         "--check-dashboard-automation-index",
@@ -172,7 +172,7 @@ def test_automation_command_fixture_index_lists_index_commands_and_docker_covera
 def test_readme_links_combined_automation_index():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "[`docs/automation-index.md`](docs/automation-index.md)" in readme
+    assert "[`automations/automation-index.md`](automations/automation-index.md)" in readme
 
 
 def test_project_goal_and_automation_folder_document_rust_in_c_showcase():
@@ -189,6 +189,90 @@ def test_project_goal_and_automation_folder_document_rust_in_c_showcase():
     showcase_text = showcase.read_text(encoding="utf-8")
     assert "interpreted Rust inside C" in showcase_text
     assert "main goal" in showcase_text
+
+
+def test_canonical_automation_indexes_live_under_automations():
+    automation_paths = (
+        "automation-index.md",
+        "dashboard-automation-index.md",
+        "release-automation-index.md",
+        "automation-command-fixtures.md",
+    )
+    for name in automation_paths:
+        assert (ROOT / "automations" / name).exists()
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "[`automations/automation-index.md`](automations/automation-index.md)" in readme
+    automation_index = (ROOT / "automations" / "automation-index.md").read_text(encoding="utf-8")
+    assert "[dashboard automation index](dashboard-automation-index.md)" in automation_index
+    assert "../docs/dashboard-index.md" in automation_index
+
+
+def test_canonical_automation_index_readiness_examples_match_current_cli():
+    env = os.environ | {"PYTHONPATH": str(ROOT / "src")}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "r_project",
+            "--root",
+            str(ROOT),
+            "--check-readme-examples",
+            "--readme-examples-path",
+            "automations/automation-index.md",
+        ],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+    )
+
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == "automations/automation-index.md examples match current CLI output.\n"
+    assert result.stderr == ""
+
+
+def test_automation_guards_default_to_canonical_paths_and_keep_legacy_overrides():
+    env = os.environ | {"PYTHONPATH": str(ROOT / "src")}
+    commands = (
+        ("--check-automation-index-links", "--automation-index-path", "docs/automation-index.md"),
+        ("--check-automation-index-commands", "--automation-index-path", "docs/automation-index.md"),
+        (
+            "--check-automation-command-fixtures",
+            "--automation-command-fixtures-path",
+            "docs/automation-command-fixtures.md",
+        ),
+        (
+            "--check-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
+        ),
+        (
+            "--check-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
+        ),
+    )
+    for check, path_flag, legacy_path in commands:
+        canonical_result = subprocess.run(
+            [sys.executable, "-m", "r_project", "--root", str(ROOT), check],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        assert canonical_result.returncode == 0, (check, canonical_result.stdout, canonical_result.stderr)
+        legacy_result = subprocess.run(
+            [sys.executable, "-m", "r_project", "--root", str(ROOT), check, path_flag, legacy_path],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        assert legacy_result.returncode == 0, (check, legacy_result.stdout, legacy_result.stderr)
 
 
 def test_release_checklist_document_fixture_matches_current_cli_output():
@@ -236,3 +320,47 @@ def test_license_file_declares_project_license():
     assert license_text.startswith("GNU AFFERO GENERAL PUBLIC LICENSE")
     assert "Version 3, 19 November 2007" in license_text
     assert "Appropriate Legal Notices" in license_text
+
+
+def test_automation_guard_help_names_canonical_defaults():
+    result = subprocess.run(
+        [sys.executable, "-m", "r_project", "--help"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=os.environ | {"PYTHONPATH": str(ROOT / "src")},
+    )
+
+    assert result.returncode == 0
+    assert "automations/automation-index.md" in result.stdout
+    assert "automations/automation-command-fixtures.md" in result.stdout
+    assert "automations/dashboard-automation-index.md" in result.stdout
+    assert "automations/release-automation-index.md" in result.stdout
+    assert "--check-automation-index-commands" in result.stdout
+    assert "docs/automation-index.md" not in result.stdout
+    assert "docs/automation-command-fixtures.md" not in result.stdout
+    assert "docs/dashboard-automation-index.md" not in result.stdout
+    assert "docs/release-automation-index.md" not in result.stdout
+
+
+def test_automation_index_path_options_reject_absolute_and_parent_escape_paths():
+    env = os.environ | {"PYTHONPATH": str(ROOT / "src")}
+    checks = (
+        ("--check-automation-index-links", "--automation-index-path"),
+        ("--check-automation-command-fixtures", "--automation-command-fixtures-path"),
+        ("--check-dashboard-automation-index", "--dashboard-automation-index-path"),
+        ("--check-release-automation-index", "--release-automation-index-path"),
+    )
+    for check, path_flag in checks:
+        for unsafe_path in ("/tmp/outside-automation.md", "../outside-automation.md"):
+            result = subprocess.run(
+                [sys.executable, "-m", "r_project", "--root", str(ROOT), check, path_flag, unsafe_path],
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+            )
+            assert result.returncode != 0
+            assert "relative to --root" in result.stderr or "stay under --root" in result.stderr

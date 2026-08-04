@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import subprocess
 import sys
 import tomllib
@@ -16,6 +17,16 @@ from .memory import (
     render_grouped_byte_span_overlap_totals,
 )
 from .report import analyze_project
+
+
+DEFAULT_AUTOMATION_INDEX_PATH = Path("automations/automation-index.md")
+DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH = Path("automations/automation-command-fixtures.md")
+DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH = Path("automations/dashboard-automation-index.md")
+DEFAULT_RELEASE_AUTOMATION_INDEX_PATH = Path("automations/release-automation-index.md")
+LEGACY_AUTOMATION_INDEX_PATH = Path("docs/automation-index.md")
+LEGACY_AUTOMATION_COMMAND_FIXTURES_PATH = Path("docs/automation-command-fixtures.md")
+LEGACY_DASHBOARD_AUTOMATION_INDEX_PATH = Path("docs/dashboard-automation-index.md")
+LEGACY_RELEASE_AUTOMATION_INDEX_PATH = Path("docs/release-automation-index.md")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -221,7 +232,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--check-release-automation-index",
         action="store_true",
-        help="Exit nonzero when docs/release-automation-index.md omits release links or Docker-covered commands.",
+        help=f"Exit nonzero when {DEFAULT_RELEASE_AUTOMATION_INDEX_PATH.as_posix()} omits release links or Docker-covered commands.",
     )
     parser.add_argument(
         "--generate-release-automation-index",
@@ -273,24 +284,56 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit nonzero when release example path override safety checks do not reject unsafe paths.",
     )
     parser.add_argument(
+        "--automation-index-path",
+        default=DEFAULT_AUTOMATION_INDEX_PATH.as_posix(),
+        help=(
+            "Combined automation index path, relative to --root, used by automation-index guards "
+            f"(default: {DEFAULT_AUTOMATION_INDEX_PATH.as_posix()})."
+        ),
+    )
+    parser.add_argument(
+        "--automation-command-fixtures-path",
+        default=DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix(),
+        help=(
+            "Automation command fixture index path, relative to --root, used by its guard "
+            f"(default: {DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix()})."
+        ),
+    )
+    parser.add_argument(
+        "--dashboard-automation-index-path",
+        default=DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix(),
+        help=(
+            "Dashboard automation index path, relative to --root, used by dashboard automation guards and writers "
+            f"(default: {DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix()})."
+        ),
+    )
+    parser.add_argument(
+        "--release-automation-index-path",
+        default=DEFAULT_RELEASE_AUTOMATION_INDEX_PATH.as_posix(),
+        help=(
+            "Release automation index path, relative to --root, used by release automation guards and writers "
+            f"(default: {DEFAULT_RELEASE_AUTOMATION_INDEX_PATH.as_posix()})."
+        ),
+    )
+    parser.add_argument(
         "--check-automation-index-links",
         action="store_true",
-        help="Exit nonzero when docs/automation-index.md does not link every standalone automation docs surface.",
+        help="Exit nonzero when the combined automation index does not link every standalone automation docs surface.",
     )
     parser.add_argument(
         "--check-automation-index-commands",
         action="store_true",
-        help="Exit nonzero when docs/automation-index.md documents r-project commands missing from docker-compose.yml.",
+        help=f"Exit nonzero when {DEFAULT_AUTOMATION_INDEX_PATH.as_posix()} documents r-project commands missing from docker-compose.yml.",
     )
     parser.add_argument(
         "--check-automation-command-fixtures",
         action="store_true",
-        help="Exit nonzero when docs/automation-command-fixtures.md lists commands missing from docker-compose.yml.",
+        help=f"Exit nonzero when {DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix()} lists commands missing from docker-compose.yml.",
     )
     parser.add_argument(
         "--check-dashboard-automation-index",
         action="store_true",
-        help="Exit nonzero when docs/dashboard-automation-index.md omits dashboard links or Docker-covered commands.",
+        help=f"Exit nonzero when {DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix()} omits dashboard links or Docker-covered commands.",
     )
     parser.add_argument(
         "--generate-dashboard-automation-index",
@@ -538,37 +581,72 @@ def main(argv: list[str] | None = None) -> int:
     if args.check_release_section_writer_matrix:
         return _check_release_section_writer_matrix(Path(args.root), args.release_section_writer_matrix_version)
     if args.check_release_automation_index:
+        root = Path(args.root)
+        release_index_path = _automation_path_arg(
+            parser, root, args.release_automation_index_path, "--release-automation-index-path"
+        )
         return _check_release_automation_index(
-            Path(args.root), args.release_automation_index_version, args.release_automation_index_profile_section
+            root, args.release_automation_index_version, args.release_automation_index_profile_section, release_index_path
         )
     if args.generate_release_automation_index:
+        root = Path(args.root)
+        release_index_path = _automation_path_arg(
+            parser, root, args.release_automation_index_path, "--release-automation-index-path"
+        )
         return _generate_release_automation_index(
-            Path(args.root), args.release_automation_index_version, args.release_automation_index_profile_section
+            root, args.release_automation_index_version, args.release_automation_index_profile_section, release_index_path
         )
     if args.write_release_automation_index:
+        root = Path(args.root)
+        release_index_path = _automation_path_arg(
+            parser, root, args.release_automation_index_path, "--release-automation-index-path"
+        )
         return _write_release_automation_index(
-            Path(args.root),
+            root,
             dry_run=args.dry_run_release_automation_index,
             version=args.release_automation_index_version,
             profile_section=args.release_automation_index_profile_section,
+            release_index_path=release_index_path,
         )
     if args.check_release_examples_path_safety:
         return _check_release_examples_path_safety(Path(args.root))
     if args.check_automation_index_links:
-        return _check_automation_index_links(Path(args.root))
+        root = Path(args.root)
+        automation_index_path = _automation_path_arg(parser, root, args.automation_index_path, "--automation-index-path")
+        return _check_automation_index_links(root, automation_index_path)
     if args.check_automation_index_commands:
-        return _check_automation_index_commands(Path(args.root))
+        root = Path(args.root)
+        automation_index_path = _automation_path_arg(parser, root, args.automation_index_path, "--automation-index-path")
+        return _check_automation_index_commands(root, automation_index_path)
     if args.check_automation_command_fixtures:
-        return _check_automation_command_fixtures(Path(args.root))
+        root = Path(args.root)
+        fixture_index_path = _automation_path_arg(
+            parser, root, args.automation_command_fixtures_path, "--automation-command-fixtures-path"
+        )
+        automation_index_path = _automation_path_arg(parser, root, args.automation_index_path, "--automation-index-path")
+        return _check_automation_command_fixtures(root, fixture_index_path, automation_index_path)
     if args.check_dashboard_automation_index:
-        return _check_dashboard_automation_index(Path(args.root), args.dashboard_automation_index_variant)
+        root = Path(args.root)
+        dashboard_index_path = _automation_path_arg(
+            parser, root, args.dashboard_automation_index_path, "--dashboard-automation-index-path"
+        )
+        return _check_dashboard_automation_index(root, args.dashboard_automation_index_variant, dashboard_index_path)
     if args.generate_dashboard_automation_index:
-        return _generate_dashboard_automation_index(Path(args.root), args.dashboard_automation_index_variant)
+        root = Path(args.root)
+        dashboard_index_path = _automation_path_arg(
+            parser, root, args.dashboard_automation_index_path, "--dashboard-automation-index-path"
+        )
+        return _generate_dashboard_automation_index(root, args.dashboard_automation_index_variant, dashboard_index_path)
     if args.write_dashboard_automation_index:
+        root = Path(args.root)
+        dashboard_index_path = _automation_path_arg(
+            parser, root, args.dashboard_automation_index_path, "--dashboard-automation-index-path"
+        )
         return _write_dashboard_automation_index(
-            Path(args.root),
+            root,
             dry_run=args.dry_run_dashboard_automation_index,
             variant=args.dashboard_automation_index_variant,
+            dashboard_index_path=dashboard_index_path,
         )
     if args.generate_dashboard_example_fixtures:
         return _generate_dashboard_example_fixtures(Path(args.root))
@@ -1123,13 +1201,31 @@ def _check_release_examples_path_safety(root: Path) -> int:
     return 0
 
 
-def _check_automation_index_links(root: Path) -> int:
-    automation_index = root / "docs" / "automation-index.md"
+def _automation_doc_path_under_root(root: Path, path: Path, option_name: str) -> Path:
+    if path.is_absolute():
+        raise ValueError(f"{option_name} must be relative to --root")
+    root_resolved = root.resolve()
+    target_resolved = (root / path).resolve()
+    try:
+        return target_resolved.relative_to(root_resolved)
+    except ValueError as error:
+        raise ValueError(f"{option_name} must stay under --root") from error
+
+
+def _automation_path_arg(parser: argparse.ArgumentParser, root: Path, value: str, option_name: str) -> Path:
+    try:
+        return _automation_doc_path_under_root(root, Path(value), option_name)
+    except ValueError as error:
+        parser.error(str(error))
+
+
+def _check_automation_index_links(root: Path, automation_index_path: Path = DEFAULT_AUTOMATION_INDEX_PATH) -> int:
+    automation_index = root / automation_index_path
     text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
     missing = [
         docs_path
-        for docs_path in _standalone_automation_surface_paths()
-        if f"({_automation_index_href(docs_path)})" not in text
+        for docs_path in _standalone_automation_surface_paths(automation_index_path)
+        if f"({_automation_index_href(docs_path, automation_index_path)})" not in text
     ]
     if missing:
         for docs_path in missing:
@@ -1139,8 +1235,8 @@ def _check_automation_index_links(root: Path) -> int:
     return 0
 
 
-def _check_automation_index_commands(root: Path) -> int:
-    automation_index = root / "docs" / "automation-index.md"
+def _check_automation_index_commands(root: Path, automation_index_path: Path = DEFAULT_AUTOMATION_INDEX_PATH) -> int:
+    automation_index = root / automation_index_path
     compose = root / "docker-compose.yml"
     index_text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
     compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
@@ -1159,9 +1255,15 @@ def _check_automation_index_commands(root: Path) -> int:
     return 0
 
 
-def _check_automation_command_fixtures(root: Path) -> int:
-    fixture_index = root / "docs" / "automation-command-fixtures.md"
-    automation_index = root / "docs" / "automation-index.md"
+def _check_automation_command_fixtures(
+    root: Path,
+    fixture_index_path: Path = DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH,
+    automation_index_path: Path = DEFAULT_AUTOMATION_INDEX_PATH,
+) -> int:
+    if fixture_index_path == LEGACY_AUTOMATION_COMMAND_FIXTURES_PATH and automation_index_path == DEFAULT_AUTOMATION_INDEX_PATH:
+        automation_index_path = LEGACY_AUTOMATION_INDEX_PATH
+    fixture_index = root / fixture_index_path
+    automation_index = root / automation_index_path
     compose = root / "docker-compose.yml"
     index_text = fixture_index.read_text(encoding="utf-8") if fixture_index.exists() else ""
     automation_index_text = automation_index.read_text(encoding="utf-8") if automation_index.exists() else ""
@@ -1188,8 +1290,13 @@ def _check_automation_command_fixtures(root: Path) -> int:
     return 0
 
 
-def _check_release_automation_index(root: Path, version: str = "0.2.0", profile_section: str | None = None) -> int:
-    release_index = root / "docs" / "release-automation-index.md"
+def _check_release_automation_index(
+    root: Path,
+    version: str = "0.2.0",
+    profile_section: str | None = None,
+    release_index_path: Path = DEFAULT_RELEASE_AUTOMATION_INDEX_PATH,
+) -> int:
+    release_index = root / release_index_path
     compose = root / "docker-compose.yml"
     index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else ""
     compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
@@ -1197,7 +1304,7 @@ def _check_release_automation_index(root: Path, version: str = "0.2.0", profile_
     missing_links = [
         docs_path
         for docs_path in _standalone_release_automation_surface_paths()
-        if f"({_automation_index_href(docs_path)})" not in index_text
+        if f"({_automation_index_href(docs_path, release_index_path)})" not in index_text
     ]
     if missing_links:
         for docs_path in missing_links:
@@ -1244,10 +1351,13 @@ def _check_release_automation_index(root: Path, version: str = "0.2.0", profile_
 
 
 def _generate_release_automation_index(
-    root: Path, version: str = "0.2.0", profile_section: str | None = None
+    root: Path,
+    version: str = "0.2.0",
+    profile_section: str | None = None,
+    release_index_path: Path = DEFAULT_RELEASE_AUTOMATION_INDEX_PATH,
 ) -> int:
     del root
-    for row in _release_automation_index_surface_rows():
+    for row in _release_automation_index_surface_rows(release_index_path):
         print(row)
     print()
     if profile_section is not None:
@@ -1261,35 +1371,46 @@ def _generate_release_automation_index(
 
 
 def _write_release_automation_index(
-    root: Path, *, dry_run: bool = False, version: str = "0.2.0", profile_section: str | None = None
+    root: Path,
+    *,
+    dry_run: bool = False,
+    version: str = "0.2.0",
+    profile_section: str | None = None,
+    release_index_path: Path = DEFAULT_RELEASE_AUTOMATION_INDEX_PATH,
 ) -> int:
-    release_index = root / "docs" / "release-automation-index.md"
+    release_index = root / release_index_path
     index_text = release_index.read_text(encoding="utf-8") if release_index.exists() else _release_automation_index_skeleton()
-    updated = _updated_release_automation_index(index_text, version, profile_section)
+    updated = _updated_release_automation_index(index_text, version, profile_section, release_index_path)
+    label = release_index_path.as_posix()
     if updated == index_text:
-        print("docs/release-automation-index.md already contains release automation links and commands.")
+        print(f"{label} already contains release automation links and commands.")
         return 0
     if dry_run:
         print(updated, end="")
     else:
         release_index.parent.mkdir(parents=True, exist_ok=True)
         release_index.write_text(updated, encoding="utf-8")
-        print("Updated docs/release-automation-index.md with release automation links and commands.")
+        print(f"Updated {label} with release automation links and commands.")
     return 0
 
 
 def _updated_release_automation_index(
-    index_text: str, version: str = "0.2.0", profile_section: str | None = None
+    index_text: str,
+    version: str = "0.2.0",
+    profile_section: str | None = None,
+    release_index_path: Path = DEFAULT_RELEASE_AUTOMATION_INDEX_PATH,
 ) -> str:
     text = index_text if index_text else _release_automation_index_skeleton()
     existing_links = {
         docs_path
         for docs_path in _standalone_release_automation_surface_paths()
-        if f"({_automation_index_href(docs_path)})" in text
+        if f"({_automation_index_href(docs_path, release_index_path)})" in text
     }
     missing_link_rows = [
         row
-        for docs_path, row in zip(_standalone_release_automation_surface_paths(), _release_automation_index_surface_rows())
+        for docs_path, row in zip(
+            _standalone_release_automation_surface_paths(), _release_automation_index_surface_rows(release_index_path)
+        )
         if docs_path not in existing_links
     ]
     existing_commands_text = _markdown_section_text(text, profile_section) if profile_section is not None else text
@@ -1321,9 +1442,11 @@ def _release_automation_index_skeleton() -> str:
 """
 
 
-def _release_automation_index_surface_rows() -> list[str]:
+def _release_automation_index_surface_rows(
+    release_index_path: Path = DEFAULT_RELEASE_AUTOMATION_INDEX_PATH,
+) -> list[str]:
     return [
-        f"- [{_release_automation_surface_label(docs_path)}]({_automation_index_href(docs_path)})"
+        f"- [{_release_automation_surface_label(docs_path)}]({_automation_index_href(docs_path, release_index_path)})"
         for docs_path in _standalone_release_automation_surface_paths()
     ]
 
@@ -1365,8 +1488,12 @@ def _release_automation_index_required_commands(version: str = "0.2.0", profile_
     ]
 
 
-def _check_dashboard_automation_index(root: Path, variant: str | None = None) -> int:
-    dashboard_index = root / "docs" / "dashboard-automation-index.md"
+def _check_dashboard_automation_index(
+    root: Path,
+    variant: str | None = None,
+    dashboard_index_path: Path = DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH,
+) -> int:
+    dashboard_index = root / dashboard_index_path
     compose = root / "docker-compose.yml"
     index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else ""
     compose_text = compose.read_text(encoding="utf-8") if compose.exists() else ""
@@ -1374,7 +1501,7 @@ def _check_dashboard_automation_index(root: Path, variant: str | None = None) ->
     missing_links = [
         docs_path
         for docs_path in _standalone_dashboard_automation_surface_paths()
-        if f"({_automation_index_href(docs_path)})" not in index_text
+        if f"({_automation_index_href(docs_path, dashboard_index_path)})" not in index_text
     ]
     if missing_links:
         for docs_path in missing_links:
@@ -1406,9 +1533,13 @@ def _check_dashboard_automation_index(root: Path, variant: str | None = None) ->
     return 0
 
 
-def _generate_dashboard_automation_index(root: Path, variant: str | None = None) -> int:
+def _generate_dashboard_automation_index(
+    root: Path,
+    variant: str | None = None,
+    dashboard_index_path: Path = DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH,
+) -> int:
     del root
-    for row in _dashboard_automation_index_surface_rows():
+    for row in _dashboard_automation_index_surface_rows(dashboard_index_path):
         print(row)
     print()
     print("```bash")
@@ -1418,32 +1549,46 @@ def _generate_dashboard_automation_index(root: Path, variant: str | None = None)
     return 0
 
 
-def _write_dashboard_automation_index(root: Path, *, dry_run: bool = False, variant: str | None = None) -> int:
-    dashboard_index = root / "docs" / "dashboard-automation-index.md"
+def _write_dashboard_automation_index(
+    root: Path,
+    *,
+    dry_run: bool = False,
+    variant: str | None = None,
+    dashboard_index_path: Path = DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH,
+) -> int:
+    dashboard_index = root / dashboard_index_path
     index_text = dashboard_index.read_text(encoding="utf-8") if dashboard_index.exists() else _dashboard_automation_index_skeleton()
-    updated = _updated_dashboard_automation_index(index_text, variant)
+    updated = _updated_dashboard_automation_index(index_text, variant, dashboard_index_path)
+    label = dashboard_index_path.as_posix()
     if updated == index_text:
-        print("docs/dashboard-automation-index.md already contains dashboard automation links and commands.")
+        print(f"{label} already contains dashboard automation links and commands.")
         return 0
     if dry_run:
         print(updated, end="")
     else:
         dashboard_index.parent.mkdir(parents=True, exist_ok=True)
         dashboard_index.write_text(updated, encoding="utf-8")
-        print("Updated docs/dashboard-automation-index.md with dashboard automation links and commands.")
+        print(f"Updated {label} with dashboard automation links and commands.")
     return 0
 
 
-def _updated_dashboard_automation_index(index_text: str, variant: str | None = None) -> str:
+def _updated_dashboard_automation_index(
+    index_text: str,
+    variant: str | None = None,
+    dashboard_index_path: Path = DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH,
+) -> str:
     text = index_text if index_text else _dashboard_automation_index_skeleton()
     existing_links = {
         docs_path
         for docs_path in _standalone_dashboard_automation_surface_paths()
-        if f"({_automation_index_href(docs_path)})" in text
+        if f"({_automation_index_href(docs_path, dashboard_index_path)})" in text
     }
     missing_link_rows = [
         row
-        for docs_path, row in zip(_standalone_dashboard_automation_surface_paths(), _dashboard_automation_index_surface_rows())
+        for docs_path, row in zip(
+            _standalone_dashboard_automation_surface_paths(),
+            _dashboard_automation_index_surface_rows(dashboard_index_path),
+        )
         if docs_path not in existing_links
     ]
     existing_commands = set(_dashboard_automation_index_r_project_commands(text))
@@ -1469,9 +1614,11 @@ def _dashboard_automation_index_skeleton() -> str:
 """
 
 
-def _dashboard_automation_index_surface_rows() -> list[str]:
+def _dashboard_automation_index_surface_rows(
+    dashboard_index_path: Path = DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH,
+) -> list[str]:
     return [
-        f"- [{_dashboard_automation_surface_label(docs_path)}]({_automation_index_href(docs_path)})"
+        f"- [{_dashboard_automation_surface_label(docs_path)}]({_automation_index_href(docs_path, dashboard_index_path)})"
         for docs_path in _standalone_dashboard_automation_surface_paths()
     ]
 
@@ -1789,15 +1936,34 @@ def _dashboard_section_writer_command(check_command: str) -> str:
     return check_command
 
 
-def _standalone_automation_surface_paths() -> tuple[str, ...]:
+def _standalone_automation_surface_paths(
+    automation_index_path: Path = DEFAULT_AUTOMATION_INDEX_PATH,
+) -> tuple[str, ...]:
+    automation_path = automation_index_path.as_posix()
+    canonical = automation_path == DEFAULT_AUTOMATION_INDEX_PATH.as_posix()
+    dashboard_index_path = (
+        DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix()
+        if canonical
+        else LEGACY_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix()
+    )
+    release_index_path = (
+        DEFAULT_RELEASE_AUTOMATION_INDEX_PATH.as_posix()
+        if canonical
+        else LEGACY_RELEASE_AUTOMATION_INDEX_PATH.as_posix()
+    )
+    command_fixtures_path = (
+        DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix()
+        if canonical
+        else LEGACY_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix()
+    )
     return (
-        "docs/dashboard-automation-index.md",
+        dashboard_index_path,
         "docs/dashboard-index.md",
         "docs/usage-examples.md",
         "docs/dashboard-schema.md",
         "docs/dashboard-example-fixtures.md",
         "docs/dashboard-section-writer-matrix.md",
-        "docs/release-automation-index.md",
+        release_index_path,
         "docs/release-index.md",
         "docs/release-checklist.md",
         "docs/release/checklist.json",
@@ -1805,7 +1971,7 @@ def _standalone_automation_surface_paths() -> tuple[str, ...]:
         "docs/release-example-fixtures.md",
         "docs/release-example-sections.md",
         "docs/release-section-writer-matrix.md",
-        "docs/automation-command-fixtures.md",
+        command_fixtures_path,
     )
 
 
@@ -1831,8 +1997,9 @@ def _standalone_release_automation_surface_paths() -> tuple[str, ...]:
     )
 
 
-def _automation_index_href(docs_path: str) -> str:
-    return docs_path.removeprefix("docs/")
+def _automation_index_href(docs_path: str, index_path: Path = DEFAULT_AUTOMATION_INDEX_PATH) -> str:
+    base_dir = posixpath.dirname(index_path.as_posix()) or "."
+    return posixpath.relpath(docs_path, base_dir)
 
 
 def _automation_index_r_project_commands(index_text: str) -> list[str]:
@@ -1964,7 +2131,18 @@ def _single_code_span(text: str) -> str | None:
 
 def _docker_harness_contains_equivalent_command(compose_text: str, documented_command: str) -> bool:
     documented_suffix = _release_example_command_suffix(documented_command)
-    return documented_suffix in compose_text
+    if documented_suffix in compose_text:
+        return True
+    legacy_to_canonical = {
+        "docs/automation-index.md": DEFAULT_AUTOMATION_INDEX_PATH.as_posix(),
+        "docs/dashboard-automation-index.md": DEFAULT_DASHBOARD_AUTOMATION_INDEX_PATH.as_posix(),
+        "docs/release-automation-index.md": DEFAULT_RELEASE_AUTOMATION_INDEX_PATH.as_posix(),
+        "docs/automation-command-fixtures.md": DEFAULT_AUTOMATION_COMMAND_FIXTURES_PATH.as_posix(),
+    }
+    canonical_suffix = documented_suffix
+    for legacy_path, canonical_path in legacy_to_canonical.items():
+        canonical_suffix = canonical_suffix.replace(legacy_path, canonical_path)
+    return canonical_suffix in compose_text
 
 
 def _release_example_command_suffix(command: str) -> str:

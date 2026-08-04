@@ -37,16 +37,16 @@ def test_docker_test_harness_exists_and_runs_full_verification():
     )
     assert "python -m r_project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md" in compose_text
     assert (
-        "python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path docs/automation-index.md --readme-examples-section 'Embedded readiness report example'"
+        "python -m r_project --root . --write-readme-examples --dry-run-readme-examples --readme-examples-path automations/automation-index.md --readme-examples-section 'Embedded readiness report example'"
         in compose_text
     )
     assert "python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md" in compose_text
     assert (
-        "python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path docs/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'"
+        "python -m r_project --root . --write-readme-schema-examples --dry-run-readme-schema-examples --readme-schema-path automations/automation-index.md --readme-schema-section 'Embedded memory-overlap schema example'"
         in compose_text
     )
-    assert "python -m r_project --root . --check-readme-examples --readme-examples-path docs/automation-index.md" in compose_text
-    assert "python -m r_project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md" in compose_text
+    assert "python -m r_project --root . --check-readme-examples --readme-examples-path automations/automation-index.md" in compose_text
+    assert "python -m r_project --root . --check-readme-schema-examples --readme-schema-path automations/automation-index.md" in compose_text
     assert "python -m r_project --memory-threshold-demo" in compose_text
     assert "python -m r_project --memory-threshold-demo --json" in compose_text
     assert "python -m r_project --memory-threshold-demo --memory-overlap-max-count 2 --memory-overlap-max-bytes 6" in compose_text
@@ -97,15 +97,15 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         in compose_text
     )
     assert (
-        "python -m r_project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        "python -m r_project --root . --check-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'"
         in compose_text
     )
     assert (
-        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'"
         in compose_text
     )
     assert (
-        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'"
+        "python -m r_project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'"
         in compose_text
     )
     assert (
@@ -207,3 +207,11 @@ def test_docker_test_harness_exists_and_runs_full_verification():
         "python -m r_project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-section-writer-matrix --dashboard-section-writer-matrix-variant expanded"
         in compose_text
     )
+
+
+def test_docker_harness_uses_canonical_automation_index_paths():
+    compose_text = Path("docker-compose.yml").read_text(encoding="utf-8")
+
+    assert "automations/automation-index.md" in compose_text
+    assert "automations/dashboard-automation-index.md" not in compose_text
+    assert "automations/release-automation-index.md" not in compose_text

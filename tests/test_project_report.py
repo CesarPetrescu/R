@@ -1679,6 +1679,8 @@ def test_automation_index_link_guard_reports_missing_standalone_surface_link(tmp
             "--root",
             str(tmp_path),
             "--check-automation-index-links",
+            "--automation-index-path",
+            "docs/automation-index.md",
         ],
         check=False,
         text=True,
@@ -1761,6 +1763,8 @@ docker compose run --build --rm test
             "--root",
             str(tmp_path),
             "--check-automation-index-commands",
+            "--automation-index-path",
+            "docs/automation-index.md",
         ],
         check=False,
         text=True,
@@ -1829,6 +1833,8 @@ def test_dashboard_automation_index_guard_reports_missing_dashboard_surface_link
             "--root",
             str(tmp_path),
             "--check-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
         ],
         check=False,
         text=True,
@@ -1889,6 +1895,8 @@ r-project --root . --check-dashboard-automation-index --dashboard-automation-ind
             "--root",
             str(tmp_path),
             "--check-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
             "--dashboard-automation-index-variant",
             "expanded",
         ],
@@ -1963,6 +1971,8 @@ r-project --root . --check-dashboard-automation-index
             "--root",
             str(tmp_path),
             "--check-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
         ],
         check=False,
         text=True,
@@ -1999,8 +2009,8 @@ def test_generate_dashboard_automation_index_emits_required_links_and_commands()
     )
 
     assert result.returncode == 0
-    assert "- [dashboard readiness/schema index](dashboard-index.md)" in result.stdout
-    assert "- [dashboard section writer matrix](dashboard-section-writer-matrix.md)" in result.stdout
+    assert "- [dashboard readiness/schema index](../docs/dashboard-index.md)" in result.stdout
+    assert "- [dashboard section writer matrix](../docs/dashboard-section-writer-matrix.md)" in result.stdout
     assert "r-project --root . --check-dashboard-automation-index" in result.stdout
     assert "r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index" in result.stdout
     assert result.stderr == ""
@@ -2092,6 +2102,8 @@ r-project --root . --check-dashboard-automation-index --dashboard-automation-ind
             "--root",
             str(tmp_path),
             "--check-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
             "--dashboard-automation-index-variant",
             "expanded",
         ],
@@ -2141,6 +2153,8 @@ r-project --root . --check-dashboard-automation-index
             str(tmp_path),
             "--write-dashboard-automation-index",
             "--dry-run-dashboard-automation-index",
+            "--dashboard-automation-index-path",
+            "docs/dashboard-automation-index.md",
         ],
         check=False,
         text=True,
@@ -2210,6 +2224,8 @@ def test_release_automation_index_guard_reports_missing_release_surface_link(tmp
             "--root",
             str(tmp_path),
             "--check-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
         ],
         check=False,
         text=True,
@@ -2267,6 +2283,8 @@ r-project --root . --check-release-example-sections
             "--root",
             str(tmp_path),
             "--check-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
         ],
         check=False,
         text=True,
@@ -2303,8 +2321,8 @@ def test_generate_release_automation_index_emits_required_links_and_commands():
     )
 
     assert result.returncode == 0
-    assert "- [release readiness index](release-index.md)" in result.stdout
-    assert "- [release section writer matrix](release-section-writer-matrix.md)" in result.stdout
+    assert "- [release readiness index](../docs/release-index.md)" in result.stdout
+    assert "- [release section writer matrix](../docs/release-section-writer-matrix.md)" in result.stdout
     assert "r-project --root . --check-release-automation-index" in result.stdout
     assert "r-project --root . --write-release-automation-index --dry-run-release-automation-index" in result.stdout
     assert result.stderr == ""
@@ -2420,6 +2438,8 @@ r-project --root . --check-release-automation-index --release-automation-index-v
             "--root",
             str(tmp_path),
             "--check-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
             "--release-automation-index-version",
             "0.4.0",
             "--release-automation-index-profile-section",
@@ -2502,6 +2522,8 @@ r-project --root . --check-release-automation-index
             str(tmp_path),
             "--write-release-automation-index",
             "--dry-run-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
             "--release-automation-index-version",
             "0.4.0",
             "--release-automation-index-profile-section",
@@ -2555,6 +2577,8 @@ r-project --root . --check-release-automation-index
             str(tmp_path),
             "--write-release-automation-index",
             "--dry-run-release-automation-index",
+            "--release-automation-index-path",
+            "docs/release-automation-index.md",
         ],
         check=False,
         text=True,
@@ -3301,6 +3325,10 @@ def test_automation_command_fixture_guard_reports_missing_docker_coverage(tmp_pa
             "--root",
             str(tmp_path),
             "--check-automation-command-fixtures",
+            "--automation-command-fixtures-path",
+            "docs/automation-command-fixtures.md",
+            "--automation-index-path",
+            "docs/automation-index.md",
         ],
         check=False,
         text=True,
@@ -3357,6 +3385,10 @@ r-project --root . --check-readme-schema-examples --readme-schema-path docs/dash
             "--root",
             str(tmp_path),
             "--check-automation-command-fixtures",
+            "--automation-command-fixtures-path",
+            "docs/automation-command-fixtures.md",
+            "--automation-index-path",
+            "docs/automation-index.md",
         ],
         check=False,
         text=True,
