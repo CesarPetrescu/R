@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add another concrete Rustic product-depth helper pair that extends `threshold_run_signal_density_band_span_gap_delta_balance_secure(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffix: `sentry` (`threshold_...` length 63, `outlier_...` length 61); consider matching-mass plus longest-run pressure and calculate composed fixture values from the transformed sequence.
+1. Complete the existing open PR #535 for the `sentry`/`warden`/`watch` Rustic helper chain once the authenticated reviewer gate is restored; do not duplicate those helpers. If the gate remains unavailable, choose the next cap-safe helper suffix after that chain and preserve direct, empty/single/no-match, diagnostic, composition, and cleanup coverage.
 2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
 3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 
