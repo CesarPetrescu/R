@@ -4,7 +4,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
+1. Complete the existing automation-facing docs/guard migration represented by PR #536, moving `docs/*automation*` paths into `automations/` behind compatibility tests while keeping Docker coverage green.
 2. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 3. Continue extending the Rustic interpreter with a bounded, test-first product-depth helper family after the automation-doc migration, keeping identifier lengths within the 63-character cap and preserving cleanup diagnostics.
 
