@@ -25,7 +25,7 @@ Python is support tooling only. It exists because it is convenient for the worke
 
 The core runtime remains C. New product work should focus on `runtime/rustic.c`, its C API, language features, diagnostics, and interpreter tests.
 
-The newest array-statistics helpers are `threshold_run_signal_density_band_span_gap_delta_balance_watch(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_watch(array, min, max)`. They extend balance-warden pressure with matching-mass plus transition-count pressure and return `0` for empty, single-element, or no-match inputs.
+The newest array-statistics helpers are `threshold_run_signal_density_band_span_gap_delta_balance_post(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_post(array, min, max)`. They extend balance-patrol pressure with matching-mass plus matching-run-count pressure and return `0` for empty, single-element, or no-match inputs.
 
 ## License
 
