@@ -5,19 +5,19 @@ This page is the single navigation entry point for dashboard and release automat
 ## Dashboard automation
 
 - [dashboard automation index](dashboard-automation-index.md) is the dashboard-only navigation page with link and command coverage guards.
-- [dashboard readiness/schema index](dashboard-index.md) links the checked readiness report examples with compact memory-overlap schema examples.
-- [readiness report examples](usage-examples.md) stores the checked JSON and Markdown readiness report fences.
-- [memory overlap schema examples](dashboard-schema.md) stores the checked compact JSON Schema fence for memory-overlap demo payloads.
-- [dashboard example fixture registry](dashboard-example-fixtures.md) maps split dashboard example docs to Docker-covered guard commands.
-- [dashboard section writer matrix](dashboard-section-writer-matrix.md) maps dashboard readiness/schema sections to Docker-covered writer dry-runs.
+- [dashboard readiness/schema index](../docs/dashboard-index.md) links the checked readiness report examples with compact memory-overlap schema examples.
+- [readiness report examples](../docs/usage-examples.md) stores the checked JSON and Markdown readiness report fences.
+- [memory overlap schema examples](../docs/dashboard-schema.md) stores the checked compact JSON Schema fence for memory-overlap demo payloads.
+- [dashboard example fixture registry](../docs/dashboard-example-fixtures.md) maps split dashboard example docs to Docker-covered guard commands.
+- [dashboard section writer matrix](../docs/dashboard-section-writer-matrix.md) maps dashboard readiness/schema sections to Docker-covered writer dry-runs.
 
 Verify dashboard docs with:
 
 ```bash
 r-project --root . --check-readme-examples --readme-examples-path docs/dashboard-index.md
 r-project --root . --check-readme-schema-examples --readme-schema-path docs/dashboard-index.md
-r-project --root . --check-readme-examples --readme-examples-path docs/automation-index.md
-r-project --root . --check-readme-schema-examples --readme-schema-path docs/automation-index.md
+r-project --root . --check-readme-examples --readme-examples-path automations/automation-index.md
+r-project --root . --check-readme-schema-examples --readme-schema-path automations/automation-index.md
 r-project --root . --generate-dashboard-automation-index
 r-project --root . --generate-dashboard-automation-index --dashboard-automation-index-variant expanded
 r-project --root . --write-dashboard-automation-index --dry-run-dashboard-automation-index
@@ -80,13 +80,13 @@ The compact schema fence below is checked with the same alternate README-style p
 ## Release automation
 
 - [release automation index](release-automation-index.md) is the release-only navigation page with link and command coverage guards.
-- [release readiness index](release-index.md) links release checklist fixture docs with version/tag guard commands.
-- [release checklist fixture workflow](release-checklist.md) documents the external release checklist path.
-- [checked release checklist JSON](release/checklist.json) is the docs-path fixture for release automation consumers.
-- [checked release checklist examples](release-examples.md) provides a README-style fenced JSON snippet for dashboard docs.
-- [release example fixture index](release-example-fixtures.md) lists every release-example smoke fixture and the Docker command that exercises it.
-- [release example section registry](release-example-sections.md) lists independently checked Markdown release checklist sections and the Docker command that exercises each section.
-- [release section writer matrix](release-section-writer-matrix.md) lists current-version and future-version writer dry-runs for every registered release checklist section.
+- [release readiness index](../docs/release-index.md) links release checklist fixture docs with version/tag guard commands.
+- [release checklist fixture workflow](../docs/release-checklist.md) documents the external release checklist path.
+- [checked release checklist JSON](../docs/release/checklist.json) is the docs-path fixture for release automation consumers.
+- [checked release checklist examples](../docs/release-examples.md) provides a README-style fenced JSON snippet for dashboard docs.
+- [release example fixture index](../docs/release-example-fixtures.md) lists every release-example smoke fixture and the Docker command that exercises it.
+- [release example section registry](../docs/release-example-sections.md) lists independently checked Markdown release checklist sections and the Docker command that exercises each section.
+- [release section writer matrix](../docs/release-section-writer-matrix.md) lists current-version and future-version writer dry-runs for every registered release checklist section.
 - [automation command fixture index](automation-command-fixtures.md) maps the combined automation index commands to Docker harness coverage so future split command docs remain auditable.
 
 Verify release docs and guards with:
@@ -96,9 +96,9 @@ r-project --root . --check-changelog-version
 r-project --root . --check-release-tag v0.1.0 --docker-verified
 r-project --root . --check-release-tag-fixture --release-tag-fixture-path docs/release/checklist.json
 r-project --root . --check-release-examples --release-examples-path docs/release-examples.md
-r-project --root . --check-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
-r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
-r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --check-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
+r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path automations/automation-index.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-path tests/fixtures/automation-index-release-smoke.md --release-examples-section 'Embedded release checklist example'
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path docs/release-examples.md
 r-project --root . --write-release-examples --dry-run-release-examples --release-examples-version 0.2.0 --release-examples-path tests/fixtures/release-examples-future-version-smoke.md

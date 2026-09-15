@@ -4,9 +4,9 @@ The autonomous agent should complete concrete implementation work every run, not
 
 ## Next recommended tasks
 
-1. Add another concrete Rustic product-depth helper pair that extends `threshold_run_signal_density_band_span_gap_delta_balance_secure(...)`, choosing names within the 63-character Rustic identifier cap, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup. Safe next candidate suffix: `sentry` (`threshold_...` length 63, `outlier_...` length 61); consider matching-mass plus longest-run pressure and calculate composed fixture values from the transformed sequence.
-2. Migrate automation-facing docs and guard defaults from `docs/*automation*` paths into `automations/` behind compatibility tests, keeping Docker coverage green while paths move.
-3. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
+2. Continue extending the Rustic interpreter with a bounded, test-first product-depth helper family after the balance-post helpers, keeping identifier lengths within the 63-character cap and preserving cleanup diagnostics.
+3. Split the oversized `parse_factor` helper-dispatch chain into smaller generated or table-driven units without changing interpreter behavior.
 
 ## Every-run checklist
 
