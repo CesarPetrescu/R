@@ -1889,6 +1889,46 @@ def test_c_hosted_rustic_interpreter_computes_balance_post_threshold_pressure(tm
     assert result.stdout == f"{source} => -2792\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_balance_audit_transition_pressure(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "threshold_run_signal_density_band_span_gap_delta_balance_audit([3, 4, 7, 3, 5, 6, 9, 4], 3, 6)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => -2802\n"
+
+
+def test_c_hosted_rustic_interpreter_computes_balance_audit_outlier_and_edge_cases(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([1, 8, 9, 3, 0, 1], 3, 6)": -2274,
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([7, 8], 3, 6)": 0,
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([3], 3, 6)": 0,
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([3, 4, 5], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([7], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([], 3, 6)": 0,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_computes_balance_post_outlier_and_edge_cases(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
@@ -1964,6 +2004,32 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_balance_post_arguments(tmp_
         "outlier_run_signal_density_band_span_gap_delta_balance_post([1], [0], 1)": "expected integer",
         "outlier_run_signal_density_band_span_gap_delta_balance_post([1], 0, [1])": "expected integer",
         "outlier_run_signal_density_band_span_gap_delta_balance_post([1], 0)": "wrong argument count",
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stderr == f"{expected}: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_balance_audit_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit(1, 0, 1)": "expected array",
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([1], [0], 1)": "expected integer",
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([1], 0, [1])": "expected integer",
+        "threshold_run_signal_density_band_span_gap_delta_balance_audit([1], 0)": "wrong argument count",
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit(1, 0, 1)": "expected array",
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([1], [0], 1)": "expected integer",
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([1], 0, [1])": "expected integer",
+        "outlier_run_signal_density_band_span_gap_delta_balance_audit([1], 0)": "wrong argument count",
     }
 
     for source, expected in expectations.items():
@@ -5708,6 +5774,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("threshold_run_signal_density_band_span_gap_delta_balance_keeper(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_keeper(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3095),
         ("threshold_run_signal_density_band_span_gap_delta_balance_patrol(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_patrol(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3099),
         ("threshold_run_signal_density_band_span_gap_delta_balance_post(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_post(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3107),
+        ("threshold_run_signal_density_band_span_gap_delta_balance_audit(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_audit(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3114),
         ("fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square)", 14),
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),
@@ -9664,6 +9731,8 @@ def test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries(tmp_path)
         "let n = 0; let total = 0; while n < 65 { total = total + outlier_run_signal_density_band_span_gap_delta_balance_patrol([1, 8, 9, 3, 0, 1], 3, 6); n = n + 1; }; total": -146900,
         "let n = 0; let total = 0; while n < 65 { total = total + threshold_run_signal_density_band_span_gap_delta_balance_post([3, 4, 7, 3, 5, 6, 9, 4], 3, 6); n = n + 1; }; total": -181480,
         "let n = 0; let total = 0; while n < 65 { total = total + outlier_run_signal_density_band_span_gap_delta_balance_post([1, 8, 9, 3, 0, 1], 3, 6); n = n + 1; }; total": -147355,
+        "let n = 0; let total = 0; while n < 65 { total = total + threshold_run_signal_density_band_span_gap_delta_balance_audit([3, 4, 7, 3, 5, 6, 9, 4], 3, 6); n = n + 1; }; total": -182130,
+        "let n = 0; let total = 0; while n < 65 { total = total + outlier_run_signal_density_band_span_gap_delta_balance_audit([1, 8, 9, 3, 0, 1], 3, 6); n = n + 1; }; total": -147810,
         "let n = 0; let total = 0; while n < 65 { total = total + histogram_within_distance(histogram_values([3, 1, 3]), histogram_count([3, 1, 3]), [3, 1], 1); n = n + 1; }; total": 65,
     }
 
