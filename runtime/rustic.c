@@ -2096,6 +2096,7 @@ static struct Value parse_factor(struct Parser *parser) {
             int measuring_signal_density_band_span_gap_delta_balance_assert = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_assert") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_assert") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_verify = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_verify") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_verify") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_assure = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_assure") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_assure") == 0;
+            int measuring_signal_density_band_span_gap_delta_balance_check = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_check") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_check") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_secure = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_secure") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_secure") == 0;
             int measuring_signal_density_band_span_gap_delta_balance_safe = strcmp(name, "threshold_run_signal_density_band_span_gap_delta_balance_safe") == 0 || strcmp(name, "outlier_run_signal_density_band_span_gap_delta_balance_safe") == 0;
             if (measuring_signal_density_band_span_gap_delta_balance_watch) {
@@ -2109,6 +2110,9 @@ static struct Value parse_factor(struct Parser *parser) {
             }
             if (measuring_signal_density_band_span_gap_delta_balance_keeper) {
                 measuring_signal_density_band_span_gap_delta_balance_secure = 1;
+            }
+            if (measuring_signal_density_band_span_gap_delta_balance_check) {
+                measuring_signal_density_band_span_gap_delta_balance_assure = 1;
             }
             if (measuring_signal_density_band_span_gap_delta_balance_assure) {
                 measuring_signal_density_band_span_gap_delta_balance_verify = 1;
@@ -2601,6 +2605,9 @@ static struct Value parse_factor(struct Parser *parser) {
             }
             if (measuring_signal_density_band_span_gap_delta_balance_assure) {
                 strcpy(name, strncmp(name, "threshold", 9) == 0 ? "threshold_run_signal_density_band_span_gap_delta_balance_verify" : "outlier_run_signal_density_band_span_gap_delta_balance_verify");
+            }
+            if (measuring_signal_density_band_span_gap_delta_balance_check) {
+                strcpy(name, strncmp(name, "threshold", 9) == 0 ? "threshold_run_signal_density_band_span_gap_delta_balance_assure" : "outlier_run_signal_density_band_span_gap_delta_balance_assure");
             }
             if (measuring_signal_density_band_span_gap_delta_balance_verify) {
                 strcpy(name, strncmp(name, "threshold", 9) == 0 ? "threshold_run_signal_density_band_span_gap_delta_balance_assert" : "outlier_run_signal_density_band_span_gap_delta_balance_assert");
@@ -4182,6 +4189,9 @@ static struct Value parse_factor(struct Parser *parser) {
                     }
                     if (measuring_signal_density_band_span_gap_delta_balance_assure && matching_mass > 1 && shortest_run > 0) {
                         matched -= matching_mass + shortest_run;
+                    }
+                    if (measuring_signal_density_band_span_gap_delta_balance_check && matching_mass > 1 && matching_run_count > 0) {
+                        matched -= matching_mass + matching_run_count;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(matched));
