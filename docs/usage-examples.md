@@ -10,7 +10,7 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 ## JSON readiness report
 
 ```json
-{"active_blockers": ["2026-09-16: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-assure` rejected the branch push with GitHub HTTP 403 during `send-pack`; `git ls-remote` shows no remote branch. Keep the verified local commit and PR creation pending authentication recovery."], "completed_backlog_items": 545, "has_active_blockers": true, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 287, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 545, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 287, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ## Markdown readiness report
@@ -22,7 +22,7 @@ r-project --root . --write-readme-examples --dry-run-readme-examples --readme-ex
 | --- | ---: |
 | Completed backlog items | 545 |
 | Open backlog items | 0 |
-| Active blockers | 1 |
+| Active blockers | 0 |
 
 ## Backlog by priority
 
@@ -38,5 +38,5 @@ None
 
 ## Active blockers
 
-- 2026-09-16: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-assure` rejected the branch push with GitHub HTTP 403 during `send-pack`; `git ls-remote` shows no remote branch. Keep the verified local commit and PR creation pending authentication recovery.
+None
 ```
