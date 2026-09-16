@@ -12,6 +12,7 @@
 
 ## Resolved blockers
 
+- 2026-09-16: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-assure` initially rejected the branch push with GitHub HTTP 403 during `send-pack`; a bounded retry successfully pushed the branch, so the transient authentication blocker is resolved.
 - 2026-07-06: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-crag` initially failed after local commit `97de2ea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch after blocker recording, so this is no longer an active blocker.
 - 2026-06-22: `/usr/local/bin/r-bot-git-push ai/r/rustic-band-span-gap-ratio` previously failed after local commit `d200d54` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch, so this is no longer an active blocker.
 - 2026-05-10: `/usr/local/bin/r-bot-git-push ai/r/rustic-array-min-max` previously failed with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch, so this is no longer an active blocker.
