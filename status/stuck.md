@@ -2,7 +2,7 @@
 
 ## Active blockers
 
-- None verified.
+- 2026-09-16: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-assure` rejected the branch push with GitHub HTTP 403 during `send-pack`; `git ls-remote` shows no remote branch. Keep the verified local commit and PR creation pending authentication recovery.
 
 ## Deferred external merge gates
 
