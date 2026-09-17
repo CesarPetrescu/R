@@ -2305,6 +2305,107 @@ def test_c_hosted_rustic_interpreter_releases_balance_case_temporaries(tmp_path)
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_computes_balance_part_transition_pressure(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "threshold_run_signal_density_band_span_gap_delta_balance_part([3, 4, 7, 3, 5, 6, 9, 4], 3, 6)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => -2928\n"
+
+
+def test_c_hosted_rustic_interpreter_computes_balance_part_outlier_and_edge_cases(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([1, 8, 9, 3, 0, 1], 3, 6)": -2376,
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([7, 8], 3, 6)": 0,
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([3], 3, 6)": 0,
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([3, 4, 5], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([7], 3, 6)": 0,
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([], 3, 6)": 0,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_balance_part_arguments(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "threshold_run_signal_density_band_span_gap_delta_balance_part(1, 0, 1)": "expected array",
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([1], [0], 1)": "expected integer",
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([1], 0, [1])": "expected integer",
+        "threshold_run_signal_density_band_span_gap_delta_balance_part([1], 0)": "wrong argument count",
+        "outlier_run_signal_density_band_span_gap_delta_balance_part(1, 0, 1)": "expected array",
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([1], [0], 1)": "expected integer",
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([1], 0, [1])": "expected integer",
+        "outlier_run_signal_density_band_span_gap_delta_balance_part([1], 0)": "wrong argument count",
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 2
+        assert result.stderr == f"{expected}: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_composes_balance_part_with_clamp(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "threshold_run_signal_density_band_span_gap_delta_balance_part(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_part(clamp([9, 1, 5, 3], 2, 6), 3, 5)"
+    result = subprocess.run(
+        [str(binary), source],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=2,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => -3246\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_balance_part_temporaries(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expectations = {
+        "let n = 0; let total = 0; while n < 65 { total = total + threshold_run_signal_density_band_span_gap_delta_balance_part([3, 4, 7, 3, 5, 6, 9, 4], 3, 6); n = n + 1; }; total": -190320,
+        "let n = 0; let total = 0; while n < 65 { total = total + outlier_run_signal_density_band_span_gap_delta_balance_part([1, 8, 9, 3, 0, 1], 3, 6); n = n + 1; }; total": -154440,
+    }
+
+    for source, expected in expectations.items():
+        result = subprocess.run(
+            [str(binary), source],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=2,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_computes_balance_unit_matching_run_pressure(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "threshold_run_signal_density_band_span_gap_delta_balance_unit([3, 4, 7, 3, 5, 6, 9, 4], 3, 6)"
@@ -7059,6 +7160,7 @@ def test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture(tmp_
         ("threshold_run_signal_density_band_span_gap_delta_balance_case(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_case(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3219),
         ("threshold_run_signal_density_band_span_gap_delta_balance_item(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_item(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3231),
         ("threshold_run_signal_density_band_span_gap_delta_balance_unit(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_unit(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3239),
+        ("threshold_run_signal_density_band_span_gap_delta_balance_part(clamp([9, 1, 5, 3], 2, 6), 2, 6) + outlier_run_signal_density_band_span_gap_delta_balance_part(clamp([9, 1, 5, 3], 2, 6), 3, 5)", -3246),
         ("fn square(x) { x * x }; weighted_score(histogram_values([3, 1, 3, 2, 1, 3]), square)", 14),
         ("nth_sorted(histogram_values([3, 1, 3, 2, 1]), 1) + frequency_score([3, 1, 3, 2, 1], 1)", 4),
         ("sum(top_count(histogram_count([2, 2, 1, 3, 3, 3]), 2)) + nth_sorted([9, 1, 5, 3], 2)", 10),

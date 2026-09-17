@@ -6,7 +6,7 @@ The autonomous agent should complete concrete implementation work every run, not
 
 1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
 2. Split the oversized `parse_factor` helper-dispatch chain into smaller generated or table-driven units without changing interpreter behavior; preserve the checked helper-chain outputs and strict diagnostics.
-3. Continue extending the Rustic interpreter with a bounded, test-first product-depth helper family after the balance-unit helpers; select the next identifier-safe suffix after checking the 63-character Rustic identifier cap, with acceptance coverage for direct/edge behavior, invalid arguments, the composed showcase, and 65-iteration cleanup diagnostics.
+3. Continue extending the Rustic interpreter with a bounded, test-first product-depth helper family after the balance-part helpers; select the next identifier-safe suffix (for example `whole` or `piece`) after checking the 63-character Rustic identifier cap, with acceptance coverage for direct/edge behavior, invalid arguments, the composed showcase, and 65-iteration cleanup diagnostics.
 
 ## Every-run checklist
 
