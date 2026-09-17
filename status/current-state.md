@@ -28,6 +28,8 @@ Last updated: 2026-09-17
 
 - The item balance helper pair is registered after case and inherits the case pressure before applying matching-mass plus shortest-run item pressure. Direct threshold/outlier behavior (`-2909` / `-2362`), empty/single/no-match cases, invalid arguments, the composed statistics showcase (`-3231`), and 65-iteration cleanup (`-189085` threshold / `-153530` outlier) are covered by host tests.
 
+- The unit balance helper pair is registered after item and inherits the item pressure before applying matching-mass plus matching-run-count unit pressure. Direct threshold/outlier behavior (`-2918` / `-2369`), empty/single/no-match cases, invalid arguments, the composed statistics showcase (`-3239`), and 65-iteration cleanup (`-189670` threshold / `-153985` outlier) are covered by host tests.
+
 - The survey balance helper pair is registered after assess and inherits assess pressure before applying matching-mass plus matching-run-count survey pressure. Direct threshold/outlier behavior (`-2883` / `-2340`), empty/single/no-match cases, invalid arguments, the composed statistics showcase (`-3200`), and 65-iteration cleanup (`-187395` threshold / `-152100` outlier) are covered by host tests.
 
 - The proof balance helper pair is registered after audit and applies matching-mass plus longest-run pressure. Direct threshold/outlier behavior, empty/single/no-match cases, invalid arguments, the composed statistics showcase, and 65-iteration cleanup are covered by host tests.
@@ -147,6 +149,7 @@ pytest -q tests/test_rustic_interpreter.py -k balance_survey
 pytest -q tests/test_rustic_interpreter.py -k balance_sample
 pytest -q tests/test_rustic_interpreter.py -k balance_case
 pytest -q tests/test_rustic_interpreter.py -k balance_item
+pytest -q tests/test_rustic_interpreter.py -k balance_unit
 pytest -q tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_computes_array_threshold_validation_helpers tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_runs_array_statistics_showcase_fixture tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_releases_reverse_take_temporaries
 python3 -m pytest -q
 PYTHONPATH=src python3 -m r_project --root . --json
