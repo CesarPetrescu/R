@@ -1,5 +1,7 @@
 # R
 
+[![C99 runtime](https://img.shields.io/badge/runtime-C99-00599C?logo=c)](runtime/rustic.c) [![Language: Rust-like subset](https://img.shields.io/badge/language-Rust--like%20subset-DEA584?logo=rust)](docs/ROADMAP.md) [![Docker](https://img.shields.io/badge/Docker-runnable-2496ED?logo=docker)](#run-with-docker) [![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
+
 **A C-hosted Rust-like interpreter, built and tested through an automated development loop.** R is for people exploring language implementation in C and for contributors who want to improve a small interpreted subset. It does **not** compile or run general Rust. This automation showcase is about advancing interpreted Rust inside C; the development loop is not a substitute for the interpreter.
 
 ## Try the interpreter
@@ -13,6 +15,18 @@ cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtu
 ```
 
 The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
+
+## Run with Docker
+
+From the repository root, with Docker installed, build the test image and run the same C-host fixture **inside** it (no host C compiler needed):
+
+```sh
+docker build -t rustic-local .
+docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtures/rustic_expression_driver.c -o /tmp/rustic-demo && /tmp/rustic-demo "let x = 2 + 3; x * 4"'
+# let x = 2 + 3; x * 4 => 20
+```
+
+The image is a development/test environment, not a packaged interpreter CLI. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
 
