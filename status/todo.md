@@ -11,12 +11,13 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Every-run checklist
 
-- [ ] Pull latest `main` with `git checkout main && git pull --ff-only`
-- [ ] Read README, plan, prompt, and all `status/` files
+- [ ] Inspect branch/status and checkout ownership first; sync clean, unowned `main` with a fast-forward pull, or use an isolated worktree. Never switch, reset, or stash another worker's shared checkout.
+- [ ] Read README, roadmap, plan, prompt, and all `status/` files
 - [ ] Ideate candidate roadmap-completion tasks
 - [ ] Choose the highest-impact finishable work package
 - [ ] Write failing tests first for behavior changes
 - [ ] Implement the selected work package fully enough to close backlog items
 - [ ] Run verification
 - [ ] Update status/backlog with completed and overflow ideas
-- [ ] Commit and push verified changes
+- [ ] Commit verified changes only on a focused `ai/r/*` branch, push through the authorized bot wrapper, and open/update a PR against `main`; never push directly to `main`.
+- [ ] Before any merge, require the exact-current-head authenticated reviewer verifier (`/usr/local/bin/r-verify-ai-review <pr-number>`, exit 0 and JSON `"ok": true`), clean mergeability, required checks and local Docker evidence; leave the PR open if any gate is missing.
