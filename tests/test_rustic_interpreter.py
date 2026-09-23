@@ -1,3 +1,4 @@
+import ctypes
 import subprocess
 from pathlib import Path
 
@@ -42,6 +43,55 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == "1 + 2 * 3 => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_evaluates_unary_minus_in_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = -3; x + 5"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 2\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_unary_minus_in_short_circuit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && -missing"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"-(0 - {long_max} - 1)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_unary_minus_showcase_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_unary_minus_showcase.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 5
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_invalid_unary_minus_operands(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for source, diagnostic in (("-", "expected integer"),
+                               ("-[1]", "expected integer"),
+                               ("-missing", "undefined identifier")):
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert result.stderr == f"{diagnostic}: {source}\n"
 
 
 def test_c_hosted_rustic_interpreter_reports_invalid_expression(tmp_path):
