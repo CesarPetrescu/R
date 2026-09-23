@@ -71,6 +71,60 @@ def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_out_of_range_integer_literal(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = str(long_max + 1)
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_out_of_range_match_arm_pattern(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"match 0 {{ {long_max + 1} => 1, _ => 2 }}"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
+    binary = tmp_path / "rustic-api-contract"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "runtime" / "include"),
+         str(ROOT / "runtime" / "rustic.c"), str(ROOT / "tests" / "fixtures" / "rustic_api_contract_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "C API success, overflow, output preservation and NULL diagnostics: ok\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_integer_literal_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_integer_literal_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 12
+    for template, expected in cases:
+        source = template.replace("{LONG_MAX}", str(long_max)).replace("{OVER_LIMIT}", str(long_max + 1))
+        expected = expected.replace("{LONG_MAX}", str(long_max))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, source
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, result.stderr
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_unary_minus_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_unary_minus_showcase.txt"
