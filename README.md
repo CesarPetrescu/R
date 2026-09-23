@@ -26,7 +26,7 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 # let x = 2 + 3; x * 4 => 20
 ```
 
-The image is a development/test environment, not a packaged interpreter CLI. For the full container verification use `docker compose run --build --rm test` as shown below.
+The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
 
