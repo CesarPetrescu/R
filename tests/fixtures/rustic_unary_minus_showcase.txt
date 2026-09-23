@@ -1,0 +1,6 @@
+# Each line is source => integer result; host driver evaluates one line at a time.
+let offset = -2; let xs = [4, -5, 7]; xs[1] * offset => 10
+let x = 3; if x > 0 { -x } else { x } => -3
+fn neg(x) { -x }; neg(2 * 3) + 1 => -5
+-(-3) * 2 => 6
+0 && -missing => 0

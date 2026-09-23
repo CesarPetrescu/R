@@ -5,9 +5,10 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 ## Next recommended tasks
 
 1. Specify the accepted Rustic subset and C API contract with runnable positive/negative host examples, explicit integer/array/function semantics and fixed resource bounds; compare the reference against existing tests.
-2. Pick one observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
-3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
-4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
+2. Audit C `long` literal conversion and arithmetic overflow using explicit host examples (including beyond-`LONG_MAX` input), then define/test a deterministic C API diagnostic without assuming full Rust integer semantics. Unary negation of `LONG_MIN` is covered; other operations are not.
+3. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
+4. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
+5. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Every-run checklist
 
