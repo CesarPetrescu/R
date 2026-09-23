@@ -1,12 +1,13 @@
 # R TODO
 
-The autonomous agent should complete concrete implementation work every run, not vague improvements.
+Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
 
-1. Add CI workflow once the builder GitHub App has `workflows` permission, or ask a maintainer to push `.github/workflows/ci.yml`.
-2. Split the oversized `parse_factor` helper-dispatch chain into smaller generated or table-driven units without changing interpreter behavior; preserve the checked helper-chain outputs and strict diagnostics.
-3. Continue extending the Rustic interpreter with a bounded, test-first product-depth helper family after the balance-part helpers; select the next identifier-safe suffix (for example `whole` or `piece`) after checking the 63-character Rustic identifier cap, with acceptance coverage for direct/edge behavior, invalid arguments, the composed showcase, and 65-iteration cleanup diagnostics.
+1. Specify the accepted Rustic subset and C API contract with runnable positive/negative host examples, explicit integer/array/function semantics and fixed resource bounds; compare the reference against existing tests.
+2. Pick one observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
+3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
+4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Every-run checklist
 
