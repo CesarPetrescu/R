@@ -12,9 +12,10 @@ From the repository root, with a C99 compiler (`cc`) installed:
 cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtures/rustic_expression_driver.c -o /tmp/rustic-expression-demo
 /tmp/rustic-expression-demo 'let x = 2 + 3; x * 4'
 /tmp/rustic-expression-demo 'fn add(a, b) { a + b }; add(2, 3)'
+/tmp/rustic-expression-demo 'let offset = -2; let xs = [4, -5, 7]; xs[1] * offset'
 ```
 
-The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
+The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
 
 ## Run with Docker
 
@@ -30,7 +31,7 @@ The image is a development/test environment, not a packaged interpreter CLI. Cha
 
 ## What works today
 
-The runtime in [`runtime/rustic.c`](runtime/rustic.c) implements a **bounded subset**: integer arithmetic and comparisons, boolean-integer `!`/`&&`/`||`, `let` and assignment, scoped blocks, `if`/`else`, `while` with `break`/`continue`, integer-arm `match`, named/recursive functions and function values, and arrays of integers with checked indexing. Selected array operations include `len`, `set`, `push`, `sum`, `map`, `filter`, and `fold`. The large threshold/outlier and statistics helper families are **showcase built-ins**; their names and number do not imply corresponding Rust syntax or standard-library coverage. See [interpreter tests](tests/test_rustic_interpreter.py) and [current state](status/current-state.md) for the precise implemented slice.
+The runtime in [`runtime/rustic.c`](runtime/rustic.c) implements a **bounded subset**: integer arithmetic (including unary `-` on expressions) and comparisons, boolean-integer `!`/`&&`/`||`, `let` and assignment, scoped blocks, `if`/`else`, `while` with `break`/`continue`, integer-arm `match`, named/recursive functions and function values, and arrays of integers with checked indexing. Unary `-` binds tighter than multiplication, composes with `!` and nested expressions, and is grammar-checked even in skipped branches. A missing or non-integer operand fails; negating `LONG_MIN` returns `RUSTIC_ERR_INTEGER_OVERFLOW` rather than overflowing the C host. This does not add general checked arithmetic or a Rust integer type system. Selected array operations include `len`, `set`, `push`, `sum`, `map`, `filter`, and `fold`. The large threshold/outlier and statistics helper families are **showcase built-ins**; their names and number do not imply corresponding Rust syntax or standard-library coverage. See [interpreter tests](tests/test_rustic_interpreter.py), [unary-minus fixture](tests/fixtures/rustic_unary_minus_showcase.txt) and [current state](status/current-state.md) for the precise implemented slice.
 
 This is not `rustc`: no Rust type system, ownership/borrowing, macros, crates, Cargo, strings, or general I/O. Bounds are fixed in the implementation (including 63-character identifiers, 16 elements per array, 8 functions, and a 512-step evaluation budget); errors such as out-of-bounds access, division by zero, and step exhaustion return status codes. These limits make it a learning/prototype runtime, **not** a production sandbox or a compatible Rust implementation. The [roadmap](docs/ROADMAP.md) prioritizes real semantics and diagnostics over more helper suffixes.
 
@@ -63,7 +64,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 554, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 254, "next_item": null, "open": 0}, "P2": {"completed": 296, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 555, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 255, "next_item": null, "open": 0}, "P2": {"completed": 296, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -75,7 +76,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 554 |
+| Completed backlog items | 555 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -84,7 +85,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 254 | 0 | None |
+| P1 | 255 | 0 | None |
 | P2 | 296 | 0 | None |
 
 ## Next backlog item

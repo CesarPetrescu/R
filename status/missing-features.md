@@ -69,6 +69,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add comparison-heavy loop showcase fixtures that combine nested blocks, local helper functions, function values, and compound boolean guards.
 - [x] Add `break`/`continue` loop-control semantics to Rustic so longer loop-heavy showcase programs can exit early without encoding every branch in guard expressions.
 - [x] Add `match`-style expression dispatch to Rustic so showcase programs can express multi-way integer decisions without deeply nested `if`/`else` blocks.
+- [x] Add unary minus to Rustic expressions so negative values can appear in bindings, arrays, functions and composed branches; parse skipped operands with the same grammar, report malformed/type errors, and reject negation of `LONG_MIN` with a C API overflow status.
 - [x] Add array literals and integer indexing to Rustic so programs can bind small collections and select elements inside arithmetic expressions.
 - [x] Add array length helper operations to Rustic so loop-heavy showcase programs can inspect small runtime collections beyond fixed-index reads.
 - [x] Add bounded array rebuild helper operations to Rustic so loop-built showcase programs can evolve small runtime collections beyond fixed-index reads and `len(xs)` inspection.

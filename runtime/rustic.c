@@ -1,6 +1,7 @@
 #include "rustic.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -837,13 +838,20 @@ static struct Value parse_factor(struct Parser *parser) {
     enum LoopControl saved_loop_control;
 
     skip_spaces(parser);
-    if (*parser->cursor == '!') {
-        parser->cursor++;
+    if (*parser->cursor == '!' || *parser->cursor == '-') {
+        char operator = *parser->cursor++;
         value = parse_factor(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &integer)) {
             return integer_value(0);
         }
-        return integer_value(integer == 0 ? 1 : 0);
+        if (operator == '!') {
+            return integer_value(integer == 0 ? 1 : 0);
+        }
+        if (integer == LONG_MIN) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return integer_value(0);
+        }
+        return integer_value(-integer);
     }
 
     if (*parser->cursor == '{') {
@@ -5204,7 +5212,7 @@ static int skip_factor_expression(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
 
     skip_spaces(parser);
-    if (*parser->cursor == '!') {
+    if (*parser->cursor == '!' || *parser->cursor == '-') {
         parser->cursor++;
         return skip_factor_expression(parser);
     }
@@ -5862,6 +5870,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "empty array";
     case RUSTIC_ERR_ARRAY_LENGTH_MISMATCH:
         return "array length mismatch";
+    case RUSTIC_ERR_INTEGER_OVERFLOW:
+        return "integer overflow";
     default:
         return "unknown rustic interpreter error";
     }
