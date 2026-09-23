@@ -1,0 +1,11 @@
+# Expected: <source> => <integer> or error:<C API diagnostic>
+let x = {LONG_MAX}; x => {LONG_MAX}
+match {LONG_MAX} { {LONG_MAX} => 9, _ => 0 } => 9
+0 && {OVER_LIMIT} => 0
+1 || {OVER_LIMIT} => 1
+if 0 { {OVER_LIMIT} } else { 7 } => 7
+{OVER_LIMIT} => error:integer overflow
+let x = {OVER_LIMIT}; x => error:integer overflow
+-{OVER_LIMIT} => error:integer overflow
+match 0 { {OVER_LIMIT} => 1, _ => 2 } => error:integer overflow
+match 1 { 1 => 1, {OVER_LIMIT} => 2 } => error:integer overflow

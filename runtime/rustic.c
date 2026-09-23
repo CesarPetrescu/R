@@ -1,6 +1,7 @@
 #include "rustic.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -498,8 +499,13 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
         parser->cursor++;
         *out_is_default = 1;
     } else if (isdigit((unsigned char)*parser->cursor)) {
+        errno = 0;
         *out_pattern = strtol(parser->cursor, &end, 10);
         parser->cursor = end;
+        if (errno == ERANGE) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return 0;
+        }
     } else {
         parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
         return 0;
@@ -886,8 +892,13 @@ static struct Value parse_factor(struct Parser *parser) {
     }
 
     if (isdigit((unsigned char)*parser->cursor)) {
+        errno = 0;
         integer = strtol(parser->cursor, &end, 10);
         parser->cursor = end;
+        if (errno == ERANGE) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return integer_value(0);
+        }
         return parse_index_postfix(parser, integer_value(integer));
     }
 
