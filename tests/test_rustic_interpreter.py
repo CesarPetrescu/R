@@ -111,7 +111,7 @@ def test_c_hosted_rustic_interpreter_runs_integer_literal_contract_fixture(tmp_p
     fixture = ROOT / "tests" / "fixtures" / "rustic_integer_literal_contract.txt"
     cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
              if line and not line.startswith("#")]
-    assert len(cases) == 10
+    assert len(cases) == 12
     for template, expected in cases:
         source = template.replace("{LONG_MAX}", str(long_max)).replace("{OVER_LIMIT}", str(long_max + 1))
         expected = expected.replace("{LONG_MAX}", str(long_max))
