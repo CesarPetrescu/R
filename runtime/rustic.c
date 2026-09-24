@@ -1569,7 +1569,13 @@ static struct Value parse_factor(struct Parser *parser) {
                     return integer_value(0);
                 }
                 for (element_index = 0; element_index < array->element_count; element_index++) {
-                    total += array->elements[element_index];
+                    long element = array->elements[element_index];
+                    if ((element > 0 && total > LONG_MAX - element) ||
+                        (element < 0 && total < LONG_MIN - element)) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
+                    total += element;
                 }
                 return parse_index_postfix(parser, integer_value(total));
             }

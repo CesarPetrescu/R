@@ -1,0 +1,14 @@
+# Source => integer result, or error:<diagnostic>. LONG_MIN is computed within range.
+sum([]) => 0
+sum([{LONG_MAX}, 0]) => {LONG_MAX}
+sum([{LONG_MAX}, 1]) => error:integer overflow
+sum([1, {LONG_MAX}, -1]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; sum([low, -1]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; sum([low, 0]) => {LONG_MIN}
+let xs = push([{LONG_MAX}], 1); sum(xs) => error:integer overflow
+fn total(xs) { sum(xs) }; total([2, 3]) => 5
+if 0 { sum([{LONG_MAX}, 1]) } else { 7 } => 7
+0 && sum([{LONG_MAX}, 1]) => 0
+sum([1]) + sum([2, 3]) => 6
+sum([1], [2]) => error:wrong argument count
+sum(1) => error:expected array

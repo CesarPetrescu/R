@@ -32,7 +32,8 @@ typedef enum RusticStatus {
 
 /* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
  * result is outside host long; / and % report it for LONG_MIN with divisor -1.
- * Array/statistics built-in intermediate arithmetic is not covered.
+ * sum(array) also checks each intermediate addition; other array/statistics
+ * built-in intermediate arithmetic is not covered.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
