@@ -1166,7 +1166,13 @@ static struct Value parse_factor(struct Parser *parser) {
                             chunk_end = source_count;
                         }
                         for (offset = chunk_start; offset < chunk_end; offset++) {
-                            total += source_elements[offset];
+                            long element = source_elements[offset];
+                            if ((element > 0 && total > LONG_MAX - element) ||
+                                (element < 0 && total < LONG_MIN - element)) {
+                                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                                return integer_value(0);
+                            }
+                            total += element;
                         }
                         result_elements[chunk_index] = total;
                     }

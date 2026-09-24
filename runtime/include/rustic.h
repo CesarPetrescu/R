@@ -32,10 +32,10 @@ typedef enum RusticStatus {
 
 /* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
  * result is outside host long; / and % report it for LONG_MIN with divisor -1.
- * sum(array), prefix_sum(array), window_sum(array, n), and
- * moving_average_sum(array, n) check each intermediate addition. Other
- * array/statistics arithmetic (e.g. chunk_sum, adjacent_diff, median, and
- * variance_sum) remains unchecked for overflow.
+ * sum(array), prefix_sum(array), window_sum(array, n),
+ * moving_average_sum(array, n), and chunk_sum(array, n) check each
+ * intermediate addition. Other array/statistics arithmetic (e.g.
+ * adjacent_diff, median, and variance_sum) remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
