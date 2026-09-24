@@ -4,14 +4,15 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Audit arithmetic overflow on the C-hosted `long` operations (`+`, binary `-`, `*`, `/`, `%`) with an observed program and a tight failing test before selecting a deterministic diagnostic; keep evaluation-bounded behavior and avoid undefined C overflow. Literal conversion and unary negation now have bounded diagnostics, but this does not yet cover arithmetic.
+1. Audit array/statistics built-ins for unchecked intermediate `long` arithmetic (e.g. `sum([LONG_MAX, 1])`) with a failing strict-C99 C-host test; decide whether to propagate `RUSTIC_ERR_INTEGER_OVERFLOW` or narrow their input contract, and include callback/temporary cleanup. The checked expression operators do **not** protect built-in internals.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
-- Documented the accepted Rustic language/C API subset with executable success/error host examples in `docs/rustic-language-contract.md`; `strtol` overflow in evaluated literals and match-arm patterns now reports `RUSTIC_ERR_INTEGER_OVERFLOW`. The grammar-only skip path still does not evaluate literal magnitude. Arithmetic overflow remains a separate task.
+- Documented the accepted Rustic language/C API subset with executable success/error host examples in `docs/rustic-language-contract.md`; `strtol` overflow in evaluated literals and match-arm patterns reports `RUSTIC_ERR_INTEGER_OVERFLOW`. The grammar-only skip path does not evaluate literal magnitude. Checked expression operators are described below; helper-internal arithmetic remains a separate task.
+- Checked host-`long` arithmetic for evaluated expression operators, including the `LONG_MIN / -1` and `% -1` crash cases; added boundary cases, composed positive/negative host examples and C API output-preservation checks. Helper-internal arithmetic is not checked.
 
 ## Every-run checklist
 

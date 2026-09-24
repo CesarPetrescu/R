@@ -268,6 +268,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add threshold-run signal density band span gap delta balance slate helpers to Rustic so showcase programs can use `threshold_run_signal_density_band_span_gap_delta_balance_slate(array, min, max)` and `outlier_run_signal_density_band_span_gap_delta_balance_slate(array, min, max)` to compare balance-basalt scores against matching-mass plus shortest-run slate pressure, with empty/single-element/no-match behavior, invalid argument diagnostics, composition fixtures, and array-slot cleanup.
 
 - [x] Reject decimal integer literals and match-arm patterns beyond host `LONG_MAX` with `RUSTIC_ERR_INTEGER_OVERFLOW` rather than silently clamping; preserve lazy skipped-operand semantics, demonstrate host-positive/negative cases, and document the C API subset and unchecked arithmetic limit.
+- [x] Diagnose host-`long` overflow in evaluated Rustic `+`, binary `-`, `*`, `/`, and `%` expression operators without signed-overflow UB or a host crash; preserve skipped-operand evaluation, division-by-zero diagnostics, and C API output on failure, with portable boundary fixture and strict C99 host tests. Array/statistics built-in intermediate arithmetic remains out of scope.
 
 ## P2 — project quality
 

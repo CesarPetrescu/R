@@ -1,0 +1,27 @@
+# Source => integer result, or error:<diagnostic>. LONG_MIN is a computed value.
+{LONG_MAX} + 0 => {LONG_MAX}
+{LONG_MAX} + 1 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low + -1 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low - 0 => {LONG_MIN}
+let low = 0 - {LONG_MAX} - 1; low - 1 => error:integer overflow
+{LONG_MAX} - -1 => error:integer overflow
+{LONG_MAX} * 1 => {LONG_MAX}
+{LONG_MAX} * 2 => error:integer overflow
+{LONG_MAX} * -2 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low * -1 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low * 1 => {LONG_MIN}
+let low = 0 - {LONG_MAX} - 1; low * 0 => 0
+let low = 0 - {LONG_MAX} - 1; low / -1 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low % -1 => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; low / 1 => {LONG_MIN}
+let low = 0 - {LONG_MAX} - 1; low % 2 => 0
+let x = {LONG_MAX}; if 0 { x + 1 } else { x } => {LONG_MAX}
+0 && ({LONG_MAX} + 1) => 0
+1 || ({LONG_MAX} * 2) => 1
+0 && (1 + *) => error:expected integer
+let x = {LONG_MAX}; x + [1] => error:expected integer
+let x = {LONG_MAX}; x / 0 => error:division by zero
+let x = {LONG_MAX}; x % 0 => error:division by zero
+let x = {LONG_MAX}; x * 0 + 5 => 5
+fn twice(n) { n * 2 }; twice({LONG_MAX}) => error:integer overflow
+match 1 { 0 => {LONG_MAX} + 1, 1 => 7 } => 7

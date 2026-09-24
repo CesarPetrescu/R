@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-23
+Last updated: 2026-09-24
 
 ## Repository
 
@@ -16,8 +16,9 @@ Last updated: 2026-09-23
 
 ## Implemented behavior
 
-- Decimal literal and integer match-arm pattern conversion now clear/check `errno` around `strtol`. Values beyond host `LONG_MAX` return `RUSTIC_ERR_INTEGER_OVERFLOW` instead of silently clamping; a grammar-only skipped operand is not converted, whereas match-arm patterns are checked even when an earlier arm matched. `tests/fixtures/rustic_integer_literal_contract.txt` exercises boundary success, composed failures, skipped operands and both match paths using the actual host `sizeof(long)`. `docs/rustic-language-contract.md` records accepted forms, C API return/output behavior (covered by `tests/fixtures/rustic_api_contract_driver.c`), resource bounds, and excluded general arithmetic overflow semantics.
-- Unary `-` now evaluates integer expressions with factor-level precedence, including bindings, array elements, function calls and nested expressions. The grammar-aware skip path consumes it in unselected logical operands, but unselected block bodies are only brace-scanned; missing operands return `expected integer` when parsed, array operands return `expected integer`, unknown identifiers remain `undefined identifier`, and negating `LONG_MIN` returns `RUSTIC_ERR_INTEGER_OVERFLOW`/`integer overflow` without invoking signed-negation UB. `tests/fixtures/rustic_unary_minus_showcase.txt` and strict C99 host tests exercise these forms. Other arithmetic overflow behavior has not yet been made a checked contract.
+- Evaluated expression operators `+`, binary `-`, and `*` check host `long` bounds before calculating; `/` and `%` reject `LONG_MIN` with divisor `-1` before C's undefined division/remainder. Overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW`, zero division remains a separate error, short-circuited operands are not evaluated, and the C API preserves the output pointer on failure. The portable 26-row `tests/fixtures/rustic_checked_arithmetic_contract.txt`, five operator-specific RED/GREEN tests and C API host fixture cover boundaries, composition, invalid syntax/types, and the previously crashing divisions. Built-in helper intermediate arithmetic is **not** covered by this operator contract.
+- Decimal literal and integer match-arm pattern conversion now clear/check `errno` around `strtol`. Values beyond host `LONG_MAX` return `RUSTIC_ERR_INTEGER_OVERFLOW` instead of silently clamping; a grammar-only skipped operand is not converted, whereas match-arm patterns are checked even when an earlier arm matched. `tests/fixtures/rustic_integer_literal_contract.txt` exercises boundary success, composed failures, skipped operands and both match paths using the actual host `sizeof(long)`. `docs/rustic-language-contract.md` records accepted forms, C API return/output behavior (covered by `tests/fixtures/rustic_api_contract_driver.c`), resource bounds, and records which arithmetic cases remain outside the contract (built-in intermediate calculations).
+- Unary `-` now evaluates integer expressions with factor-level precedence, including bindings, array elements, function calls and nested expressions. The grammar-aware skip path consumes it in unselected logical operands, but unselected block bodies are only brace-scanned; missing operands return `expected integer` when parsed, array operands return `expected integer`, unknown identifiers remain `undefined identifier`, and negating `LONG_MIN` returns `RUSTIC_ERR_INTEGER_OVERFLOW`/`integer overflow` without invoking signed-negation UB. `tests/fixtures/rustic_unary_minus_showcase.txt` and strict C99 host tests exercise these forms. Built-in helper arithmetic is not yet checked.
 - The sentry, warden, watch, keeper, patrol, and post balance helper pairs are registered through the existing Rustic helper chain. Each pair is covered by direct/edge, composed showcase, invalid-argument, and 65-iteration cleanup evidence where applicable. The checked outlier showcase sequence preserves `[1, 8, 9]` as one contiguous outlier run when calculating transition and run-pressure adjustments.
 
 - The review balance helper pair is registered after check and inherits the checked balance chain before applying matching-mass plus transition-count review pressure. Direct threshold/outlier behavior, empty/single/no-match cases, invalid arguments, the composed statistics showcase (`-3180`), and 65-iteration cleanup (`-186225` threshold / `-151125` outlier) are covered by host tests.
@@ -145,6 +146,7 @@ Last updated: 2026-09-23
 
 ```bash
 git diff --check
+python3 -m pytest -q tests/test_rustic_interpreter.py -k 'arithmetic_contract_fixture or addition_overflow or subtraction_overflow or multiplication_overflow or division_overflow or remainder_overflow or c_api_contract'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k integer_literal
 python3 -m pytest -q tests/test_rustic_interpreter.py -k unary_minus
 pytest -q tests/test_rustic_interpreter.py -k balance_assert
