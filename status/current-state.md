@@ -16,6 +16,7 @@ Last updated: 2026-09-24
 
 ## Implemented behavior
 
+- `prefix_sum(array)` now checks each intermediate host-`long` addition before computing it. Positive and negative overflow return `RUSTIC_ERR_INTEGER_OVERFLOW`, including a prefix later cancelled by a negative element; `prefix_sum([])` stays empty and C API output remains unchanged on error. The 14-row portable `tests/fixtures/rustic_prefix_sum_overflow_contract.txt` covers boundaries, nested temporaries, function composition, lazy branches, invalid arguments and 65-iteration cleanup. Other array/statistics built-in intermediate arithmetic remains unchecked.
 - `sum(array)` now checks each intermediate host-`long` addition before computing it; positive and negative overflow return `RUSTIC_ERR_INTEGER_OVERFLOW` and do not update the C API output, including when later elements could cancel the overflow. Empty arrays still return `0`. The 13-row portable `tests/fixtures/rustic_sum_overflow_contract.txt` covers boundaries, function/temporary composition, skipped paths and invalid arguments. Other array/statistics built-in arithmetic remains unchecked.
 
 - Evaluated expression operators `+`, binary `-`, and `*` check host `long` bounds before calculating; `/` and `%` reject `LONG_MIN` with divisor `-1` before C's undefined division/remainder. Overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW`, zero division remains a separate error, short-circuited operands are not evaluated, and the C API preserves the output pointer on failure. The portable 26-row `tests/fixtures/rustic_checked_arithmetic_contract.txt`, five operator-specific RED/GREEN tests and C API host fixture cover boundaries, composition, invalid syntax/types, and the previously crashing divisions. Built-in helper intermediate arithmetic is **not** covered by this operator contract.
@@ -148,6 +149,7 @@ Last updated: 2026-09-24
 
 ```bash
 git diff --check
+PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'prefix_sum_overflow or c_api_contract or builds_prefix_sums'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'sum_overflow_contract or c_api_contract or summarizes_arrays_with_sum_helper'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'arithmetic_contract_fixture or addition_overflow or subtraction_overflow or multiplication_overflow or division_overflow or remainder_overflow or c_api_contract'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k integer_literal
