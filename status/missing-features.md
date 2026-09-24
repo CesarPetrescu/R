@@ -272,6 +272,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject overflowing intermediate `sum(array)` additions with `RUSTIC_ERR_INTEGER_OVERFLOW` rather than signed-overflow UB; cover positive/negative boundaries, a later-cancelled prefix, function/temporary composition, skipped branches, invalid arguments, and C API output preservation with a portable host fixture.
 - [x] Reject overflowing intermediate `prefix_sum(array)` additions with `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB; cover positive/negative bounds, a later-cancelled prefix, nested temporary arrays, skipped branches, repeated cleanup, invalid arguments, and C API output preservation.
 - [x] Reject overflowing intermediate `window_sum(array, n)` additions with `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB; cover positive/negative bounds, overlapping windows, later-cancelled sums, nested temporaries, skipped branches, repeated cleanup, invalid arguments, and C API output preservation.
+- [x] Reject overflowing intermediate `moving_average_sum(array, n)` window additions before integer division with `RUSTIC_ERR_INTEGER_OVERFLOW`; cover both bounds, cancellation, composition, lazy paths, invalid arguments, repeated cleanup, and unchanged C API output.
 
 ## P2 — project quality
 
