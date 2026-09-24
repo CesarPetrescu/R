@@ -4,13 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Continue the built-in arithmetic safety audit beyond checked `sum` and `prefix_sum`: demonstrate overflow in `window_sum([LONG_MAX, 1], 2)` with a portable RED C-host fixture, then propagate `RUSTIC_ERR_INTEGER_OVERFLOW` and check nested temporary-array lifetime. Expression operators and these two helpers do **not** protect other built-in internals.
+1. Continue the built-in arithmetic safety audit beyond checked `sum`, `prefix_sum` and `window_sum`: demonstrate overflow in `moving_average_sum([LONG_MAX, 1], 2)` with a portable RED C-host fixture, then preserve its integer-division behavior and nested temporary-array lifetime. It shares window accumulation code but remains unchecked; `chunk_sum` and `adjacent_diff` are also separate candidates.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
+- Checked every `window_sum(array, n)` intermediate addition, including positive/negative boundaries and later cancellation in overlapping windows; preserved C API output on failure. A portable 17-row fixture exercises composition, lazy paths, diagnostics and 65-iteration temporary cleanup. `moving_average_sum` still has unchecked accumulation.
 - Checked every `prefix_sum(array)` intermediate addition before computing it, including positive/negative boundaries and a later-cancelled prefix; C API output remains unchanged on error. A portable 14-row host fixture covers composition, lazy branches, invalid arguments and repeated temporary cleanup.
 - Documented the accepted Rustic language/C API subset with executable success/error host examples in `docs/rustic-language-contract.md`; `strtol` overflow in evaluated literals and match-arm patterns reports `RUSTIC_ERR_INTEGER_OVERFLOW`. The grammar-only skip path does not evaluate literal magnitude. Checked expression operators are described below; helper-internal arithmetic remains a separate task.
 - Checked host-`long` arithmetic for evaluated expression operators, including the `LONG_MIN / -1` and `% -1` crash cases; added boundary cases, composed positive/negative host examples and C API output-preservation checks. Helper-internal arithmetic is not checked.

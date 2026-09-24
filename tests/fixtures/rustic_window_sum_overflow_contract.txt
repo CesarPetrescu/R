@@ -1,0 +1,18 @@
+# Source => integer result, or error:<diagnostic>. LONG_MIN is computed within range.
+len(window_sum([], 1)) => 0
+len(window_sum([1], 2)) => 0
+window_sum([{LONG_MAX}, 0], 2)[0] => {LONG_MAX}
+window_sum([{LONG_MAX}, 1], 2)[0] => error:integer overflow
+window_sum([1, {LONG_MAX}, -1], 3)[0] => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; window_sum([low, -1], 2)[0] => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; window_sum([low, 0], 2)[0] => {LONG_MIN}
+window_sum([2, -3, 4], 2)[1] => 1
+window_sum([0, {LONG_MAX}, 1], 2)[1] => error:integer overflow
+window_sum(push([{LONG_MAX}], 1), 2)[0] => error:integer overflow
+fn first(xs) { window_sum(xs, 2)[0] }; first([2, 3]) => 5
+if 0 { window_sum([{LONG_MAX}, 1], 2)[0] } else { 7 } => 7
+0 && window_sum([{LONG_MAX}, 1], 2)[0] => 0
+window_sum(1, 2) => error:expected array
+window_sum([1], 0) => error:expected integer
+window_sum([1], 1, 2) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + window_sum(push([1], 2), 2)[0]; n = n + 1; }; total => 195
