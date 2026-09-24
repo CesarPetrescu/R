@@ -270,6 +270,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject decimal integer literals and match-arm patterns beyond host `LONG_MAX` with `RUSTIC_ERR_INTEGER_OVERFLOW` rather than silently clamping; preserve lazy skipped-operand semantics, demonstrate host-positive/negative cases, and document the C API subset and unchecked arithmetic limit.
 - [x] Diagnose host-`long` overflow in evaluated Rustic `+`, binary `-`, `*`, `/`, and `%` expression operators without signed-overflow UB or a host crash; preserve skipped-operand evaluation, division-by-zero diagnostics, and C API output on failure, with portable boundary fixture and strict C99 host tests. Array/statistics built-in intermediate arithmetic remains out of scope.
 - [x] Reject overflowing intermediate `sum(array)` additions with `RUSTIC_ERR_INTEGER_OVERFLOW` rather than signed-overflow UB; cover positive/negative boundaries, a later-cancelled prefix, function/temporary composition, skipped branches, invalid arguments, and C API output preservation with a portable host fixture.
+- [x] Reject overflowing intermediate `prefix_sum(array)` additions with `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB; cover positive/negative bounds, a later-cancelled prefix, nested temporary arrays, skipped branches, repeated cleanup, invalid arguments, and C API output preservation.
 
 ## P2 — project quality
 

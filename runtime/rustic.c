@@ -1177,7 +1177,13 @@ static struct Value parse_factor(struct Parser *parser) {
                 } else if (prefixing) {
                     long total = 0;
                     for (element_index = 0; element_index < result_count; element_index++) {
-                        total += source_elements[element_index];
+                        long element = source_elements[element_index];
+                        if ((element > 0 && total > LONG_MAX - element) ||
+                            (element < 0 && total < LONG_MIN - element)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        total += element;
                         result_elements[element_index] = total;
                     }
                 } else if (differencing) {
