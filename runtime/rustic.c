@@ -5053,6 +5053,13 @@ static struct Value parse_term(struct Parser *parser) {
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &right)) {
                 return integer_value(0);
             }
+            if ((left > 0 && right > 0 && left > LONG_MAX / right) ||
+                (left > 0 && right < 0 && right < LONG_MIN / left) ||
+                (left < 0 && right > 0 && left < LONG_MIN / right) ||
+                (left < 0 && right < 0 && left < LONG_MAX / right)) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return integer_value(0);
+            }
             value = integer_value(left * right);
             continue;
         }
@@ -5067,6 +5074,10 @@ static struct Value parse_term(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_DIVISION_BY_ZERO;
                 return integer_value(0);
             }
+            if (left == LONG_MIN && right == -1) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return integer_value(0);
+            }
             value = integer_value(left / right);
             continue;
         }
@@ -5078,6 +5089,10 @@ static struct Value parse_term(struct Parser *parser) {
         }
         if (right == 0) {
             parser->status = RUSTIC_ERR_DIVISION_BY_ZERO;
+            return integer_value(0);
+        }
+        if (left == LONG_MIN && right == -1) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
             return integer_value(0);
         }
         value = integer_value(left % right);
@@ -5103,6 +5118,11 @@ static struct Value parse_additive_expression(struct Parser *parser) {
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
+            if ((right > 0 && left > LONG_MAX - right) ||
+                (right < 0 && left < LONG_MIN - right)) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return integer_value(0);
+            }
             value = integer_value(left + right);
         } else if (*parser->cursor == '-') {
             if (!value_as_integer(parser, value, &left)) {
@@ -5111,6 +5131,11 @@ static struct Value parse_additive_expression(struct Parser *parser) {
             parser->cursor++;
             right_value = parse_term(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+                return integer_value(0);
+            }
+            if ((right < 0 && left > LONG_MAX + right) ||
+                (right > 0 && left < LONG_MIN + right)) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
                 return integer_value(0);
             }
             value = integer_value(left - right);

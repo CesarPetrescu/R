@@ -1,6 +1,6 @@
 # Rustic language and C-host contract
 
-Rustic is a bounded Rust-*like* expression interpreter, not `rustc`. The public entry point is `runtime/include/rustic.h`; `runtime/rustic.c` owns parsing and evaluation. The strict-C99 [host driver](../tests/fixtures/rustic_expression_driver.c), [direct C API fixture](../tests/fixtures/rustic_api_contract_driver.c) and [literal contract fixture](../tests/fixtures/rustic_integer_literal_contract.txt) are executable reference cases. Python is test/report tooling, not the interpreter.
+Rustic is a bounded Rust-*like* expression interpreter, not `rustc`. The public entry point is `runtime/include/rustic.h`; `runtime/rustic.c` owns parsing and evaluation. The strict-C99 [host driver](../tests/fixtures/rustic_expression_driver.c), [direct C API fixture](../tests/fixtures/rustic_api_contract_driver.c), [literal contract fixture](../tests/fixtures/rustic_integer_literal_contract.txt) and [checked arithmetic fixture](../tests/fixtures/rustic_checked_arithmetic_contract.txt) are executable reference cases. Python is test/report tooling, not the interpreter.
 
 ## Accepted forms
 
@@ -20,7 +20,7 @@ RusticStatus status = rustic_eval_expression("let x = 2 + 3; x * 4", &result);
 
 Pass a NUL-terminated source and a non-NULL output pointer. Every call starts with fresh interpreter state. On success, `RUSTIC_OK` writes the final integer to `*out_value`. On failure, the output is **not updated** and the status describes the failure; `NULL` arguments return `RUSTIC_ERR_EXPECTED_INTEGER`. The host fixture prints `source => result` on success and `message: source` to stderr with exit code `2` on failure. The enum names and messages are in the [C header](../runtime/include/rustic.h) and implementation; do not infer a source position from a status code.
 
-Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patterns) return `RUSTIC_ERR_INTEGER_OVERFLOW` / `integer overflow` rather than silently clamping. The `-` prefix is a separate unary operator, so `-(LONG_MAX+1)` as a decimal token also fails literal conversion; negating a *computed* `LONG_MIN` has the same status. Skipped expression operands such as `0 && TOO_LARGE` are consumed without numeric conversion; `0 && (1 + *)` still rejects malformed expression syntax, while skipped `{ ... }` blocks are only scanned for balanced braces and can contain malformed statements. This is **not** a claim of checked arithmetic: `+`, binary `-`, `*`, `/` and `%` have not been given a comprehensive overflow contract. Do not use inputs near C `long` limits for those operations until that work is done.
+Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patterns) return `RUSTIC_ERR_INTEGER_OVERFLOW` / `integer overflow` rather than silently clamping. The `-` prefix is a separate unary operator, so `-(LONG_MAX+1)` as a decimal token also fails literal conversion; negating a *computed* `LONG_MIN` has the same status. Evaluated `+`, binary `-` and `*` also reject a result outside the host C `long` range. `/` and `%` reject `LONG_MIN` with divisor `-1` with the same overflow status; a zero divisor still returns `RUSTIC_ERR_DIVISION_BY_ZERO`. In-range division truncates toward zero and the remainder follows the C99 signed-integer rule. An error leaves the C API output untouched. These guarantees apply to **expression operators**, not to the many array/statistics built-ins, whose intermediate arithmetic is not yet checked. Skipped expression operands such as `0 && (LONG_MAX + 1)` are consumed without performing arithmetic; `0 && (1 + *)` still rejects malformed expression syntax, while skipped `{ ... }` blocks are only scanned for balanced braces and can contain malformed statements.
 
 ## Runnable host examples
 
@@ -31,11 +31,12 @@ cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtu
 /tmp/rustic-demo 'let x = 2 + 3; x * 4'  # => 20
 /tmp/rustic-demo '0 && 999999999999999999999999999999999999'  # => 0 (not evaluated)
 /tmp/rustic-demo '999999999999999999999999999999999999'  # exit 2: integer overflow
+/tmp/rustic-demo '9223372036854775807 + 1'  # exit 2: integer overflow on 64-bit long hosts
 /tmp/rustic-demo 'match 0 { 999999999999999999999999999999 => 1, _ => 2 }'  # exit 2: integer overflow
 /tmp/rustic-demo 'let xs = [1, 2]; xs[2]'  # exit 2: array index out of bounds
 ```
 
-These deliberately large digits exceed `LONG_MAX` on normal 32/64-bit hosts; the pytest fixture constructs the exact boundary from `sizeof(long)` for portability. A Docker-backed host run is in the [README](../README.md#run-with-docker).
+The first oversized digits exceed `LONG_MAX` on normal 32/64-bit hosts; the checked arithmetic example uses a 64-bit boundary. The pytest fixtures construct exact boundaries from `sizeof(long)` for portability. A Docker-backed host run is in the [README](../README.md#run-with-docker).
 
 ## Resource boundaries and exclusions
 

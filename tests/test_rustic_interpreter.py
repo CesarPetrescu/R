@@ -71,6 +71,76 @@ def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_reports_addition_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"let x = {long_max}; x + 1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_subtraction_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"let low = 0 - {long_max} - 1; low - 1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_multiplication_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"{long_max} * 2"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_division_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"let low = 0 - {long_max} - 1; low / -1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_remainder_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"let low = 0 - {long_max} - 1; low % -1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_checked_arithmetic_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_checked_arithmetic_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 26
+    for template, expected in cases:
+        source = template.replace("{LONG_MAX}", str(long_max))
+        expected = expected.replace("{LONG_MAX}", str(long_max)).replace("{LONG_MIN}", str(-long_max - 1))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_out_of_range_integer_literal(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
