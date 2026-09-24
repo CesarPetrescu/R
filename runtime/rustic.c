@@ -1145,7 +1145,13 @@ static struct Value parse_factor(struct Parser *parser) {
                     for (window_index = 0; window_index < result_count; window_index++) {
                         long total = 0;
                         for (offset = 0; offset < (size_t)window_size; offset++) {
-                            total += source_elements[window_index + offset];
+                            long element = source_elements[window_index + offset];
+                            if (windowing && ((element > 0 && total > LONG_MAX - element) ||
+                                              (element < 0 && total < LONG_MIN - element))) {
+                                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                                return integer_value(0);
+                            }
+                            total += element;
                         }
                         result_elements[window_index] = moving_averaging ? total / window_size : total;
                     }

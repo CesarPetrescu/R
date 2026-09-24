@@ -1729,6 +1729,36 @@ def test_c_hosted_rustic_interpreter_counts_partitions_with_callback_helper(tmp_
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_reports_window_sum_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"window_sum([{long_max}, 1], 2)[0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_window_sum_overflow_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_window_sum_overflow_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 17
+    for template, expected in cases:
+        source = template.replace("{LONG_MAX}", str(long_max))
+        expected = expected.replace("{LONG_MAX}", str(long_max)).replace("{LONG_MIN}", str(-long_max - 1))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_sums_sliding_windows_with_window_sum_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
