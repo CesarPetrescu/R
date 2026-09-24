@@ -1954,6 +1954,35 @@ def test_c_hosted_rustic_interpreter_runs_prefix_sum_overflow_contract_fixture(t
             assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_reports_adjacent_diff_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"let low = 0 - {long_max} - 1; adjacent_diff([low, {long_max}])[1]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_adjacent_diff_overflow_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_adjacent_diff_overflow_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 17
+    for template, expected in cases:
+        source = template.replace("{LONG_MAX}", str(long_max))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_builds_adjacent_diffs_with_adjacent_diff_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {

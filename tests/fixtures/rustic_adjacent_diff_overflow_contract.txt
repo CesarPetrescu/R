@@ -1,0 +1,18 @@
+# First result copies the first element; later results subtract the preceding element.
+len(adjacent_diff([])) => 0
+adjacent_diff([7])[0] => 7
+adjacent_diff([{LONG_MAX}, {LONG_MAX}])[1] => 0
+let low = 0 - {LONG_MAX} - 1; adjacent_diff([low, low])[1] => 0
+adjacent_diff([{LONG_MAX} - 1, {LONG_MAX}])[1] => 1
+let low = 0 - {LONG_MAX} - 1; adjacent_diff([low + 1, low])[1] => -1
+let low = 0 - {LONG_MAX} - 1; adjacent_diff([low, {LONG_MAX}])[1] => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; adjacent_diff([{LONG_MAX}, low])[1] => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; adjacent_diff([low, {LONG_MAX}, low])[2] => error:integer overflow
+adjacent_diff([0, {LONG_MAX}, {LONG_MAX}])[2] => 0
+let low = 0 - {LONG_MAX} - 1; adjacent_diff(rotate_right([low, {LONG_MAX}], 1))[1] => error:integer overflow
+fn delta(xs) { adjacent_diff(xs)[1] }; delta([4, 9]) => 5
+if 0 { adjacent_diff([0 - {LONG_MAX} - 1, {LONG_MAX}])[1] } else { 7 } => 7
+0 && adjacent_diff([0 - {LONG_MAX} - 1, {LONG_MAX}])[1] => 0
+adjacent_diff(1) => error:expected array
+adjacent_diff([1], 2) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + adjacent_diff(push([1], 3))[1]; n = n + 1; }; total => 130

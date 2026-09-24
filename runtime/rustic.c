@@ -1203,7 +1203,14 @@ static struct Value parse_factor(struct Parser *parser) {
                         if (element_index == 0) {
                             result_elements[element_index] = source_elements[element_index];
                         } else {
-                            result_elements[element_index] = source_elements[element_index] - source_elements[element_index - 1];
+                            long current = source_elements[element_index];
+                            long previous = source_elements[element_index - 1];
+                            if ((previous < 0 && current > LONG_MAX + previous) ||
+                                (previous > 0 && current < LONG_MIN + previous)) {
+                                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                                return integer_value(0);
+                            }
+                            result_elements[element_index] = current - previous;
                         }
                     }
                 }
