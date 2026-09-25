@@ -40,6 +40,9 @@ typedef enum RusticStatus {
  * middle elements before dividing an even-length median. top_sum(array, n)
  * checks each selected addition after sorting descending, including a
  * prefix that would overflow before later selected values could cancel it.
+ * weighted_score(array, fn) checks each integer callback result before
+ * adding it to the running score, including a prefix that would overflow
+ * before later callback results could cancel it.
  * Other array/statistics arithmetic remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
