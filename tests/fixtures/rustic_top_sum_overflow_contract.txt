@@ -1,0 +1,21 @@
+# top_sum sorts descending and checks every selected host-long addition.
+top_sum([{LONG_MAX}, 1], 2) => error:integer overflow
+top_sum([1, {LONG_MAX}, 0], 2) => error:integer overflow
+top_sum([{LONG_MAX}, {LONG_MAX}, -{LONG_MAX}], 3) => error:integer overflow
+top_sum([-{LONG_MAX}, -{LONG_MAX}], 2) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; top_sum([low, low], 2) => error:integer overflow
+top_sum([{LONG_MAX}, 1], 1) => {LONG_MAX}
+let low = 0 - {LONG_MAX} - 1; top_sum([low], 1) => {LONG_MIN}
+top_sum([{LONG_MAX}, -{LONG_MAX}], 2) => 0
+top_sum([], 3) => 0
+top_sum([4, 2], 0) => 0
+top_sum([4, 2], 9) => 6
+top_sum(sort([2, 9, 3]), 2) => 12
+fn select(xs) { top_sum(xs, 2) }; select(sort([3, 1, 5])) => 8
+if 0 { top_sum([{LONG_MAX}, 1], 2) } else { 7 } => 7
+0 && top_sum([{LONG_MAX}, 1], 2) => 0
+top_sum(1, 1) => error:expected array
+top_sum([1], [1]) => error:expected integer
+top_sum([1], -1) => error:expected integer
+top_sum([1]) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + top_sum(sort([3, 1, 2]), 2); n = n + 1; }; total => 325
