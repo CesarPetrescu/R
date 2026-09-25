@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Repository
 
@@ -16,7 +16,8 @@ Last updated: 2026-09-24
 
 ## Implemented behavior
 
-- `adjacent_diff(array)` copies the first element and checks each subsequent subtraction against host-`long` bounds before evaluation. Both overflow directions return `RUSTIC_ERR_INTEGER_OVERFLOW` without signed-overflow UB or changing the C API output; empty arrays stay empty. A 17-row portable fixture covers boundaries, nested arrays, skipped expressions, invalid arguments and repeated temporary cleanup. Other statistics built-in arithmetic (including `variance_sum`) remains unchecked.
+- `variance_sum(array)` checks each mean-sum addition, signed element-minus-mean subtraction, square and sum-of-squares accumulation against host-long bounds before performing arithmetic. Any overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW` without changing C API output. Empty arrays still return `RUSTIC_ERR_EMPTY_ARRAY`; a portable 21-row fixture covers bounds, composition, skipped paths, invalid input and 65-iteration cleanup. `median` midpoint arithmetic and other statistics helpers remain unchecked.
+- `adjacent_diff(array)` copies the first element and checks each subsequent subtraction against host-`long` bounds before evaluation. Both overflow directions return `RUSTIC_ERR_INTEGER_OVERFLOW` without signed-overflow UB or changing the C API output; empty arrays stay empty. A 17-row portable fixture covers boundaries, nested arrays, skipped expressions, invalid arguments and repeated temporary cleanup. Other statistics built-in arithmetic (including `median`) remains unchecked.
 - `chunk_sum(array, n)` checks every intermediate addition within each evaluated fixed-size chunk, including partial final chunks. Both positive and negative overflow return `RUSTIC_ERR_INTEGER_OVERFLOW` without signed-overflow UB, even when later elements would cancel; adjacent chunks remain independent. The C API output stays unchanged on failure. An 18-row portable fixture covers host-long boundaries, composition, skipped paths, argument errors and 65-iteration temporary cleanup; other statistics arithmetic remains unchecked.
 - `moving_average_sum(array, n)` checks each intermediate sliding-window addition before signed-overflow UB, even if a later element would cancel the overflow or the final divided mean would fit. In-range division still truncates toward zero; empty/short windows return empty arrays, skipped expressions do not evaluate the helper, and the C API output stays unchanged on failure. The portable 17-row `tests/fixtures/rustic_moving_average_overflow_contract.txt` covers boundaries, composition, diagnostics and 65-iteration cleanup. Other statistics arithmetic remains unchecked.
 - `window_sum(array, n)` now checks each addition in every evaluated sliding window before computing it, returning `RUSTIC_ERR_INTEGER_OVERFLOW` without host-`long` signed-overflow UB. This includes overlapping windows and a later-cancelled sum; empty and short arrays still produce empty arrays, skipped expressions do not evaluate the helper, and the C API leaves its output unchanged on failure. The 17-row portable `tests/fixtures/rustic_window_sum_overflow_contract.txt` covers boundaries, temporary composition, invalid arguments and 65-iteration cleanup. Other statistics helper internals remain unchecked.
@@ -153,6 +154,7 @@ Last updated: 2026-09-24
 
 ```bash
 git diff --check
+python3 -m pytest -q tests/test_rustic_interpreter.py -k 'variance_sum or c_api_contract or variance_and_mode'
 PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'adjacent_diff_overflow or c_api_contract or builds_adjacent_diffs'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'chunk_sum_overflow or c_api_contract or sums_fixed_size_chunks'
 PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'prefix_sum_overflow or c_api_contract or builds_prefix_sums'

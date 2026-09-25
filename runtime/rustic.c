@@ -4881,12 +4881,36 @@ static struct Value parse_factor(struct Parser *parser) {
                     long total = 0;
                     long variance_total = 0;
                     for (element_index = 0; element_index < array->element_count; element_index++) {
-                        total += array->elements[element_index];
+                        long element = array->elements[element_index];
+                        if ((element > 0 && total > LONG_MAX - element) ||
+                            (element < 0 && total < LONG_MIN - element)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        total += element;
                     }
                     mean = total / (long)array->element_count;
                     for (element_index = 0; element_index < array->element_count; element_index++) {
-                        long delta = array->elements[element_index] - mean;
-                        variance_total += delta * delta;
+                        long element = array->elements[element_index];
+                        long delta;
+                        long square;
+                        if ((mean < 0 && element > LONG_MAX + mean) ||
+                            (mean > 0 && element < LONG_MIN + mean)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        delta = element - mean;
+                        if ((delta > 0 && delta > LONG_MAX / delta) ||
+                            (delta < 0 && delta < LONG_MAX / delta)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        square = delta * delta;
+                        if (variance_total > LONG_MAX - square) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        variance_total += square;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(variance_total));

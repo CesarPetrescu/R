@@ -35,8 +35,9 @@ typedef enum RusticStatus {
  * sum(array), prefix_sum(array), window_sum(array, n),
  * moving_average_sum(array, n), and chunk_sum(array, n) check each
  * intermediate addition. adjacent_diff(array) checks each subtraction.
- * Other array/statistics arithmetic (e.g. median and variance_sum) remains
- * unchecked for overflow.
+ * variance_sum(array) checks mean accumulation, each difference and square,
+ * and the sum of squares. Other array/statistics arithmetic (e.g. median)
+ * remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
