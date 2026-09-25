@@ -58,6 +58,10 @@ int main(void) {
             rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
         return 15;
     }
+    if (snprintf(source, sizeof(source), "top_sum([%ld, 1], 2)", LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 16;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

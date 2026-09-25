@@ -4,12 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Audit `top_sum([{LONG_MAX}, 1], 2)` with a portable RED C-host test: sorting and selecting the two largest elements currently uses an unchecked accumulator. Cover positive/negative bounds, a later-cancelled prefix, empty/count-edge behavior, skipped branches, temporary cleanup and unchanged C API output on error; limit this package to the demonstrated `top_sum` arithmetic, not all statistics helpers.
+1. Audit `weighted_score(array, fn)` with a portable host boundary repro: a callback returning `LONG_MAX` followed by `1` can overflow its accumulation; first establish callback and temporary-root behavior, then RED/GREEN overflow, skipped branches, invalid arguments and unchanged C API output.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+
+- Checked `top_sum(array, n)` selected additions after descending sort before signed overflow. The portable 20-row fixture covers both host-long bounds, a later-cancelled prefix, zero/empty/count edges, function/nested temporary composition, lazy paths, diagnostics and 65-iteration cleanup; the C API retains its previous output on error.
 
 - Checked `median(array)` even-length midpoint addition before C signed-overflow UB. The sorted middle pair must have an in-range host-`long` sum before division (even when its mathematical midpoint would fit); odd-length arrays return their middle element. A portable 20-row host fixture covers both overflow directions, signed truncation, composition, skipped paths, invalid arguments and 65-iteration cleanup; the C API output is unchanged on failure.
 

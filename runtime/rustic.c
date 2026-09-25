@@ -4717,7 +4717,13 @@ static struct Value parse_factor(struct Parser *parser) {
                         result_count = array->element_count;
                     }
                     for (element_index = 0; element_index < result_count; element_index++) {
-                        scalar_result += sorted_elements[array->element_count - element_index - 1];
+                        long element = sorted_elements[array->element_count - element_index - 1];
+                        if ((element > 0 && scalar_result > LONG_MAX - element) ||
+                            (element < 0 && scalar_result < LONG_MIN - element)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        scalar_result += element;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(scalar_result));
