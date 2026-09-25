@@ -16,6 +16,7 @@ Last updated: 2026-09-25
 
 ## Implemented behavior
 
+- `histogram_pairs_score(values, counts)` checks each element-pair multiplication and each subsequent left-to-right accumulation against host-`long` bounds before signed-overflow UB. Any overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW`, even if a later pair would cancel it; `[]` scores `0`, existing argument/length diagnostics remain, and the C API output stays unchanged on failure. A portable 20-row fixture exercises boundaries, composition, lazy branches and 65-iteration cleanup. Other unlisted helper arithmetic remains unchecked.
 - `weighted_score(array, fn)` checks each integer callback result before adding it to the running host-`long` score; both positive and negative overflow return `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB, even if a later callback could cancel the excess. Empty arrays return `0`, invalid callbacks keep their previous diagnostics, and the C API output stays unchanged on failure. A portable 16-row fixture exercises boundaries, lazy branches, nested temporaries and 65-iteration cleanup. Arithmetic in other unlisted helpers remains unchecked.
 - `top_sum(array, n)` checks every selected addition after descending sort before host-long signed overflow; positive/negative overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW` even when later selected elements could cancel. Empty arrays or zero selected elements still return `0`, invalid arguments retain their diagnostics, and the C API output is unchanged on error. A portable 20-row `tests/fixtures/rustic_top_sum_overflow_contract.txt` exercises host bounds, nested composition, lazy branches and 65-iteration cleanup. Arithmetic in other unlisted statistics helpers remains unchecked.
 
@@ -157,6 +158,7 @@ Last updated: 2026-09-25
 
 ## Verified commands
 
+The `histogram_pairs_score` overflow work package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'histogram_pair or c_api_contract'` to the focused C-host matrix; full host, report, lint and fresh Docker commands below remain required before push.
 The `weighted_score` overflow work package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'weighted_score_overflow or c_api_contract'` to the focused C-host matrix; the full host, report, lint and fresh Docker commands below remain required before push.
 The `top_sum` overflow work package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'top_sum_overflow or c_api_contract'` to the focused C-host matrix; the full host, report, lint and fresh Docker commands below remain required before push.
 

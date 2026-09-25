@@ -26,6 +26,8 @@ Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patter
 
 `weighted_score(array, fn)` invokes its one-argument callback for each integer element and checks each returned integer addition against host `long` limits *before* computing it. An overflowing prefix is rejected even when a later callback could cancel it, with `RUSTIC_ERR_INTEGER_OVERFLOW` and unchanged C API output. Empty arrays return `0`; invalid callbacks and non-integer callback results retain their prior errors. See the portable [weighted-score host contract](../tests/fixtures/rustic_weighted_score_overflow_contract.txt). Other unlisted helper arithmetic remains unchecked.
 
+`histogram_pairs_score(values, counts)` requires equal-length integer arrays and checks each signed multiplication *before* evaluating it, then each left-to-right score addition before signed overflow. A prefix that exceeds host `long` fails even if a later pair would cancel it; `([], [])` returns `0`. On error the C API output is unchanged. See the portable [histogram-pairs host contract](../tests/fixtures/rustic_histogram_pairs_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
+
 ## Runnable host examples
 
 From the repository root (choose any writable output path):

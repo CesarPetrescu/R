@@ -1,0 +1,21 @@
+# Bounds are expanded from host C long by the Python test.
+histogram_pairs_score([{LONG_MAX}], [2]) => error:integer overflow
+histogram_pairs_score([-{LONG_MAX}], [2]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; histogram_pairs_score([low], [-1]) => error:integer overflow
+histogram_pairs_score([{LONG_MAX}, 1], [1, 1]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; histogram_pairs_score([low, -1], [1, 1]) => error:integer overflow
+histogram_pairs_score([{LONG_MAX}, 1, -1], [1, 1, 1]) => error:integer overflow
+histogram_pairs_score([{LONG_MAX}], [1]) => {LONG_MAX}
+let low = 0 - {LONG_MAX} - 1; histogram_pairs_score([low], [1]) => {LONG_MIN}
+histogram_pairs_score([{LONG_MAX}, -{LONG_MAX}], [1, 1]) => 0
+let low = 0 - {LONG_MAX} - 1; histogram_pairs_score([low], [0]) => 0
+histogram_pairs_score([], []) => 0
+histogram_pairs_score([2, 3], [4, -1]) => 5
+fn score(xs, ys) { histogram_pairs_score(xs, ys) }; score(reverse([2, 3]), reverse([1, 4])) => 14
+0 && histogram_pairs_score([{LONG_MAX}], [2]) => 0
+if 0 { histogram_pairs_score([{LONG_MAX}], [2]) } else { 7 } => 7
+histogram_pairs_score(1, []) => error:expected array
+histogram_pairs_score([], 1) => error:expected array
+histogram_pairs_score([1]) => error:wrong argument count
+histogram_pairs_score([1], [1, 2]) => error:array length mismatch
+let n = 0; let total = 0; while n < 65 { total = total + histogram_pairs_score(reverse([2, 3]), reverse([1, 4])); n = n + 1; }; total => 910

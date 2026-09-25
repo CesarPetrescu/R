@@ -1875,7 +1875,23 @@ static struct Value parse_factor(struct Parser *parser) {
                     return integer_value(0);
                 }
                 for (element_index = 0; element_index < values->element_count; element_index++) {
-                    score += values->elements[element_index] * counts->elements[element_index];
+                    long left = values->elements[element_index];
+                    long right = counts->elements[element_index];
+                    long product;
+                    if ((left > 0 && right > 0 && left > LONG_MAX / right) ||
+                        (left > 0 && right < 0 && right < LONG_MIN / left) ||
+                        (left < 0 && right > 0 && left < LONG_MIN / right) ||
+                        (left < 0 && right < 0 && left < LONG_MAX / right)) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
+                    product = left * right;
+                    if ((product > 0 && score > LONG_MAX - product) ||
+                        (product < 0 && score < LONG_MIN - product)) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
+                    score += product;
                 }
                 compact_unreferenced_arrays(parser, NULL);
                 return parse_index_postfix(parser, integer_value(score));
