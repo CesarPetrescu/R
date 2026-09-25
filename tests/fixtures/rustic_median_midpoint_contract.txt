@@ -1,0 +1,21 @@
+# Even-length median checks the intermediate host-long sum before division.
+median([{LONG_MAX}, {LONG_MAX}]) => error:integer overflow
+median([{LONG_MAX}, {LONG_MAX} - 1]) => error:integer overflow
+median([-{LONG_MAX}, -{LONG_MAX}]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; median([low, low]) => error:integer overflow
+median([{LONG_MAX}, -{LONG_MAX}]) => 0
+let low = 0 - {LONG_MAX} - 1; median([low, {LONG_MAX}]) => 0
+median([{LONG_MAX}]) => {LONG_MAX}
+let low = 0 - {LONG_MAX} - 1; median([low]) => {LONG_MIN}
+median([{LONG_MAX}, -{LONG_MAX}, {LONG_MAX}]) => {LONG_MAX}
+median([2, 3]) => 2
+median([-3, -2]) => -2
+median([-3, 2]) => 0
+median(sort([6, 2, 4, 8])) => 5
+fn midpoint(xs) { median(xs) }; midpoint(sort([9, 1, 5, 3])) => 4
+if 0 { median([{LONG_MAX}, {LONG_MAX}]) } else { 7 } => 7
+0 && median([{LONG_MAX}, {LONG_MAX}]) => 0
+median([]) => error:empty array
+median(1) => error:expected array
+median([1], 2) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + median(sort([6, 2, 4])); n = n + 1; }; total => 260
