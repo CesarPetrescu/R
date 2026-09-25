@@ -4,13 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Continue the built-in arithmetic safety audit beyond checked `sum`, `prefix_sum`, `window_sum`, `moving_average_sum`, `chunk_sum` and `adjacent_diff`: demonstrate a concrete overflowing `variance_sum` intermediate (mean difference, square or accumulation) with a portable RED C-host test, then preserve empty/valid behavior and C API output on failure.
+1. Audit `median([LONG_MAX, LONG_MAX])` and mixed-sign midpoint arithmetic with a portable RED C-host test, preserving in-range integer midpoint behavior, empty-array diagnostics and unchanged C API output on error; its even-length addition remains unchecked.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
+- Checked `variance_sum(array)` mean accumulation, signed delta, square and sum-of-squares accumulation before host-long overflow. A portable 21-row host fixture covers positive/negative bounds, composition, skipped branches, invalid arguments and 65-iteration temporary cleanup; the C API preserves output on failure. `median` even-length arithmetic remains unchecked.
 - Checked each `adjacent_diff(array)` subtraction against host-long bounds before evaluation; the first element is copied without subtraction. A portable 17-row host fixture covers both overflow directions, zero/one-element arrays, nested temporaries, skipped paths, invalid arguments, 65-iteration cleanup and unchanged C API output.
 - Checked `chunk_sum(array, n)` additions per chunk before signed-overflow UB; a portable 18-row host fixture covers boundary values, partial and independent chunks, nested temporaries, lazy paths, invalid arguments, repeated cleanup and unchanged C API output.
 - Checked every `moving_average_sum(array, n)` intermediate window addition before division, including positive/negative overflow that would otherwise wrap to an apparently valid mean. A portable 17-row host fixture covers boundaries, truncation, nested temporaries, skipped branches, diagnostics and repeated cleanup; the C API preserves output on error.

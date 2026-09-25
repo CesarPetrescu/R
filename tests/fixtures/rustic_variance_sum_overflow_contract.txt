@@ -1,0 +1,22 @@
+# Integer mean, delta, square and accumulated variance use checked host-long arithmetic.
+variance_sum([1, 2, 3]) => 2
+variance_sum([2, 4, 8, 10]) => 40
+variance_sum([0]) => 0
+variance_sum([0 - 4]) => 0
+variance_sum([4, -4]) => 32
+variance_sum(sort([9, 1, 5, 3])) => 36
+variance_sum([{LONG_MAX}]) => 0
+let low = 0 - {LONG_MAX} - 1; variance_sum([low]) => 0
+variance_sum([{LONG_MAX}, 1]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; variance_sum([low, -1]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; variance_sum([low, {LONG_MAX}, {LONG_MAX}]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; variance_sum([{LONG_MAX}, low, -{LONG_MAX}]) => error:integer overflow
+variance_sum([{LONG_MAX}, -{LONG_MAX}]) => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; variance_sum([0, low]) => error:integer overflow
+variance_sum([{ACCUM_DELTA}, -{ACCUM_DELTA}]) => error:integer overflow
+if 0 { variance_sum([{LONG_MAX}, 1]) } else { 7 } => 7
+0 && variance_sum([{LONG_MAX}, 1]) => 0
+variance_sum([]) => error:empty array
+variance_sum(2) => error:expected array
+variance_sum([1], 2) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + variance_sum(push([2, 4], 6)); n = n + 1; }; total => 520
