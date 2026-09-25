@@ -42,7 +42,9 @@ typedef enum RusticStatus {
  * prefix that would overflow before later selected values could cancel it.
  * weighted_score(array, fn) checks each integer callback result before
  * adding it to the running score, including a prefix that would overflow
- * before later callback results could cancel it.
+ * before later callback results could cancel it. histogram_pairs_score(values,
+ * counts) checks each pair multiplication and each left-to-right sum before
+ * signed overflow, even when a later pair could cancel the excess.
  * Other array/statistics arithmetic remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

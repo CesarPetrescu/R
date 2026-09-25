@@ -4,13 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Audit `histogram_pairs_score(values, counts)` with portable boundary repros for both per-pair multiplication and sum accumulation (for example, `LONG_MAX * 2` and `[LONG_MAX, 1]` paired with `[1, 1]`); use RED/GREEN for overflow and preserve length/type diagnostics and C API output on error.
+1. Audit `histogram_distance_score(values, counts, expected)` with a portable RED/GREEN host fixture for `LONG_MIN` absolute-distance and sum-of-distances overflow; preserve length/type diagnostics, lazy paths and C API output on failure. Its product value is a deterministic result instead of host signed-overflow UB on ordinary scoring data.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
+- Checked `histogram_pairs_score(values, counts)` per-pair multiplication and left-to-right sum before signed overflow. A portable 20-row fixture covers both boundaries, a later-cancelled prefix, empty/mismatched arrays, composed and skipped paths, and 65-iteration cleanup; the C API output stays unchanged on error.
 - Checked `weighted_score(array, fn)` callback-result additions before signed overflow, with positive/negative host-long boundaries and a later-cancelled prefix. The portable 16-row fixture covers valid and invalid callbacks, nested temporary arrays, lazy branches and 65-iteration cleanup; the C API output is unchanged on error.
 - Checked `top_sum(array, n)` selected additions after descending sort before signed overflow. The portable 20-row fixture covers both host-long bounds, a later-cancelled prefix, zero/empty/count edges, function/nested temporary composition, lazy paths, diagnostics and 65-iteration cleanup; the C API retains its previous output on error.
 
