@@ -4871,7 +4871,14 @@ static struct Value parse_factor(struct Parser *parser) {
                         selected = sorted_elements[array->element_count / 2];
                     } else {
                         size_t upper_index = array->element_count / 2;
-                        selected = (sorted_elements[upper_index - 1] + sorted_elements[upper_index]) / 2;
+                        long lower = sorted_elements[upper_index - 1];
+                        long upper = sorted_elements[upper_index];
+                        if ((upper > 0 && lower > LONG_MAX - upper) ||
+                            (upper < 0 && lower < LONG_MIN - upper)) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        selected = (lower + upper) / 2;
                     }
                     compact_unreferenced_arrays(parser, &arguments[0]);
                     return parse_index_postfix(parser, integer_value(selected));
