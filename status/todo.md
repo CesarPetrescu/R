@@ -4,13 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Audit `histogram_distance_score(values, counts, expected)` with a portable RED/GREEN host fixture for `LONG_MIN` absolute-distance and sum-of-distances overflow; preserve length/type diagnostics, lazy paths and C API output on failure. Its product value is a deterministic result instead of host signed-overflow UB on ordinary scoring data.
-2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
+1. Audit `outlier_score(array, min, max)` with a portable host-long RED/GREEN fixture for subtraction and accumulated distance overflow; preserve range/type diagnostics, skipped paths, and C API output on failure. This closes another observed unchecked arithmetic path, but requires care with reversed bounds.
+2. Pick an observed semantic gap in ordinary composed programs and close it test-first; compare its user impact against remaining arithmetic checks and cover invalid input, scope/lifetime and budget cases where relevant.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
+- Checked `histogram_distance_score` and `histogram_within_distance` before the frequency subtraction, absolute-value conversion, left-to-right score addition, and missing-expected-element increment. A portable 24-row fixture covers the host-long limits, compositions, lazy paths, diagnostics and repeated temporary cleanup; both functions preserve C API output on failure. The distance-limit predicate does not silently turn overflow into a boolean.
 - Checked `histogram_pairs_score(values, counts)` per-pair multiplication and left-to-right sum before signed overflow. A portable 20-row fixture covers both boundaries, a later-cancelled prefix, empty/mismatched arrays, composed and skipped paths, and 65-iteration cleanup; the C API output stays unchanged on error.
 - Checked `weighted_score(array, fn)` callback-result additions before signed overflow, with positive/negative host-long boundaries and a later-cancelled prefix. The portable 16-row fixture covers valid and invalid callbacks, nested temporary arrays, lazy branches and 65-iteration cleanup; the C API output is unchanged on error.
 - Checked `top_sum(array, n)` selected additions after descending sort before signed overflow. The portable 20-row fixture covers both host-long bounds, a later-cancelled prefix, zero/empty/count edges, function/nested temporary composition, lazy paths, diagnostics and 65-iteration cleanup; the C API retains its previous output on error.

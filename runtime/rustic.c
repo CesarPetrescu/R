@@ -4546,9 +4546,21 @@ static struct Value parse_factor(struct Parser *parser) {
                             expected_count++;
                         }
                     }
+                    if (counts->elements[value_index] < LONG_MIN + expected_count) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
                     difference = counts->elements[value_index] - expected_count;
+                    if (difference == LONG_MIN) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
                     if (difference < 0) {
                         difference = -difference;
+                    }
+                    if (score > LONG_MAX - difference) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
                     }
                     score += difference;
                 }
@@ -4561,6 +4573,10 @@ static struct Value parse_factor(struct Parser *parser) {
                         }
                     }
                     if (!present) {
+                        if (score == LONG_MAX) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
                         score++;
                     }
                 }
