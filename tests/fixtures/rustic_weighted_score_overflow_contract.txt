@@ -1,0 +1,17 @@
+# Host-long bounds are expanded by the Python test (no 64-bit assumption).
+fn identity(x) { x }; weighted_score([{LONG_MAX}], identity) => {LONG_MAX}
+fn identity(x) { x }; weighted_score([{LONG_MAX}, 1], identity) => error:integer overflow
+fn identity(x) { x }; weighted_score([0 - {LONG_MAX} - 1, -1], identity) => error:integer overflow
+fn identity(x) { x }; weighted_score([{LONG_MAX}, 1, -1], identity) => error:integer overflow
+fn identity(x) { x }; weighted_score([0 - {LONG_MAX} - 1], identity) => {LONG_MIN}
+fn identity(x) { x }; weighted_score([], identity) => 0
+fn identity(x) { x }; weighted_score([2, 3], identity) => 5
+fn increment(x) { x + 1 }; weighted_score(reverse([1, 2]), increment) => 5
+fn identity(x) { x }; 0 && weighted_score([{LONG_MAX}, 1], identity) => 0
+fn identity(x) { x }; if 0 { weighted_score([{LONG_MAX}, 1], identity) } else { 7 } => 7
+weighted_score(1, 1) => error:expected array
+weighted_score([1], 1) => error:undefined identifier
+fn add(x, y) { x + y }; weighted_score([1], add) => error:wrong argument count
+fn arr(x) { [x] }; weighted_score([1], arr) => error:expected integer
+weighted_score([1]) => error:wrong argument count
+fn identity(x) { x }; let n = 0; let total = 0; while n < 65 { total = total + weighted_score(reverse([1, 2]), identity); n = n + 1; }; total => 195

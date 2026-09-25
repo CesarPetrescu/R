@@ -4,13 +4,14 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Audit `weighted_score(array, fn)` with a portable host boundary repro: a callback returning `LONG_MAX` followed by `1` can overflow its accumulation; first establish callback and temporary-root behavior, then RED/GREEN overflow, skipped branches, invalid arguments and unchanged C API output.
+1. Audit `histogram_pairs_score(values, counts)` with portable boundary repros for both per-pair multiplication and sum accumulation (for example, `LONG_MAX * 2` and `[LONG_MAX, 1]` paired with `[1, 1]`); use RED/GREEN for overflow and preserve length/type diagnostics and C API output on error.
 2. Pick another observed semantic or diagnostic gap in ordinary composed programs and close it test-first, including invalid input, scope/lifetime and budget cases where relevant. Do not assume full Rust compatibility.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
 
+- Checked `weighted_score(array, fn)` callback-result additions before signed overflow, with positive/negative host-long boundaries and a later-cancelled prefix. The portable 16-row fixture covers valid and invalid callbacks, nested temporary arrays, lazy branches and 65-iteration cleanup; the C API output is unchanged on error.
 - Checked `top_sum(array, n)` selected additions after descending sort before signed overflow. The portable 20-row fixture covers both host-long bounds, a later-cancelled prefix, zero/empty/count edges, function/nested temporary composition, lazy paths, diagnostics and 65-iteration cleanup; the C API retains its previous output on error.
 
 - Checked `median(array)` even-length midpoint addition before C signed-overflow UB. The sorted middle pair must have an in-range host-`long` sum before division (even when its mathematical midpoint would fit); odd-length arrays return their middle element. A portable 20-row host fixture covers both overflow directions, signed truncation, composition, skipped paths, invalid arguments and 65-iteration cleanup; the C API output is unchanged on failure.

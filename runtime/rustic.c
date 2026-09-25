@@ -4592,6 +4592,11 @@ static struct Value parse_factor(struct Parser *parser) {
                     if (parser->status != RUSTIC_OK || !value_as_integer(parser, weighted_value, &weighted)) {
                         return integer_value(0);
                     }
+                    if ((weighted > 0 && score > LONG_MAX - weighted) ||
+                        (weighted < 0 && score < LONG_MIN - weighted)) {
+                        parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                        return integer_value(0);
+                    }
                     score += weighted;
                 }
                 compact_unreferenced_arrays(parser, &arguments[0]);

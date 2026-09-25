@@ -24,6 +24,8 @@ Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patter
 
 `top_sum(array, n)` sorts values descending, selects up to `n` elements, and rejects an out-of-range host-`long` intermediate sum before addition; an overflowing prefix is rejected even if later selected values would cancel it. Empty arrays or zero selected elements return `0`; negative `n` and non-integer counts retain their existing diagnostics. See the portable [top-sum host contract](../tests/fixtures/rustic_top_sum_overflow_contract.txt). This guarantee covers `top_sum`'s selected additions only; the checked operations of other named helpers are documented above. Other array/statistics arithmetic remains unchecked.
 
+`weighted_score(array, fn)` invokes its one-argument callback for each integer element and checks each returned integer addition against host `long` limits *before* computing it. An overflowing prefix is rejected even when a later callback could cancel it, with `RUSTIC_ERR_INTEGER_OVERFLOW` and unchanged C API output. Empty arrays return `0`; invalid callbacks and non-integer callback results retain their prior errors. See the portable [weighted-score host contract](../tests/fixtures/rustic_weighted_score_overflow_contract.txt). Other unlisted helper arithmetic remains unchecked.
+
 ## Runnable host examples
 
 From the repository root (choose any writable output path):
