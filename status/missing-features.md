@@ -278,6 +278,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject overflowing `variance_sum(array)` mean additions, element deltas, squares and sum-of-squares accumulation with `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB; preserve valid/empty behavior, lazy branches, temporary cleanup and unchanged C API output.
 - [x] Reject overflow in the even-length `median(array)` sorted-middle-element addition with `RUSTIC_ERR_INTEGER_OVERFLOW` before signed-overflow UB; preserve in-range C99 midpoint truncation, odd-length selection, empty-array diagnostics, skipped branches, composition, repeated cleanup and unchanged C API output.
 - [x] Reject overflow in each selected `top_sum(array, n)` addition after descending sort, before signed-overflow UB; preserve both host-long boundaries, cancelled prefixes, count/empty behavior, lazy branches, nested temporary cleanup, diagnostics and unchanged C API output.
+- [x] Reject overflowing `weighted_score(array, fn)` callback-result accumulation before host signed-overflow UB; preserve callback/type diagnostics, short-circuit behavior, nested temporary cleanup and unchanged C API output with a portable host fixture.
 
 ## P2 — project quality
 
