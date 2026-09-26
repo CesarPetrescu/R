@@ -2162,6 +2162,66 @@ def test_c_hosted_rustic_interpreter_reports_weighted_score_overflow(tmp_path):
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_outlier_distance_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"outlier_score([-1], {long_max}, {long_max})"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_outlier_accumulation_overflow(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"outlier_score([0, 0], {long_max}, {long_max})"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_outlier_upper_distance_overflow(tmp_path):
+    binary = tmp_path / "rustic-ubsan-demo"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror",
+         "-fsanitize=undefined", "-fno-sanitize-recover=undefined",
+         "-I", str(ROOT / "runtime" / "include"),
+         str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_expression_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True,
+    )
+    assert build.returncode == 0, build.stderr
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    source = f"outlier_score([{long_max}], 0 - {long_max} - 1, -1)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"integer overflow: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_outlier_score_overflow_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_outlier_score_overflow_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 22
+    for template, expected in cases:
+        source = template.replace("{LONG_MAX}", str(long_max))
+        expected = (expected.replace("{LONG_MAX_MINUS_ONE}", str(long_max - 1))
+                    .replace("{LONG_MAX}", str(long_max)))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_histogram_pairs_overflow_contract_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1

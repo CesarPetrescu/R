@@ -281,6 +281,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject overflowing `weighted_score(array, fn)` callback-result accumulation before host signed-overflow UB; preserve callback/type diagnostics, short-circuit behavior, nested temporary cleanup and unchanged C API output with a portable host fixture.
 - [x] Reject overflowing `histogram_pairs_score(values, counts)` per-pair multiplication and left-to-right score accumulation before host signed-overflow UB; preserve empty/length/type diagnostics, lazy paths, temporary cleanup and unchanged C API output with a portable host fixture.
 - [x] Reject host-long overflow in `histogram_distance_score(values, counts, expected)` and `histogram_within_distance(values, counts, expected, limit)` before subtracting expected frequency, taking absolute distance, accumulating distance or counting unseen expected values; preserve argument diagnostics, skipped paths, temporary cleanup and unchanged C API output with a portable host fixture.
+- [x] Reject host-long overflow in `outlier_score(array, min, max)` before each below/above-range distance subtraction or running-score addition; preserve reversed-bound ordering, empty arrays, type/arity errors, skipped paths, temporary cleanup and unchanged C API output with a portable host fixture.
 
 ## P2 — project quality
 

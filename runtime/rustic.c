@@ -1935,11 +1935,26 @@ static struct Value parse_factor(struct Parser *parser) {
                             matched++;
                         }
                     } else if (scoring_outliers) {
-                        if (array->elements[element_index] < lower_bound) {
-                            matched += lower_bound - array->elements[element_index];
-                        } else if (array->elements[element_index] > upper_bound) {
-                            matched += array->elements[element_index] - upper_bound;
+                        long element = array->elements[element_index];
+                        long distance = 0;
+                        if (element < lower_bound) {
+                            if (element < 0 && lower_bound > LONG_MAX + element) {
+                                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                                return integer_value(0);
+                            }
+                            distance = lower_bound - element;
+                        } else if (element > upper_bound) {
+                            if (upper_bound < 0 && element > LONG_MAX + upper_bound) {
+                                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                                return integer_value(0);
+                            }
+                            distance = element - upper_bound;
                         }
+                        if (matched > LONG_MAX - distance) {
+                            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                            return integer_value(0);
+                        }
+                        matched += distance;
                     } else if (in_range) {
                         matched++;
                     }

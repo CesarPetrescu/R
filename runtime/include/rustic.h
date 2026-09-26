@@ -51,6 +51,8 @@ typedef enum RusticStatus {
  * left-to-right score addition, and increment for an unlisted expected
  * element before host-long overflow. Both report INTEGER_OVERFLOW for an
  * overflowing prefix, even if the distance limit would otherwise accept it.
+ * outlier_score(array, min, max) checks each distance subtraction and
+ * left-to-right nonnegative score addition before host-long overflow.
  * Other array/statistics arithmetic remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
