@@ -38,7 +38,7 @@ r-project --root . --write-dashboard-section-writer-matrix --dry-run-dashboard-s
 The combined index also embeds the checked readiness report examples directly so dashboard consumers can discover current automation metrics without following another link.
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 571, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 270, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 572, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 271, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 ```markdown
@@ -46,7 +46,7 @@ The combined index also embeds the checked readiness report examples directly so
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 571 |
+| Completed backlog items | 572 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -55,7 +55,7 @@ The combined index also embeds the checked readiness report examples directly so
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 270 | 0 | None |
+| P1 | 271 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

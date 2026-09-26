@@ -90,6 +90,23 @@ int main(void) {
             rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
         return 23;
     }
+    {
+        char nested[2050];
+        size_t i;
+        for (i = 0; i < 1024; i++) {
+            nested[i] = '(';
+            nested[1025 + i] = ')';
+        }
+        nested[1024] = '1';
+        nested[2049] = '\0';
+        if (rustic_eval_expression(nested, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 24;
+        }
+        if (rustic_eval_expression("2 + 3", &out) != RUSTIC_OK || out != 5) {
+            return 25;
+        }
+        out = 20;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

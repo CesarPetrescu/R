@@ -10,6 +10,7 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+- Bounded evaluated and grammar-only skipped expression-factor nesting to 64 active frames after a 1,024-unary host program crashed with SIGSEGV (`-11`) despite the 512-step runtime budget. Both forms now return `step limit exceeded`; a nested-parentheses C API case preserves the previous output and a subsequent call succeeds. No new statistical helper was introduced.
 - Checked `outlier_score(array, min, max)` distance subtractions and nonnegative accumulation against host-`long` overflow. A portable 22-row fixture covers both sides, reversed bounds, valid boundaries, lazy paths, diagnostics, composition and repeated cleanup; the C API preserves output on failure.
 
 - Checked `histogram_distance_score` and `histogram_within_distance` before the frequency subtraction, absolute-value conversion, left-to-right score addition, and missing-expected-element increment. A portable 24-row fixture covers the host-long limits, compositions, lazy paths, diagnostics and repeated temporary cleanup; both functions preserve C API output on failure. The distance-limit predicate does not silently turn overflow into a boolean.

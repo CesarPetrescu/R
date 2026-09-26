@@ -62,6 +62,22 @@ def test_c_hosted_rustic_interpreter_skips_unary_minus_in_short_circuit(tmp_path
     assert result.stdout == f"{source} => 0\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_nested_unary_expressions(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "!" * 1024 + "1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_skipped_unary_expressions(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && " + "!" * 1024 + "1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1

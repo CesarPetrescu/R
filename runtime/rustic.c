@@ -14,6 +14,7 @@
 #define RUSTIC_MAX_ARRAY_ELEMENTS 16
 #define RUSTIC_MAX_PARAMETERS 8
 #define RUSTIC_MAX_STEPS 512
+#define RUSTIC_MAX_EXPRESSION_DEPTH 64
 #define RUSTIC_MAX_ARRAY_ROOTS 64
 
 enum ValueKind {
@@ -74,6 +75,7 @@ struct Parser {
     size_t array_count;
     size_t next_array_id;
     size_t steps_remaining;
+    size_t expression_depth;
     size_t loop_depth;
     enum LoopControl loop_control;
     struct Value *array_roots;
@@ -830,7 +832,21 @@ static struct Value call_binary_function(struct Parser *parser, struct Function 
     return value;
 }
 
+static struct Value parse_factor_impl(struct Parser *parser);
+
 static struct Value parse_factor(struct Parser *parser) {
+    struct Value value;
+    if (parser->expression_depth >= RUSTIC_MAX_EXPRESSION_DEPTH) {
+        parser->status = RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+        return integer_value(0);
+    }
+    parser->expression_depth++;
+    value = parse_factor_impl(parser);
+    parser->expression_depth--;
+    return value;
+}
+
+static struct Value parse_factor_impl(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
     size_t argument_count;
@@ -5371,7 +5387,21 @@ static int skip_index_postfix(struct Parser *parser) {
     return 1;
 }
 
+static int skip_factor_expression_impl(struct Parser *parser);
+
 static int skip_factor_expression(struct Parser *parser) {
+    int success;
+    if (parser->expression_depth >= RUSTIC_MAX_EXPRESSION_DEPTH) {
+        parser->status = RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+        return 0;
+    }
+    parser->expression_depth++;
+    success = skip_factor_expression_impl(parser);
+    parser->expression_depth--;
+    return success;
+}
+
+static int skip_factor_expression_impl(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
 
     skip_spaces(parser);
@@ -5967,6 +5997,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.array_count = 0;
     parser.next_array_id = 1;
     parser.steps_remaining = RUSTIC_MAX_STEPS;
+    parser.expression_depth = 0;
     parser.loop_depth = 0;
     parser.loop_control = LOOP_CONTROL_NONE;
     parser.array_roots = NULL;
