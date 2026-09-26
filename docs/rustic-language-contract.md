@@ -28,6 +28,8 @@ Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patter
 
 `histogram_pairs_score(values, counts)` requires equal-length integer arrays and checks each signed multiplication *before* evaluating it, then each left-to-right score addition before signed overflow. A prefix that exceeds host `long` fails even if a later pair would cancel it; `([], [])` returns `0`. On error the C API output is unchanged. See the portable [histogram-pairs host contract](../tests/fixtures/rustic_histogram_pairs_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
 
+`histogram_distance_score(values, counts, expected)` and `histogram_within_distance(values, counts, expected, limit)` require equal-length value/count arrays. For each value, they count occurrences in `expected`, take the absolute difference from its count, and sum left to right; expected elements with no listed value each add one. They check subtraction, `LONG_MIN` absolute value, every sum addition, and unseen-element increments *before* host-long overflow. An overflowing prefix fails with `RUSTIC_ERR_INTEGER_OVERFLOW` and unchanged C API output, including the predicate form even with a large limit. Empty arrays score zero. See the [distance host contract](../tests/fixtures/rustic_histogram_distance_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
+
 ## Runnable host examples
 
 From the repository root (choose any writable output path):

@@ -45,6 +45,12 @@ typedef enum RusticStatus {
  * before later callback results could cancel it. histogram_pairs_score(values,
  * counts) checks each pair multiplication and each left-to-right sum before
  * signed overflow, even when a later pair could cancel the excess.
+ * histogram_distance_score(values, counts, expected) and
+ * histogram_within_distance(values, counts, expected, limit) check each
+ * count-minus-expected-frequency subtraction, LONG_MIN absolute distance,
+ * left-to-right score addition, and increment for an unlisted expected
+ * element before host-long overflow. Both report INTEGER_OVERFLOW for an
+ * overflowing prefix, even if the distance limit would otherwise accept it.
  * Other array/statistics arithmetic remains unchecked for overflow.
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);

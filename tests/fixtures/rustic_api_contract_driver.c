@@ -74,6 +74,14 @@ int main(void) {
             rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
         return 19;
     }
+    if (snprintf(source, sizeof(source), "histogram_distance_score([1], [0 - %ld - 1], [])", LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 20;
+    }
+    if (snprintf(source, sizeof(source), "histogram_within_distance([1], [%ld], [2], %ld)", LONG_MAX, LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 21;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

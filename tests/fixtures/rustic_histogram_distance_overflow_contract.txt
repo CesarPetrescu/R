@@ -1,0 +1,25 @@
+# LONG_MAX expands from the host C long; every distance and unseen-value increment is checked.
+histogram_distance_score([1], [0 - {LONG_MAX} - 1], []) => error:integer overflow
+histogram_distance_score([1], [0 - {LONG_MAX} - 1], [1]) => error:integer overflow
+histogram_distance_score([1, 2], [{LONG_MAX}, 1], []) => error:integer overflow
+histogram_distance_score([1], [{LONG_MAX}], [2]) => error:integer overflow
+histogram_within_distance([1], [{LONG_MAX}], [2], {LONG_MAX}) => error:integer overflow
+histogram_within_distance([1], [0 - {LONG_MAX} - 1], [1], {LONG_MAX}) => error:integer overflow
+histogram_distance_score([1], [{LONG_MAX}], []) => {LONG_MAX}
+histogram_distance_score([1], [0 - {LONG_MAX}], []) => {LONG_MAX}
+histogram_distance_score([1], [{LONG_MAX}], [1]) => {LONG_MAX_MINUS_ONE}
+histogram_distance_score([], [], []) => 0
+histogram_distance_score([], [], [4, 4]) => 2
+histogram_distance_score([1], [0], [1, 1]) => 2
+histogram_within_distance([1], [2], [1], 1) => 1
+histogram_within_distance([1], [2], [1], 0) => 0
+fn gap(xs, cs, es) { histogram_distance_score(xs, cs, es) }; gap(reverse([2, 3]), reverse([1, 4]), [3, 3, 2]) => 2
+0 && histogram_distance_score([1], [0 - {LONG_MAX} - 1], []) => 0
+if 0 { histogram_within_distance([1], [{LONG_MAX}], [2], 0) } else { 7 } => 7
+histogram_distance_score(1, [], []) => error:expected array
+histogram_distance_score([], 1, []) => error:expected array
+histogram_distance_score([], [], 1) => error:expected array
+histogram_distance_score([1], [1, 2], []) => error:array length mismatch
+histogram_within_distance([], [], [], -1) => error:expected integer
+histogram_distance_score([1], [1]) => error:wrong argument count
+let n = 0; let total = 0; while n < 65 { total = total + histogram_distance_score(reverse([2, 3]), reverse([1, 4]), [3, 3, 2]); n = n + 1; }; total => 130
