@@ -4,12 +4,13 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 
 ## Next recommended tasks
 
-1. Test whether invalid statements in unselected `if`/`else` and zero-iteration `while` blocks are silently accepted (`if 0 { 1 + * } else { 7 }` currently returns `7`); decide and document the supported grammar, then close the gap test-first without evaluating effects in skipped bodies. Cover nested blocks, scope, malformed statements, and step limits.
+1. Close the analogous grammar gap for deferred function bodies: `fn f() { 1 + * }; 7` currently succeeds until `f()` is called. Specify declaration-time versus call-time diagnostics, preserve recursion and 512-step semantics, and add RED/GREEN host/C API tests before changing behavior.
 2. Audit another observed arithmetic or semantic failure in an ordinary composed program; use a portable boundary or host-level RED/GREEN fixture, invalid input and C API output-preservation tests where applicable.
 3. Split the oversized `parse_factor` helper-dispatch chain without changing interpreter behavior; preserve existing helper outputs, diagnostic ordering and temporary-array cleanup in regression tests.
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+- Unselected `if`/`else` and zero-iteration `while` bodies now parse statement and expression grammar without evaluating effects. Nested blocks, `let`, assignment, nested loops, function signatures and match arms have grammar checks; deferred function bodies are still brace-scanned. The skipped-body fixture includes both rejection and positive lazy cases, 512-step budget exhaustion is tested, and the C API output remains unchanged on errors.
 - Bounded evaluated and grammar-only skipped expression-factor nesting to 64 active frames after a 1,024-unary host program crashed with SIGSEGV (`-11`) despite the 512-step runtime budget. Both forms now return `step limit exceeded`; a nested-parentheses C API case preserves the previous output and a subsequent call succeeds. No new statistical helper was introduced.
 - Checked `outlier_score(array, min, max)` distance subtractions and nonnegative accumulation against host-`long` overflow. A portable 22-row fixture covers both sides, reversed bounds, valid boundaries, lazy paths, diagnostics, composition and repeated cleanup; the C API preserves output on failure.
 

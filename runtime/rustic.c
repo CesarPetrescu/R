@@ -398,6 +398,7 @@ static void pop_scope_preserving_value(struct Parser *parser, struct Value *valu
 static struct Value parse_expression(struct Parser *parser);
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator);
 static int skip_expression_operand(struct Parser *parser);
+static int skip_statement_block(struct Parser *parser);
 
 static int skip_block(struct Parser *parser) {
     size_t depth = 0;
@@ -469,7 +470,7 @@ static struct Value parse_if_expression(struct Parser *parser) {
         if (parser->status != RUSTIC_OK) {
             return integer_value(0);
         }
-    } else if (!skip_block(parser)) {
+    } else if (!skip_statement_block(parser)) {
         return integer_value(0);
     }
 
@@ -485,7 +486,7 @@ static struct Value parse_if_expression(struct Parser *parser) {
         if (parser->status != RUSTIC_OK) {
             return integer_value(0);
         }
-    } else if (!skip_block(parser)) {
+    } else if (!skip_statement_block(parser)) {
         return integer_value(0);
     }
 
@@ -608,7 +609,7 @@ static struct Value parse_while_statement(struct Parser *parser) {
         parser->array_count = condition_array_count;
 
         if (condition == 0) {
-            if (!skip_block(parser)) {
+            if (!skip_statement_block(parser)) {
                 return integer_value(0);
             }
             return value;
@@ -5389,6 +5390,54 @@ static int skip_index_postfix(struct Parser *parser) {
 
 static int skip_factor_expression_impl(struct Parser *parser);
 
+static int skip_match_arms(struct Parser *parser) {
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return 0;
+    }
+    parser->cursor++;
+    while (parser->status == RUSTIC_OK) {
+        if (!consume_step(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor == '}') {
+            parser->cursor++;
+            return 1;
+        }
+        if (*parser->cursor == '_') {
+            parser->cursor++;
+        } else if (isdigit((unsigned char)*parser->cursor)) {
+            while (isdigit((unsigned char)*parser->cursor)) {
+                parser->cursor++;
+            }
+        } else {
+            parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+            return 0;
+        }
+        skip_spaces(parser);
+        if (parser->cursor[0] != '=' || parser->cursor[1] != '>') {
+            parser->status = RUSTIC_ERR_EXPECTED_EQUALS;
+            return 0;
+        }
+        parser->cursor += 2;
+        if (!skip_expression_operand(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor == ',') {
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor != '}') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return 0;
+        }
+    }
+    return 0;
+}
+
 static int skip_factor_expression(struct Parser *parser) {
     int success;
     if (parser->expression_depth >= RUSTIC_MAX_EXPRESSION_DEPTH) {
@@ -5410,7 +5459,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         return skip_factor_expression(parser);
     }
     if (*parser->cursor == '{') {
-        return skip_block(parser) && skip_index_postfix(parser);
+        return skip_statement_block(parser) && skip_index_postfix(parser);
     }
     if (cursor_starts_keyword(parser, "if")) {
         parser->cursor += 2;
@@ -5418,7 +5467,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
             return 0;
         }
         skip_spaces(parser);
-        if (!skip_block(parser)) {
+        if (!skip_statement_block(parser)) {
             return 0;
         }
         skip_spaces(parser);
@@ -5427,15 +5476,14 @@ static int skip_factor_expression_impl(struct Parser *parser) {
             return 0;
         }
         parser->cursor += 4;
-        return skip_block(parser) && skip_index_postfix(parser);
+        return skip_statement_block(parser) && skip_index_postfix(parser);
     }
     if (cursor_starts_keyword(parser, "match")) {
         parser->cursor += 5;
         if (!skip_expression_operand(parser)) {
             return 0;
         }
-        skip_spaces(parser);
-        return skip_block(parser) && skip_index_postfix(parser);
+        return skip_match_arms(parser) && skip_index_postfix(parser);
     }
     if (*parser->cursor == '[') {
         parser->cursor++;
@@ -5600,6 +5648,165 @@ static int skip_expression_operand(struct Parser *parser) {
         }
     }
     return 1;
+}
+
+/* Parse the statements in an unselected control-flow body without evaluating them. */
+static int skip_statement_block(struct Parser *parser) {
+    int saw_statement = 0;
+
+    skip_spaces(parser);
+    if (*parser->cursor != '{') {
+        parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+        return 0;
+    }
+    parser->cursor++;
+    while (parser->status == RUSTIC_OK) {
+        if (!consume_step(parser)) {
+            return 0;
+        }
+        skip_spaces(parser);
+        if (*parser->cursor == '}') {
+            if (!saw_statement) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                return 0;
+            }
+            parser->cursor++;
+            return 1;
+        }
+        if (*parser->cursor == '\0') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return 0;
+        }
+        if (cursor_starts_keyword(parser, "let")) {
+            char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+            parser->cursor += 3;
+            if (!parse_identifier(parser, name, sizeof(name))) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != '=') {
+                parser->status = RUSTIC_ERR_EXPECTED_EQUALS;
+                return 0;
+            }
+            parser->cursor++;
+            if (!skip_expression_operand(parser)) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != ';') {
+                parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                return 0;
+            }
+            parser->cursor++;
+            saw_statement = 1;
+            continue;
+        }
+        if (cursor_starts_keyword(parser, "fn")) {
+            char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+            size_t parameters = 0;
+            parser->cursor += 2;
+            if (!parse_identifier(parser, name, sizeof(name))) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != '(') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return 0;
+            }
+            parser->cursor++;
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                while (parser->status == RUSTIC_OK) {
+                    if (parameters++ >= RUSTIC_MAX_PARAMETERS) {
+                        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                        return 0;
+                    }
+                    if (!parse_identifier(parser, name, sizeof(name))) {
+                        return 0;
+                    }
+                    skip_spaces(parser);
+                    if (*parser->cursor != ',') {
+                        break;
+                    }
+                    parser->cursor++;
+                }
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return 0;
+            }
+            parser->cursor++;
+            if (!skip_block(parser)) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != ';') {
+                parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                return 0;
+            }
+            parser->cursor++;
+            saw_statement = 1;
+            continue;
+        }
+        if (cursor_starts_keyword(parser, "while")) {
+            parser->cursor += 5;
+            if (!skip_expression_operand(parser) || !skip_statement_block(parser)) {
+                return 0;
+            }
+            saw_statement = 1;
+            skip_spaces(parser);
+            if (*parser->cursor == ';') {
+                parser->cursor++;
+                continue;
+            }
+            if (*parser->cursor == '}') {
+                continue;
+            }
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return 0;
+        }
+        if (is_identifier_start(*parser->cursor)) {
+            const char *start = parser->cursor;
+            char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
+            if (!parse_identifier(parser, name, sizeof(name))) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor == '=' && parser->cursor[1] != '=') {
+                parser->cursor++;
+                if (!skip_expression_operand(parser)) {
+                    return 0;
+                }
+                saw_statement = 1;
+                skip_spaces(parser);
+                if (*parser->cursor == ';') {
+                    parser->cursor++;
+                    continue;
+                }
+                if (*parser->cursor == '}') {
+                    continue;
+                }
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+                return 0;
+            }
+            parser->cursor = start;
+        }
+        if (!skip_expression_operand(parser)) {
+            return 0;
+        }
+        saw_statement = 1;
+        skip_spaces(parser);
+        if (*parser->cursor == ';') {
+            parser->cursor++;
+            continue;
+        }
+        if (*parser->cursor != '}') {
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return 0;
+        }
+    }
+    return 0;
 }
 
 static struct Value parse_logical_and_expression(struct Parser *parser) {

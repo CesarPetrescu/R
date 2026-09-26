@@ -762,6 +762,81 @@ def test_c_hosted_rustic_interpreter_evaluates_while_loop_mutation(tmp_path):
     assert result.stdout == f"{source} => 6\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_malformed_unselected_if_body(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 0 { 1 + * } else { 7 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert "expected integer" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_rejects_malformed_unselected_let(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for source in ("if 1 { 7 } else { let x = ; x }", "while 0 { let x = ; }; 9"):
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        assert result.returncode == 2, source
+        assert result.stdout == ""
+        assert "expected integer" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_checks_nested_skipped_blocks(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 0 { if 1 { let x = 2; x } else { 3 + * } } else { 7 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert "expected integer" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_skips_nested_while_without_effects(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 4; if 0 { while 1 { x = x + 1; } } else { x }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 4\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_function_declaration_in_unselected_body(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 0 { fn double(a) { a * 2 }; 3 } else { 7 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_checks_skipped_match_arms(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 0 { match 1 { 1 => 2, _ => 3 + * } }; 9"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert "expected integer" in result.stderr
+
+
+def test_c_hosted_rustic_interpreter_skipped_block_contract_fixture(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_skipped_block_contract.txt"
+    for line in fixture.read_text().splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected = line.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("ERROR:"):
+            assert result.returncode == 2, (source, result.stdout, result.stderr)
+            assert result.stdout == ""
+            assert expected[6:] in result.stderr, (source, result.stderr)
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_skipped_body_respects_step_budget(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 0 { " + "1; " * 513 + "2 } else { 7 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert "step limit exceeded" in result.stderr
+
+
 def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

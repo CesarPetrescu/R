@@ -15,6 +15,7 @@ Last updated: 2026-09-26
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- Unselected `if`/`else` and zero-iteration `while` bodies now consume statement grammar rather than brace-scanning alone. `if 0 { 1 + * } else { 7 }` fails with `RUSTIC_ERR_EXPECTED_INTEGER`; valid skipped lookups, division by zero and mutations are not evaluated. Nested blocks, `let` bindings, assignments, loops, match-arm expressions and function signatures are checked, while declared function bodies remain deferred/brace-scanned. Skipped statements/arms consume the bounded step budget. The strict C99 host tests run `tests/fixtures/rustic_skipped_block_contract.txt`, include step-budget exhaustion and confirm the C API preserves output on invalid skipped syntax.
 - Expression-factor nesting is bounded at 64 active evaluated/skipped parser frames. Deep unary chains and nested parentheses return `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` rather than crashing the host; the C API keeps its output unchanged on failure and later calls start fresh. Focused strict C99 tests cover evaluated and short-circuited paths plus the direct C API. The bound supplements the 512-step execution budget and is not a security sandbox.
 - `outlier_score(array, min, max)` checks each out-of-range subtraction and nonnegative score addition before host-long overflow. Reversed bounds keep their existing below-minimum branch precedence; empty arrays score zero, type/arity errors retain their diagnostics, skipped paths do not evaluate the helper, and failed C API calls preserve output. A portable 22-row `tests/fixtures/rustic_outlier_score_overflow_contract.txt` covers boundaries, composition and 65-iteration cleanup. Other unlisted built-in arithmetic remains unchecked.
 
@@ -170,6 +171,7 @@ The `top_sum` overflow work package adds `python3 -m pytest -q tests/test_rustic
 
 ```bash
 git diff --check
+python3 -m pytest -q tests/test_rustic_interpreter.py -k 'skipped_block or skipped_body or skips_nested_while or checks_skipped_match or c_api_contract'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'median_midpoint or c_api_contract or finds_array_medians'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'variance_sum or c_api_contract or variance_and_mode'
 PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'adjacent_diff_overflow or c_api_contract or builds_adjacent_diffs'

@@ -107,6 +107,14 @@ int main(void) {
         }
         out = 20;
     }
+    if (rustic_eval_expression("if 0 { 1 + * } else { 7 }", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 26;
+    }
+    if (rustic_eval_expression("while 0 { let x = ; }; 9", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 27;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

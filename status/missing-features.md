@@ -284,6 +284,8 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject host-long overflow in `outlier_score(array, min, max)` before each below/above-range distance subtraction or running-score addition; preserve reversed-bound ordering, empty arrays, type/arity errors, skipped paths, temporary cleanup and unchanged C API output with a portable host fixture.
 - [x] Bound recursive evaluated and grammar-only skipped expression nesting at 64 factors, returning `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` instead of overflowing the C host stack; test unary and parentheses, output preservation, and fresh subsequent C API calls.
 
+- [x] Reject malformed statements in unselected `if`/`else` and zero-iteration `while` bodies without evaluating their effects; check nested blocks, bindings, assignments, loop syntax, function signatures and match arms, preserve C API output on error and bound skipped traversal by the step budget.
+
 ## P2 — project quality
 
 - [x] Improve README with real usage examples.

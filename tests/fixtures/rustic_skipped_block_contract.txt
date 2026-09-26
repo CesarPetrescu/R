@@ -1,0 +1,14 @@
+# Source => integer result or ERROR:diagnostic substring. Skipped values must not be evaluated.
+if 0 { 1 + * } else { 7 } => ERROR:expected integer
+if 1 { 7 } else { let x = ; x } => ERROR:expected integer
+while 0 { let x = ; }; 9 => ERROR:expected integer
+if 0 { if 1 { let x = 2; x } else { 3 + * } } else { 7 } => ERROR:expected integer
+while 0 { match 1 { 1 => 2, _ => 3 + * } }; 9 => ERROR:expected integer
+if 1 { 7 } else { let x 3; x } => ERROR:expected equals
+while 0 { let x = 3 }; 9 => ERROR:expected semicolon
+if 0 { let x = 3; x + 1 } else { 7 } => 7
+let x = 4; if 0 { while 1 { x = x + 1; } } else { x } => 4
+if 0 { fn double(a) { a * 2 }; 3 } else { 7 } => 7
+let x = 3; while 0 { x = x / 0; }; x => 3
+if 1 { 7 } else { [1, 2][9] + missing } => 7
+if 0 { match 1 { 1 => 2, _ => 3 + 4 } } else { 7 } => 7
