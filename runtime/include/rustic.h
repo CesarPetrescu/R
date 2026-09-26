@@ -54,6 +54,9 @@ typedef enum RusticStatus {
  * outlier_score(array, min, max) checks each distance subtraction and
  * left-to-right nonnegative score addition before host-long overflow.
  * Other array/statistics arithmetic remains unchecked for overflow.
+ * Evaluated and skipped expression-factor nesting is capped at 64 active
+ * factors; exceeding it reports STEP_LIMIT_EXCEEDED (also used for the
+ * independent 512-step execution budget).
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
