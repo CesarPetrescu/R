@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-09-25
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- `outlier_score(array, min, max)` checks each out-of-range subtraction and nonnegative score addition before host-long overflow. Reversed bounds keep their existing below-minimum branch precedence; empty arrays score zero, type/arity errors retain their diagnostics, skipped paths do not evaluate the helper, and failed C API calls preserve output. A portable 22-row `tests/fixtures/rustic_outlier_score_overflow_contract.txt` covers boundaries, composition and 65-iteration cleanup. Other unlisted built-in arithmetic remains unchecked.
 
 - `histogram_distance_score(values, counts, expected)` and `histogram_within_distance(values, counts, expected, limit)` check host-`long` bounds before subtracting expected frequency, negating absolute distance, adding it to the running score or incrementing for an unseen expected value. Overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW` without changing the C API output, even when a large distance limit might otherwise accept a wrapped score. Empty arrays, previous argument/length diagnostics and skipped expressions retain their behavior. The portable 24-row `tests/fixtures/rustic_histogram_distance_overflow_contract.txt` covers direct boundaries, composition, 65-iteration cleanup and lazy paths. Other unlisted helper arithmetic remains unchecked.
 - `histogram_pairs_score(values, counts)` checks each element-pair multiplication and each subsequent left-to-right accumulation against host-`long` bounds before signed-overflow UB. Any overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW`, even if a later pair would cancel it; `[]` scores `0`, existing argument/length diagnostics remain, and the C API output stays unchanged on failure. A portable 20-row fixture exercises boundaries, composition, lazy branches and 65-iteration cleanup. Other unlisted helper arithmetic remains unchecked.
@@ -158,6 +159,7 @@ Last updated: 2026-09-25
 - `LICENSE` declares GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) terms so distributed and network-served modified versions remain open-source.
 
 ## Verified commands
+The `outlier_score` overflow package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'outlier_score_overflow_contract or outlier_distance_overflow or outlier_upper_distance_overflow or outlier_accumulation_overflow or c_api_contract'` to the focused strict C99/UBSan host matrix; full host, report, lint and fresh Docker commands below remain required before push.
 
 The `histogram_distance_score`/`histogram_within_distance` overflow work package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'histogram_distance_overflow_contract or c_api_contract'` to the focused C-host matrix; full host, report, lint and fresh Docker commands below remain required before push.
 The `histogram_pairs_score` overflow work package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'histogram_pair or c_api_contract'` to the focused C-host matrix; full host, report, lint and fresh Docker commands below remain required before push.

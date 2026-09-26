@@ -30,6 +30,8 @@ Decimal digits beyond `LONG_MAX` (including inside bindings and match-arm patter
 
 `histogram_distance_score(values, counts, expected)` and `histogram_within_distance(values, counts, expected, limit)` require equal-length value/count arrays. For each value, they count occurrences in `expected`, take the absolute difference from its count, and sum left to right; expected elements with no listed value each add one. They check subtraction, `LONG_MIN` absolute value, every sum addition, and unseen-element increments *before* host-long overflow. An overflowing prefix fails with `RUSTIC_ERR_INTEGER_OVERFLOW` and unchanged C API output, including the predicate form even with a large limit. Empty arrays score zero. See the [distance host contract](../tests/fixtures/rustic_histogram_distance_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
 
+`outlier_score(array, min, max)` sums the distances of elements below `min` or above `max`, checking each subtraction and nonnegative left-to-right sum before host-long overflow. When bounds are reversed, the existing below-`min` branch takes precedence; the bounds are not silently reordered. Overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW` and leaves the C API output unchanged. Empty arrays score zero, unselected branches do not evaluate the helper, and existing type/arity diagnostics remain. See the [portable host contract](../tests/fixtures/rustic_outlier_score_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
+
 ## Runnable host examples
 
 From the repository root (choose any writable output path):

@@ -82,6 +82,14 @@ int main(void) {
             rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
         return 21;
     }
+    if (snprintf(source, sizeof(source), "outlier_score([-1], %ld, %ld)", LONG_MAX, LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 22;
+    }
+    if (snprintf(source, sizeof(source), "outlier_score([0, 0], %ld, %ld)", LONG_MAX, LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 23;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
