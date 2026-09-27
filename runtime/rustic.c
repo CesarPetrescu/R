@@ -502,7 +502,8 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
     if (*parser->cursor == '_') {
         parser->cursor++;
         *out_is_default = 1;
-    } else if (isdigit((unsigned char)*parser->cursor)) {
+    } else if (isdigit((unsigned char)*parser->cursor) ||
+               (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
         errno = 0;
         *out_pattern = strtol(parser->cursor, &end, 10);
         parser->cursor = end;

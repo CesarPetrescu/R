@@ -123,6 +123,17 @@ int main(void) {
         return 28;
     }
     out = 20;
+    if (snprintf(source, sizeof(source), "match 1 { 1 => 9, -%lu => 0 }",
+                 (unsigned long)LONG_MAX + 2UL) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 29;
+    }
+    if (snprintf(source, sizeof(source), "let low = 0 - %ld - 1; match low { -%lu => 31, _ => 0 }",
+                 LONG_MAX, (unsigned long)LONG_MAX + 1UL) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_OK || out != 31) {
+        return 30;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

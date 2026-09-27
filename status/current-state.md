@@ -15,6 +15,7 @@ Last updated: 2026-09-27
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- `match` patterns accept signed decimal tokens such as `-2`, down to host `LONG_MIN`; nonliteral `-(2)`, spaced `- 2` and `+2` remain rejected. An arm pattern below `LONG_MIN` reports `RUSTIC_ERR_INTEGER_OVERFLOW`, including after a prior selected arm, and does not change the C API output. The portable 14-row `tests/fixtures/rustic_negative_match_patterns.txt` and direct C API fixture cover the boundary and malformed forms; general expression literals still use unary minus and cannot spell `LONG_MIN` directly.
 - Identifiers of up to 63 characters retain their spelling in bindings, functions and parameters. Longer names now return `RUSTIC_ERR_IDENTIFIER_TOO_LONG` / `identifier too long` instead of silently truncating/aliasing another binding or function; assignment probes preserve the diagnostic. Grammar-only skipped expression operands also check the bound, while skipped brace-delimited bodies remain brace-scanned. The 10-case identifier fixture and direct C API host test cover declarations, references, assignments, calls, parameters, the accepted boundary, no partial result on error, and recovery on a later call.
 - Expression-factor nesting is bounded at 64 active evaluated/skipped parser frames. Deep unary chains and nested parentheses return `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` rather than crashing the host; the C API keeps its output unchanged on failure and later calls start fresh. Focused strict C99 tests cover evaluated and short-circuited paths plus the direct C API. The bound supplements the 512-step execution budget and is not a security sandbox.
 - `outlier_score(array, min, max)` checks each out-of-range subtraction and nonnegative score addition before host-long overflow. Reversed bounds keep their existing below-minimum branch precedence; empty arrays score zero, type/arity errors retain their diagnostics, skipped paths do not evaluate the helper, and failed C API calls preserve output. A portable 22-row `tests/fixtures/rustic_outlier_score_overflow_contract.txt` covers boundaries, composition and 65-iteration cleanup. Other unlisted built-in arithmetic remains unchecked.
@@ -172,6 +173,7 @@ The `top_sum` overflow work package adds `python3 -m pytest -q tests/test_rustic
 
 ```bash
 git diff --check
+python3 -m pytest -q tests/test_rustic_interpreter.py -k 'negative_match or c_api_contract or match_expression_arms'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'median_midpoint or c_api_contract or finds_array_medians'
 python3 -m pytest -q tests/test_rustic_interpreter.py -k 'variance_sum or c_api_contract or variance_and_mode'
 PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'adjacent_diff_overflow or c_api_contract or builds_adjacent_diffs'
