@@ -264,6 +264,32 @@ def test_c_hosted_rustic_interpreter_evaluates_let_binding_statement(tmp_path):
     assert result.stdout == "let x = 2 + 3; x * 4 => 20\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_overlong_binding_name(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = f"let {'a' * 64} = 5; 1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"identifier too long: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_identifier_length_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = (ROOT / "tests" / "fixtures" / "rustic_identifier_length_contract.txt").read_text().splitlines()
+    cases = [line.rsplit(" => ", 1) for line in cases if line and not line.startswith("#")]
+    assert len(cases) == 10
+    for template, expected in cases:
+        source = template.replace("{MAX}", "a" * 63).replace("{OVER}", "a" * 63 + "x")
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_reports_undefined_identifiers(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

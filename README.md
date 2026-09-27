@@ -30,6 +30,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Identifiers of up to 63 characters work in bindings, functions, parameters and expressions; longer names now fail with `RUSTIC_ERR_IDENTIFIER_TOO_LONG` / `identifier too long` instead of silently aliasing another name. The [host contract](tests/fixtures/rustic_identifier_length_contract.txt) covers both boundaries and short-circuited expressions. Skipped brace-delimited bodies are still only brace-scanned, not fully grammar-checked.
+
 `outlier_score(array, min, max)` checks both out-of-range distance subtractions and every running-score addition before host-`long` overflow. A failed C API call returns `RUSTIC_ERR_INTEGER_OVERFLOW` without changing its output; empty arrays, reversed-bound branch precedence, and existing argument diagnostics remain intact. The [portable host contract](tests/fixtures/rustic_outlier_score_overflow_contract.txt) covers boundary values, lazy paths, composition and temporary cleanup. Other unlisted helper arithmetic remains unchecked.
 
 
@@ -70,7 +72,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 572, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 271, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 573, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 272, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -82,7 +84,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 572 |
+| Completed backlog items | 573 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -91,7 +93,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 271 | 0 | None |
+| P1 | 272 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

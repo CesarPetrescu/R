@@ -1,0 +1,11 @@
+# {MAX} is a 63-character identifier; {OVER} is the same name plus one character.
+let {MAX} = 41; {MAX} + 1 => 42
+let {OVER} = 5; 1 => error:identifier too long
+let {MAX} = 5; {OVER} => error:identifier too long
+let {MAX} = 5; {OVER} = 9; {MAX} => error:identifier too long
+fn {MAX}(x) { x + 1 }; {MAX}(2) => 3
+fn {OVER}(x) { x }; 2 => error:identifier too long
+fn id({MAX}) { {MAX} }; id(3) => 3
+fn id({OVER}) { 1 }; id(3) => error:identifier too long
+let {MAX} = 5; 0 && {OVER} => error:identifier too long
+let {MAX} = 5; {OVER}() => error:identifier too long

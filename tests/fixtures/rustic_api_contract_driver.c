@@ -107,6 +107,22 @@ int main(void) {
         }
         out = 20;
     }
+    {
+        char name[65];
+        memset(name, 'a', 64);
+        name[64] = '\0';
+        if (snprintf(source, sizeof(source), "let %s = 5; 1", name) < 0 ||
+                rustic_eval_expression(source, &out) != RUSTIC_ERR_IDENTIFIER_TOO_LONG || out != 20) {
+            return 26;
+        }
+    }
+    if (strcmp(rustic_status_message(RUSTIC_ERR_IDENTIFIER_TOO_LONG), "identifier too long") != 0) {
+        return 27;
+    }
+    if (rustic_eval_expression("2 + 3", &out) != RUSTIC_OK || out != 5) {
+        return 28;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
