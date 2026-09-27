@@ -13306,6 +13306,35 @@ def test_c_hosted_rustic_interpreter_evaluates_match_expression_arms(tmp_path):
     assert result.stderr == ""
 
 
+def test_c_hosted_rustic_interpreter_matches_negative_integer_pattern(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = -2; match n { -3 => 10, -2 => n * -4, _ => 0 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 8\n"
+
+
+def test_c_hosted_rustic_interpreter_negative_match_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_negative_match_patterns.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 14
+    for template, expected in cases:
+        source = (template.replace("{LONG_MAX}", str(long_max))
+                  .replace("{OVER_LIMIT}", str(long_max + 1))
+                  .replace("{BELOW_LONG_MIN}", str(long_max + 2)))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_match_default_skips_unselected_arms(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

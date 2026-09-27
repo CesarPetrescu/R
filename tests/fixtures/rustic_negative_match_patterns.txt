@@ -1,0 +1,15 @@
+# Decimal match patterns accept an adjacent minus, including LONG_MIN (not a general expression).
+match -2 { -2 => 7, _ => 0 } => 7
+let n = -3; match n { -2 => 1, -3 => n * -4, _ => 0 } => 12
+match 4 { -3 => missing / 0, _ => 9 } => 9
+match -2 { -2 => 7, -3 => 1 } => 7
+match -2 { -3 => 1 } => error:no matching match arm
+match 0 { -0 => 6 } => 6
+match 0 { - => 1, _ => 2 } => error:expected integer
+match 0 { - 1 => 1, _ => 2 } => error:expected integer
+match 0 { -(1) => 1, _ => 2 } => error:expected integer
+match 0 { +1 => 1, _ => 2 } => error:expected integer
+match 0 { -{BELOW_LONG_MIN} => 1, _ => 2 } => error:integer overflow
+match 1 { 1 => 7, -{BELOW_LONG_MIN} => 2 } => error:integer overflow
+let low = 0 - {LONG_MAX} - 1; match low { -{OVER_LIMIT} => 11, _ => 0 } => 11
+match 1 { -{OVER_LIMIT} => 0, 1 => 8 } => 8
