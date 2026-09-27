@@ -187,6 +187,30 @@ int main(void) {
         return 41;
     }
     out = 20;
+    {
+        char chain[4096];
+        size_t used = 0;
+        size_t i;
+        int written = snprintf(chain, sizeof(chain), "1");
+        if (written < 0 || (size_t)written >= sizeof(chain)) {
+            return 42;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(chain + used, sizeof(chain) - used, " + 1");
+            if (written < 0 || (size_t)written >= sizeof(chain) - used) {
+                return 43;
+            }
+            used += (size_t)written;
+        }
+        if (rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 44;
+        }
+    }
+    if (rustic_eval_expression("1 + 2 * 3", &out) != RUSTIC_OK || out != 7) {
+        return 45;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

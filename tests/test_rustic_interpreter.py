@@ -187,6 +187,52 @@ def test_c_hosted_rustic_interpreter_rejects_out_of_range_match_arm_pattern(tmp_
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_evaluated_additive_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "1" + " + 1" * 600
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_skipped_additive_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && (1" + " + 1" * 600 + ")"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_evaluated_multiplicative_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "1" + " * 1" * 600
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_skipped_multiplicative_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && (1" + " * 1" * 600 + ")"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_logical_chains(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for source in ("1" + " && 1" * 600, "0" + " && 0" * 600,
+                   "0" + " || 0" * 600, "1" + " || 1" * 600):
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        assert result.returncode == 2, result
+        assert result.stdout == ""
+        assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     binary = tmp_path / "rustic-api-contract"
     build = subprocess.run(
