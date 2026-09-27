@@ -863,6 +863,16 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     enum LoopControl saved_loop_control;
 
     skip_spaces(parser);
+    if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
+        errno = 0;
+        integer = strtol(parser->cursor, &end, 10);
+        parser->cursor = end;
+        if (errno == ERANGE) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return integer_value(0);
+        }
+        return parse_index_postfix(parser, integer_value(integer));
+    }
     if (*parser->cursor == '!' || *parser->cursor == '-') {
         char operator = *parser->cursor++;
         value = parse_factor(parser);

@@ -133,6 +133,22 @@ int main(void) {
             rustic_eval_expression(source, &out) != RUSTIC_OK || out != 31) {
         return 30;
     }
+    if (snprintf(source, sizeof(source), "let low = -%lu; low / 2", (unsigned long)LONG_MAX + 1UL) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_OK || out != LONG_MIN / 2) {
+        return 31;
+    }
+    out = 20;
+    if (snprintf(source, sizeof(source), "-%lu", (unsigned long)LONG_MAX + 2UL) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 32;
+    }
+    if (snprintf(source, sizeof(source), "--%lu", (unsigned long)LONG_MAX + 1UL) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 33;
+    }
+    if (rustic_eval_expression("2 + 3", &out) != RUSTIC_OK || out != 5) {
+        return 34;
+    }
     out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
