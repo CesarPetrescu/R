@@ -160,10 +160,12 @@ static int parse_identifier(struct Parser *parser, char *out_name, size_t out_si
     }
 
     while (is_identifier_continue(*parser->cursor)) {
-        if (length + 1 < out_size) {
-            out_name[length] = *parser->cursor;
-            length++;
+        if (length + 1 >= out_size) {
+            parser->status = RUSTIC_ERR_IDENTIFIER_TOO_LONG;
+            return 0;
         }
+        out_name[length] = *parser->cursor;
+        length++;
         parser->cursor++;
     }
     out_name[length] = '\0';
@@ -5794,7 +5796,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     }
 
     if (!parse_identifier(parser, name, sizeof(name))) {
-        return 0;
+        return 1;
     }
 
     skip_spaces(parser);
@@ -6066,6 +6068,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "array length mismatch";
     case RUSTIC_ERR_INTEGER_OVERFLOW:
         return "integer overflow";
+    case RUSTIC_ERR_IDENTIFIER_TOO_LONG:
+        return "identifier too long";
     default:
         return "unknown rustic interpreter error";
     }
