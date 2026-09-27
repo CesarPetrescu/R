@@ -161,6 +161,32 @@ int main(void) {
         return 37;
     }
     out = 20;
+    {
+        char match_source[8192];
+        size_t used;
+        size_t i;
+        int written = snprintf(match_source, sizeof(match_source), "match 0 { ");
+        if (written < 0 || (size_t)written >= sizeof(match_source)) {
+            return 38;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 520; i++) {
+            written = snprintf(match_source + used, sizeof(match_source) - used, "1 => 1, ");
+            if (written < 0 || (size_t)written >= sizeof(match_source) - used) {
+                return 39;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(match_source + used, sizeof(match_source) - used, "_ => 7 }");
+        if (written < 0 || (size_t)written >= sizeof(match_source) - used ||
+                rustic_eval_expression(match_source, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 40;
+        }
+    }
+    if (rustic_eval_expression("match 0 { 0 => 7, _ => 8 }", &out) != RUSTIC_OK || out != 7) {
+        return 41;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

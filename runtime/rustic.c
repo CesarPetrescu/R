@@ -556,6 +556,9 @@ static struct Value parse_match_expression(struct Parser *parser) {
             }
             return value;
         }
+        if (!consume_step(parser)) {
+            return integer_value(0);
+        }
 
         if (!parse_match_arm_pattern(parser, &pattern, &is_default)) {
             return integer_value(0);
