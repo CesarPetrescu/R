@@ -411,6 +411,9 @@ static int skip_block(struct Parser *parser) {
     }
 
     while (*parser->cursor != '\0') {
+        if (!isspace((unsigned char)*parser->cursor) && !consume_step(parser)) {
+            return 0;
+        }
         if (*parser->cursor == '{') {
             depth++;
         } else if (*parser->cursor == '}') {

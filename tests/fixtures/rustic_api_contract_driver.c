@@ -187,6 +187,22 @@ int main(void) {
         return 41;
     }
     out = 20;
+    {
+        char deferred[1800] = "fn unused() { ";
+        size_t i;
+        for (i = 0; i < 520; i++) {
+            strcat(deferred, "1; ");
+        }
+        strcat(deferred, "1 }; 7");
+        if (rustic_eval_expression(deferred, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20 ||
+                strcmp(rustic_status_message(RUSTIC_ERR_STEP_LIMIT_EXCEEDED), "step limit exceeded") != 0) {
+            return 42;
+        }
+    }
+    if (rustic_eval_expression("fn add(x) { x + 1 }; add(5)", &out) != RUSTIC_OK || out != 6) {
+        return 43;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
