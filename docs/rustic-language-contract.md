@@ -11,6 +11,7 @@ Rustic is a bounded Rust-*like* expression interpreter, not `rustc`. The public 
 Identifiers (binding names, function names, parameters, references and call targets) accept at most 63 characters. A longer name returns `RUSTIC_ERR_IDENTIFIER_TOO_LONG` / `identifier too long`, rather than aliasing its first 63 characters; even grammar-only skipped expression operands check this limit. Skipped brace-delimited bodies remain brace-scanned and may defer the diagnostic until selected/evaluated. The [identifier host contract](../tests/fixtures/rustic_identifier_length_contract.txt) covers the boundary, alias prevention and skipped operands.
 
 ## Embedding and failures
+Each visited arm of an evaluated `match` (even after a previous arm matched) charges the shared 512-step budget. If it runs out, the API returns `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` and does not change the output. A whole `match` expression skipped by `&&`/`||` still uses brace scanning; long arithmetic chains can also bypass this step budget. These are resource-behavior limits, not a security sandbox.
 
 ```c
 #include "rustic.h"

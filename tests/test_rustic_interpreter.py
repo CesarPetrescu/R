@@ -1003,6 +1003,18 @@ def test_c_hosted_rustic_interpreter_runs_loop_control_showcase_fixture(tmp_path
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_charges_match_arms_to_step_budget(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for source in (
+        "match 0 { " + "1 => 1, " * 520 + "_ => 7 }",
+        "match 0 { 0 => 7, " + "1 => 1, " * 520 + "_ => 8 }",
+    ):
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        assert result.returncode == 2, result
+        assert result.stdout == ""
+        assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_match_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_match_showcase.txt"
