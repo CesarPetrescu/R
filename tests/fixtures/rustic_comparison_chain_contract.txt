@@ -1,0 +1,16 @@
+# Unparenthesized comparison chains are ambiguous; use parentheses or &&.
+3 > 2 > 1 => error:expected operator
+1 == 1 != 0 => error:expected operator
+0 && 1 < 2 < 3 => error:expected operator
+1 || 0 == 1 == 1 => error:expected operator
+match 0 { 0 => 3 > 2 > 1, _ => 7 } => error:expected operator
+match 0 { 1 => 1 < 2 < 3, _ => 7 } => error:expected operator
+if 1 { 3 > 2 > 1 } else { 0 } => error:expected operator
+(3 > 2) == 1 => 1
+3 > (2 > 1) => 1
+1 < 2 && 2 < 3 => 1
+0 && (3 > 2) == 0 => 0
+fn within(x) { x > 0 && x < 5 }; within(3) => 1
+1 < => error:expected integer
+0 && 1 < => error:expected integer
+3 > 2; 1 < 2 => 1

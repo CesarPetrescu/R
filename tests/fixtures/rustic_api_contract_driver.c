@@ -150,6 +150,17 @@ int main(void) {
         return 34;
     }
     out = 20;
+    if (rustic_eval_expression("3 > 2 > 1", &out) != RUSTIC_ERR_EXPECTED_OPERATOR || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_OPERATOR), "expected operator") != 0) {
+        return 35;
+    }
+    if (rustic_eval_expression("0 && 1 < 2 < 3", &out) != RUSTIC_ERR_EXPECTED_OPERATOR || out != 20) {
+        return 36;
+    }
+    if (rustic_eval_expression("(3 > 2) == 1", &out) != RUSTIC_OK || out != 1) {
+        return 37;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
