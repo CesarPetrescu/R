@@ -5301,11 +5301,19 @@ static struct Value parse_additive_expression(struct Parser *parser) {
 static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
+    int saw_comparison = 0;
     struct Value value = parse_additive_expression(parser);
     struct Value right_value;
 
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
+        if (saw_comparison &&
+            (*parser->cursor == '<' || *parser->cursor == '>' ||
+             (parser->cursor[0] == '=' && parser->cursor[1] == '=') ||
+             (parser->cursor[0] == '!' && parser->cursor[1] == '='))) {
+            parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+            return integer_value(0);
+        }
         if (parser->cursor[0] == '=' && parser->cursor[1] == '=') {
             if (!value_as_integer(parser, value, &left)) {
                 return integer_value(0);
@@ -5372,6 +5380,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
         } else {
             return value;
         }
+        saw_comparison = 1;
     }
 
     return value;
@@ -5559,11 +5568,19 @@ static int skip_additive_expression(struct Parser *parser) {
 }
 
 static int skip_comparison_expression(struct Parser *parser) {
+    int saw_comparison = 0;
     if (!skip_additive_expression(parser)) {
         return 0;
     }
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
+        if (saw_comparison &&
+            (*parser->cursor == '<' || *parser->cursor == '>' ||
+             (parser->cursor[0] == '=' && parser->cursor[1] == '=') ||
+             (parser->cursor[0] == '!' && parser->cursor[1] == '='))) {
+            parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
+            return 0;
+        }
         if ((parser->cursor[0] == '=' && parser->cursor[1] == '=') ||
             (parser->cursor[0] == '!' && parser->cursor[1] == '=') ||
             (parser->cursor[0] == '<' && parser->cursor[1] == '=') ||
@@ -5577,6 +5594,7 @@ static int skip_comparison_expression(struct Parser *parser) {
         if (!skip_additive_expression(parser)) {
             return 0;
         }
+        saw_comparison = 1;
     }
     return 1;
 }

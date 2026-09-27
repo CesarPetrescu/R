@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Reject unparenthesized comparison chains in evaluated and grammar-only skipped operands so `3 > 2 > 1` does not silently compare a boolean integer with `1`; preserve explicitly parenthesized comparisons, logical composition, deterministic `expected operator` diagnostics, and unchanged C API output on failure (15-row host contract).
 
 - [x] Implement the first useful end-to-end feature.
 - [x] Add CLI or API entry points, depending on the chosen product direction.

@@ -432,6 +432,41 @@ def test_c_hosted_rustic_interpreter_evaluates_not_equal_comparison(tmp_path):
     assert result.stdout == "let x = 3; x != 4 => 1\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_unparenthesized_comparison_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "3 > 2 > 1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"expected operator: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_skipped_comparison_chain(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && 1 < 2 < 3"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"expected operator: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_comparison_chain_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_comparison_chain_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 15
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_ordering_comparisons(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
