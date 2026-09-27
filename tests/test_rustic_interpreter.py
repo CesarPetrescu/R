@@ -233,6 +233,15 @@ def test_c_hosted_rustic_interpreter_bounds_logical_chains(tmp_path):
         assert result.stderr == f"step limit exceeded: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_nested_block_does_not_reset_outer_operator_budget(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "1" + " + 1" * 300 + " + { 1 }" + " + 1" * 300
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     binary = tmp_path / "rustic-api-contract"
     build = subprocess.run(

@@ -206,6 +206,20 @@ int main(void) {
         if (rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
             return 44;
         }
+        used = 1;
+        chain[0] = '1';
+        chain[used] = '\0';
+        for (i = 0; i < 600; i++) {
+            const char *piece = i == 300 ? " + { 1 }" : " + 1";
+            written = snprintf(chain + used, sizeof(chain) - used, "%s", piece);
+            if (written < 0 || (size_t)written >= sizeof(chain) - used) {
+                return 46;
+            }
+            used += (size_t)written;
+        }
+        if (rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 47;
+        }
     }
     if (rustic_eval_expression("1 + 2 * 3", &out) != RUSTIC_OK || out != 7) {
         return 45;

@@ -5936,7 +5936,7 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
     return 0;
 }
 
-static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
+static struct Value parse_statement_sequence_body(struct Parser *parser, char terminator) {
     struct Value value = integer_value(0);
     int saw_statement = 0;
 
@@ -6042,6 +6042,13 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
         compact_unreferenced_arrays(parser, NULL);
     }
 
+    return value;
+}
+
+static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
+    size_t outer_operator_steps_remaining = parser->operator_steps_remaining;
+    struct Value value = parse_statement_sequence_body(parser, terminator);
+    parser->operator_steps_remaining = outer_operator_steps_remaining;
     return value;
 }
 
