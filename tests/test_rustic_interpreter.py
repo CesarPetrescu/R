@@ -88,6 +88,15 @@ def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_accepts_direct_long_min_literal(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_min = -(1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1))
+    source = f"let low = {long_min}; low / 2"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => {long_min // 2}\n"
+
+
 def test_c_hosted_rustic_interpreter_reports_addition_overflow(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
@@ -198,10 +207,14 @@ def test_c_hosted_rustic_interpreter_runs_integer_literal_contract_fixture(tmp_p
     fixture = ROOT / "tests" / "fixtures" / "rustic_integer_literal_contract.txt"
     cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
              if line and not line.startswith("#")]
-    assert len(cases) == 12
+    assert len(cases) == 21
     for template, expected in cases:
-        source = template.replace("{LONG_MAX}", str(long_max)).replace("{OVER_LIMIT}", str(long_max + 1))
-        expected = expected.replace("{LONG_MAX}", str(long_max))
+        source = (template.replace("{LONG_MAX}", str(long_max))
+                  .replace("{OVER_LIMIT}", str(long_max + 1))
+                  .replace("{BELOW_MIN}", str(long_max + 2)))
+        expected = (expected.replace("{LONG_MAX}", str(long_max))
+                    .replace("{LONG_MIN}", str(-long_max - 1))
+                    .replace("{HALF_LONG_MIN}", str((-long_max - 1) // 2)))
         result = subprocess.run([str(binary), source], text=True, capture_output=True)
         if expected.startswith("error:"):
             assert result.returncode == 2, source
