@@ -201,6 +201,48 @@ int main(void) {
         return 41;
     }
     out = 20;
+    {
+        char skipped[2048];
+        size_t used;
+        size_t i;
+        int written = snprintf(skipped, sizeof(skipped), "while 1 { break; ");
+        if (written < 0 || (size_t)written >= sizeof(skipped)) {
+            return 48;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(skipped + used, sizeof(skipped) - used, "0; ");
+            if (written < 0 || (size_t)written >= sizeof(skipped) - used) {
+                return 49;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(skipped + used, sizeof(skipped) - used, "}; 9");
+        if (written < 0 || (size_t)written >= sizeof(skipped) - used ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 50;
+        }
+    }
+    if (rustic_eval_expression("while 1 { break; { 3 }; 9 }; 7", &out) != RUSTIC_OK || out != 7) {
+        return 51;
+    }
+    out = 20;
+    {
+        char skipped[2048];
+        size_t used;
+        int written = snprintf(skipped, sizeof(skipped), "while 1 { if 1 { break; } else { ");
+        if (written < 0 || (size_t)written + 1024 + 16 >= sizeof(skipped)) {
+            return 52;
+        }
+        used = (size_t)written;
+        memset(skipped + used, ' ', 1024);
+        used += 1024;
+        written = snprintf(skipped + used, sizeof(skipped) - used, "0 }; 7 }; 9");
+        if (written < 0 || (size_t)written >= sizeof(skipped) - used ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 53;
+        }
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

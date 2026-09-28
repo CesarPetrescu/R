@@ -142,6 +142,16 @@ static void skip_spaces(struct Parser *parser) {
     }
 }
 
+static int skip_spaces_after_loop_control(struct Parser *parser) {
+    while (isspace((unsigned char)*parser->cursor)) {
+        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+            return 0;
+        }
+        parser->cursor++;
+    }
+    return 1;
+}
+
 static int is_identifier_start(char character) {
     return isalpha((unsigned char)character) || character == '_';
 }
@@ -410,13 +420,18 @@ static int skip_expression_operand(struct Parser *parser);
 static int skip_block(struct Parser *parser) {
     size_t depth = 0;
 
-    skip_spaces(parser);
+    if (!skip_spaces_after_loop_control(parser)) {
+        return 0;
+    }
     if (*parser->cursor != '{') {
         parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
         return 0;
     }
 
     while (*parser->cursor != '\0') {
+        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+            return 0;
+        }
         if (*parser->cursor == '{') {
             depth++;
         } else if (*parser->cursor == '}') {
@@ -481,7 +496,9 @@ static struct Value parse_if_expression(struct Parser *parser) {
         return integer_value(0);
     }
 
-    skip_spaces(parser);
+    if (!skip_spaces_after_loop_control(parser)) {
+        return integer_value(0);
+    }
     if (!cursor_starts_keyword(parser, "else")) {
         parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
         return integer_value(0);
@@ -534,6 +551,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
 static struct Value parse_match_expression(struct Parser *parser) {
     struct Value scrutinee_value;
     struct Value value = integer_value(0);
+    size_t skipped_depth;
     long scrutinee;
     long pattern = 0;
     int is_default = 0;
@@ -580,11 +598,28 @@ static struct Value parse_match_expression(struct Parser *parser) {
             return integer_value(0);
         }
 
-        skip_spaces(parser);
+        if (!skip_spaces_after_loop_control(parser)) {
+            return integer_value(0);
+        }
         if (parser->loop_control != LOOP_CONTROL_NONE) {
-            while (*parser->cursor != '\0' && *parser->cursor != '}') {
+            skipped_depth = 0;
+            while (*parser->cursor != '\0') {
+                if (!consume_step(parser)) {
+                    return integer_value(0);
+                }
+                if (*parser->cursor == '{') {
+                    skipped_depth++;
+                } else if (*parser->cursor == '}') {
+                    if (skipped_depth == 0) {
+                        parser->cursor++;
+                        return value;
+                    }
+                    skipped_depth--;
+                }
                 parser->cursor++;
             }
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return integer_value(0);
         }
         if (*parser->cursor == ',') {
             parser->cursor++;
@@ -650,7 +685,9 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
     long index;
 
     while (parser->status == RUSTIC_OK) {
-        skip_spaces(parser);
+        if (!skip_spaces_after_loop_control(parser)) {
+            return integer_value(0);
+        }
         if (*parser->cursor != '[') {
             return value;
         }
@@ -5892,6 +5929,9 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
     while (*parser->cursor != '\0') {
         if (block_depth == 0 && *parser->cursor == terminator) {
             return 1;
+        }
+        if (!consume_step(parser)) {
+            return 0;
         }
         if (*parser->cursor == '{') {
             block_depth++;

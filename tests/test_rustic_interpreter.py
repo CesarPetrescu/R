@@ -897,6 +897,68 @@ def test_c_hosted_rustic_interpreter_continues_while_loop_iteration(tmp_path):
     assert result.stdout == f"{source} => 12\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_unreachable_loop_suffix(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 1 { break; " + "0; " * 600 + "}; 9"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_match_suffix_after_break(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 1 { match 1 { 1 => { break; }, " + "2 => 0, " * 120 + "_ => 0 }; 9 }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_skipped_else_after_continue(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; while n < 1 { n = n + 1; if 1 { continue; } else { " + " " * 1024 + "0 }; 7 }; n"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_bounds_whitespace_after_nested_break(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 1 { match 1 { 1 => { break; }" + " " * 1024 + ", _ => 0 }; 9 }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_balances_skipped_match_arm_braces_after_loop_exit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    cases = {
+        "while 1 { match 1 { 1 => { break; }, 2 => { 1 / 0 }, _ => 0 }; 9 }; 7": 7,
+        "let n = 0; while n < 1 { n = n + 1; match 1 { 1 => { continue; }, 2 => { 1 / 0 } }; 9 }; n": 1,
+    }
+    for source, expected in cases.items():
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        assert result.returncode == 0, result
+        assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_loop_exit_scan_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_loop_exit_scan_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 5
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        if expected == "expected closing brace":
+            assert result.returncode == 2, result
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+        else:
+            assert result.returncode == 0, result.stderr
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_loop_control_outside_loop(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
