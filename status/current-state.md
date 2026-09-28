@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-09-27
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- After `break;`/`continue;`, the remaining body scanner consumes one shared step per source byte until its matching brace, including nested selected `match` arms, skipped `if` branches and whitespace. A 600-statement unreachable suffix and nested 120-arm/1024-space cases return `RUSTIC_ERR_STEP_LIMIT_EXCEEDED`; the direct C API fixture confirms unchanged output and next-call recovery. The five-row loop-exit host contract preserves short nested suffixes, skipped effects and missing-brace diagnostics. It still scans rather than grammar-checking unreachable statements and is not a sandbox.
 - Evaluated `match` expressions now consume one shared budget step per visited arm, whether or not an earlier arm matched; 520-arm host cases return `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` instead of scanning an arbitrarily long arm list. Strict C99 direct API coverage proves failed calls leave the output untouched and a short match succeeds on the next call. This does not cover additive expression chains or short-circuited match bodies, which still have separate traversal behavior.
 - Comparison expressions allow one of `==`, `!=`, `<`, `<=`, `>`, `>=` per unparenthesized expression. A second comparison now returns `RUSTIC_ERR_EXPECTED_OPERATOR` in both evaluated and grammar-only skipped operands instead of comparing a previous boolean integer; explicit parentheses and `&&`/`||` composition remain available. The 15-row `tests/fixtures/rustic_comparison_chain_contract.txt` and direct C API checks cover success/failure, selected and skipped `match` arms, diagnostic text, unchanged output on failure, and subsequent evaluation. Skipped brace-delimited bodies retain their separately documented brace-scan behavior.
 - Immediately adjacent negative decimal expression literals such as `-9223372036854775808` on 64-bit-long hosts are converted as signed tokens down to host `LONG_MIN`; they work in bindings, arrays and match scrutinees. Smaller values report `RUSTIC_ERR_INTEGER_OVERFLOW`, as do `- (LONG_MAX+1)` and negation of a computed `LONG_MIN`; grammar-only skipped operands still do not convert magnitudes. The portable 21-row `rustic_integer_literal_contract.txt`, direct RED/GREEN host test, and C API contract cover arithmetic, laziness, failure output preservation and next-call recovery. Skipped brace-delimited bodies still use brace scanning.
