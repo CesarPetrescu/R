@@ -187,6 +187,15 @@ int main(void) {
         return 41;
     }
     out = 20;
+    if (rustic_eval_expression("fn choose(x, y, x) { x }; choose(1, 2, 3)", &out) !=
+            RUSTIC_ERR_DUPLICATE_PARAMETER || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_PARAMETER), "duplicate parameter") != 0) {
+        return 42;
+    }
+    if (rustic_eval_expression("fn choose(x, y) { y }; choose(1, 2)", &out) != RUSTIC_OK || out != 2) {
+        return 43;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

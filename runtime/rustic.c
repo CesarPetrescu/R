@@ -5746,6 +5746,7 @@ static void parse_let_statement(struct Parser *parser) {
 static void parse_function_declaration(struct Parser *parser) {
     struct Function *function;
     const char *block_start;
+    size_t previous;
 
     if (parser->function_count >= RUSTIC_MAX_FUNCTIONS) {
         parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
@@ -5777,6 +5778,13 @@ static void parse_function_declaration(struct Parser *parser) {
                     function->parameters[function->parameter_count],
                     sizeof(function->parameters[function->parameter_count]))) {
                 return;
+            }
+            for (previous = 0; previous < function->parameter_count; previous++) {
+                if (strcmp(function->parameters[previous],
+                           function->parameters[function->parameter_count]) == 0) {
+                    parser->status = RUSTIC_ERR_DUPLICATE_PARAMETER;
+                    return;
+                }
             }
             function->parameter_count++;
             skip_spaces(parser);
@@ -6102,6 +6110,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "integer overflow";
     case RUSTIC_ERR_IDENTIFIER_TOO_LONG:
         return "identifier too long";
+    case RUSTIC_ERR_DUPLICATE_PARAMETER:
+        return "duplicate parameter";
     default:
         return "unknown rustic interpreter error";
     }

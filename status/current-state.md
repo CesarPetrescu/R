@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-09-27
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- Function declarations reject duplicate parameter names with `RUSTIC_ERR_DUPLICATE_PARAMETER` / `duplicate parameter` rather than silently binding the last argument over the first. An 11-row strict-C99 host contract covers valid distinct parameter lists, binding reuse across outer/function scopes, nested declarations, repeated first/third names, malformed parameter syntax and unchanged call-arity diagnostics. A direct C API fixture verifies unchanged output on failure and successful subsequent evaluation. Skipped brace bodies retain their documented brace-only grammar behavior.
 - Evaluated `match` expressions now consume one shared budget step per visited arm, whether or not an earlier arm matched; 520-arm host cases return `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` instead of scanning an arbitrarily long arm list. Strict C99 direct API coverage proves failed calls leave the output untouched and a short match succeeds on the next call. This does not cover additive expression chains or short-circuited match bodies, which still have separate traversal behavior.
 - Comparison expressions allow one of `==`, `!=`, `<`, `<=`, `>`, `>=` per unparenthesized expression. A second comparison now returns `RUSTIC_ERR_EXPECTED_OPERATOR` in both evaluated and grammar-only skipped operands instead of comparing a previous boolean integer; explicit parentheses and `&&`/`||` composition remain available. The 15-row `tests/fixtures/rustic_comparison_chain_contract.txt` and direct C API checks cover success/failure, selected and skipped `match` arms, diagnostic text, unchanged output on failure, and subsequent evaluation. Skipped brace-delimited bodies retain their separately documented brace-scan behavior.
 - Immediately adjacent negative decimal expression literals such as `-9223372036854775808` on 64-bit-long hosts are converted as signed tokens down to host `LONG_MIN`; they work in bindings, arrays and match scrutinees. Smaller values report `RUSTIC_ERR_INTEGER_OVERFLOW`, as do `- (LONG_MAX+1)` and negation of a computed `LONG_MIN`; grammar-only skipped operands still do not convert magnitudes. The portable 21-row `rustic_integer_literal_contract.txt`, direct RED/GREEN host test, and C API contract cover arithmetic, laziness, failure output preservation and next-call recovery. Skipped brace-delimited bodies still use brace scanning.
@@ -165,6 +166,7 @@ Last updated: 2026-09-27
 - `LICENSE` declares GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) terms so distributed and network-served modified versions remain open-source.
 
 ## Verified commands
+The duplicate-parameter package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'function_parameter_contract or rejects_duplicate_function_parameters or c_api_contract'` to the focused strict-C99 host matrix; full host, report, lint and fresh Docker checks remain mandatory before push.
 The match-arm budget package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'charges_match_arms_to_step_budget or c_api_contract or match_showcase_fixture'` to the focused strict C99 host matrix; full host, report, lint and fresh Docker commands below remain required before push.
 The comparison-chain package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'comparison_chain or c_api_contract or ordering_comparisons'` to the focused strict C99 host matrix; full host, report, lint, and fresh Docker verification below remain required before push.
 The identifier-length package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'identifier_length_contract or rejects_overlong_binding_name or c_api_contract'` to the focused strict C99 host matrix; all baseline checks below remain required before push.

@@ -3,6 +3,8 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
+Current isolated PR work closes the ambiguous duplicate-parameter binding behavior (`fn pick(x, x) { x }` previously selected the later argument); keep the distinct open parser/budget PRs and their independent reviewer gates separate. After those merge or unblock, inspect whether zero-iteration and short-circuit skipped blocks should validate statement grammar without running effects, rather than adding a new helper suffix.
+
 
 1. Test whether invalid statements in unselected `if`/`else` and zero-iteration `while` blocks are silently accepted (`if 0 { 1 + * } else { 7 }` currently returns `7`); decide and document the supported grammar, then close the gap test-first without evaluating effects in skipped bodies. Cover nested blocks, scope, malformed statements, and step limits. Separate local worktrees are already exploring this outcome; avoid duplicate implementation branches.
 2. Close the remaining expression-work budget gap: the host source `"1" + "+1" * 600` still evaluates to `601` without a step error. Add a RED C-host/C API test for long additive chains (including short-circuited operands where syntax still needs traversing), then charge expression operations without changing small expression results or output-preservation behavior. The match-arm fix below does not make all expression traversal bounded.
