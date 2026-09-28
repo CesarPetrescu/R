@@ -60,6 +60,8 @@ typedef enum RusticStatus {
  * Evaluated and skipped expression-factor nesting is capped at 64 active
  * factors; exceeding it reports STEP_LIMIT_EXCEEDED (also used for the
  * independent 512-step execution budget).
+ * Scanning the unreachable remainder of a loop body after break/continue
+ * charges one budget step per source byte (including nested braces).
  * On any error, *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);

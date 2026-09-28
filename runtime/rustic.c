@@ -5887,6 +5887,9 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
         if (block_depth == 0 && *parser->cursor == terminator) {
             return 1;
         }
+        if (!consume_step(parser)) {
+            return 0;
+        }
         if (*parser->cursor == '{') {
             block_depth++;
         } else if (*parser->cursor == '}') {

@@ -1,0 +1,4 @@
+# Valid loop exits skip effects in the remainder of the body, including nested braces.
+while 1 { break; { 1 / 0 }; 9 }; 7 => 7
+let n = 0; while n < 2 { n = n + 1; continue; { 1 / 0 }; 9 }; n => 2
+while 1 { break; { 7 }; 1 => expected closing brace
