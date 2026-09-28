@@ -152,7 +152,8 @@ static int is_identifier_continue(char character) {
 
 static int starts_adjacent_statement(const char *cursor) {
     return isdigit((unsigned char)*cursor) || is_identifier_start(*cursor) ||
-           *cursor == '(' || *cursor == '{';
+           *cursor == '(' || *cursor == '{' || *cursor == '!' ||
+           *cursor == '-' || *cursor == '[';
 }
 
 static int parse_identifier(struct Parser *parser, char *out_name, size_t out_size) {

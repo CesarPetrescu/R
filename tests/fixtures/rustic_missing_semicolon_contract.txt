@@ -5,6 +5,14 @@
 { 1 2 } => error:expected semicolon
 let x = 2; x = 3 4 => error:expected semicolon
 while 0 { 1 } 7 => error:expected semicolon
+while 0 { 1 }; !0 => 1
+while 0 { 1 } !0 => error:expected semicolon
+while 0 { 1 }; -2 => -2
+while 0 { 1 } -2 => error:expected semicolon
+1 -2 => -1
+while 0 { 1 }; [2][0] => 2
+while 0 { 1 } [2][0] => error:expected semicolon
+while 0 { 1 } @ => error:trailing input
 1 (2) => error:expected semicolon
 1 { 2 } => error:expected semicolon
 1 @ 2 => error:trailing input

@@ -184,6 +184,15 @@ int main(void) {
         }
     }
     out = 20;
+    if (rustic_eval_expression("while 0 { 1 } !0", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 43;
+    }
+    if (rustic_eval_expression("while 0 { 1 } -2", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 44;
+    }
+    if (rustic_eval_expression("while 0 { 1 } [2][0]", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 45;
+    }
     if (rustic_eval_expression("1 (2)", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20 ||
             strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_SEMICOLON), "expected semicolon") != 0) {
         return 42;
