@@ -213,6 +213,22 @@ int main(void) {
         return 45;
     }
     out = 20;
+    {
+        char skipped[2048];
+        size_t used;
+        int written = snprintf(skipped, sizeof(skipped), "while 1 { if 1 { break; } else { ");
+        if (written < 0 || (size_t)written + 1024 + 16 >= sizeof(skipped)) {
+            return 46;
+        }
+        used = (size_t)written;
+        memset(skipped + used, ' ', 1024);
+        used += 1024;
+        written = snprintf(skipped + used, sizeof(skipped) - used, "0 }; 7 }; 9");
+        if (written < 0 || (size_t)written >= sizeof(skipped) - used ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 47;
+        }
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
