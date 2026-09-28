@@ -248,6 +248,22 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_unary_minus_operands(tmp_pa
         assert result.stderr == f"{diagnostic}: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_reports_missing_semicolon_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_missing_semicolon_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_reports_invalid_expression(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

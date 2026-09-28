@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Diagnose a missing semicolon between adjacent evaluated statements (`1 2`, assignment followed by a literal, or `while` followed by a literal) as `RUSTIC_ERR_EXPECTED_SEMICOLON`, while retaining accepted semicolon sequences, scoped blocks and generic trailing-input diagnostics for unknown tokens; verify output preservation through the C API.
 - [x] Charge every arm visited by an evaluated `match` expression to the shared 512-step budget, including arms after a selected match; fail with `step limit exceeded` before scanning unbounded arm lists, preserve small-match behavior and C API output on failure.
 - [x] Reject unparenthesized comparison chains in evaluated and grammar-only skipped operands so `3 > 2 > 1` does not silently compare a boolean integer with `1`; preserve explicitly parenthesized comparisons, logical composition, deterministic `expected operator` diagnostics, and unchanged C API output on failure (15-row host contract).
 

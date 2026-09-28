@@ -183,6 +183,11 @@ int main(void) {
             return 40;
         }
     }
+    out = 20;
+    if (rustic_eval_expression("1 (2)", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_SEMICOLON), "expected semicolon") != 0) {
+        return 42;
+    }
     if (rustic_eval_expression("match 0 { 0 => 7, _ => 8 }", &out) != RUSTIC_OK || out != 7) {
         return 41;
     }
