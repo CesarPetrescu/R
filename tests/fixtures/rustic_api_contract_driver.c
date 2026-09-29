@@ -201,6 +201,15 @@ int main(void) {
         return 41;
     }
     out = 20;
+    if (rustic_eval_expression("fn choose(x, y, x) { x }; choose(1, 2, 3)", &out) !=
+            RUSTIC_ERR_DUPLICATE_PARAMETER || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_PARAMETER), "duplicate parameter") != 0) {
+        return 48;
+    }
+    if (rustic_eval_expression("fn choose(x, y) { y }; choose(1, 2)", &out) != RUSTIC_OK || out != 2) {
+        return 49;
+    }
+    out = 20;
     {
         char skipped[2048];
         size_t used;

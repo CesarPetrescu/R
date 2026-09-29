@@ -5,6 +5,8 @@
 - None verified.
 
 ## Deferred external merge gates
+- 2026-09-29: PR #586 (duplicate function parameters) received an authenticated CLEAR for head `7451233`, but GitHub did not receive the required App-authored `hermes/isolated-review` SUCCESS status; merging #585 into its branch will require a fresh exact-head verdict and status. Keep it open until those gates pass. Earlier isolated reviewer service failure at the original head was recovered; do not publish a substitute verdict or status.
+- 2026-09-28: Existing PR #584 at its updated loop-exit budget head has recorded host/Docker verification but no authenticated current-head AI verdict: `/usr/local/bin/r-verify-ai-review 584` returned exit `1`, `{"ok":false,"reason":"no_authenticated_current_head_review"}`. The independent `r-isolated-reviewer-584-403cf9075885.service` failed with exit `5` and `isolated model review failed` before publishing a verdict. Do not restart its privileged publisher or merge; operator recovery is separate. PR #585 is also open and being edited by another worker; do not touch that checkout.
 
 - 2026-09-27: PR #581 (evaluated match-arm step budget) passed standalone host pytest (489 tests) and fresh Docker Compose (489 tests) on the implementation head. Its independent reviewer task reported CLEAR, but the posted comment was attributed to the repository owner rather than the authenticated reviewer-bot/App identity; `/usr/local/bin/r-verify-ai-review 581` returned exit `1` with `{"ok":false,"reason":"no_authenticated_current_head_review"}`. Keep the PR open until a genuinely authenticated reviewer verdict and required exact-head status are available; do not republish the owner comment or bypass the gate. Reverify the current head after any status-only update.
 
