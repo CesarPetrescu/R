@@ -235,6 +235,15 @@ int main(void) {
     if (rustic_eval_expression("while 1 { break; { 3 }; 9 }; 7", &out) != RUSTIC_OK || out != 7) {
         return 51;
     }
+    if (rustic_eval_expression("sum([1, 2,])", &out) != RUSTIC_OK || out != 3) {
+        return 54;
+    }
+    if (rustic_eval_expression("[1,,][0]", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 3) {
+        return 55;
+    }
+    if (rustic_eval_expression("0 && [1, 2,]", &out) != RUSTIC_OK || out != 0) {
+        return 56;
+    }
     out = 20;
     {
         char skipped[2048];
