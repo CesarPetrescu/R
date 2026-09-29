@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Array literals now accept a single optional trailing comma after the final element: `sum([1, 2,])` evaluates to `3`. The same grammar is recognized in short-circuited operands (`0 && [1, 2,]` evaluates to `0` without evaluating the array). Empty `[]`, the 16-element cap and `expected integer` for doubled commas remain unchanged; this does not enable trailing commas in function declarations or calls. The [executable 12-row contract](tests/fixtures/rustic_array_trailing_comma_contract.txt) covers composition, invalid forms and limits, with a direct C API output-preservation check.
+
 Function declarations reject repeated parameter names with `RUSTIC_ERR_DUPLICATE_PARAMETER` / `duplicate parameter` rather than silently binding the last argument over the first. Distinct functions and outer bindings may reuse names; omitted arguments still report `wrong argument count`. The [executable host contract](tests/fixtures/rustic_function_parameter_contract.txt) and direct C API test cover nested declarations, diagnostic ordering, unchanged output on failure and subsequent recovery.
 
 After `break;` or `continue;`, scanning the unreachable remainder of a loop body now charges the shared 512-step budget per source byte, including nested selected `match` arms, skipped `if` branches and intervening whitespace; a long suffix returns `step limit exceeded` instead of bypassing the limit. Short valid suffixes still skip side effects, nested braces remain balanced, and failed C API calls preserve the output. The [loop-exit contract](tests/fixtures/rustic_loop_exit_scan_contract.txt) covers both control forms and malformed braces. This scan does not validate statement grammar or make Rustic a sandbox.
@@ -86,7 +88,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 580, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 279, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 581, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 280, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -98,7 +100,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 580 |
+| Completed backlog items | 581 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -107,7 +109,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 279 | 0 | None |
+| P1 | 280 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

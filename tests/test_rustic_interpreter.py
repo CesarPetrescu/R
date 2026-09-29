@@ -46,6 +46,39 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_array_literal(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let xs = [1, 2,]; sum(xs)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_trailing_comma_array_operand(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && [1, 2,]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_array_trailing_comma_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_trailing_comma_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if result.returncode == 0:
+            assert result.stdout == f"{source} => {expected}\n"
+            assert result.stderr == ""
+        else:
+            assert result.returncode == 2
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_unary_minus_in_binding(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let x = -3; x + 5"

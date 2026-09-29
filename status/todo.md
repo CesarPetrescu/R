@@ -3,7 +3,7 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
-The duplicate-parameter contract now rejects ambiguous bindings (`fn pick(x, x) { x }` previously selected the later argument); the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. After they merge or unblock, inspect whether zero-iteration and short-circuit skipped blocks should validate statement grammar without running effects.
+The array-literal trailing-comma contract now accepts `[1, 2,]` in evaluated and short-circuited operands; calls and function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
 0. Finish independent authenticated reviewer/status gates for open PRs #582 (expression chains) and #583 (deferred function-body scanning); both are human-mandatory and the current-head verifier fails closed. Do not merge or duplicate their implementations.
@@ -13,6 +13,7 @@ The duplicate-parameter contract now rejects ambiguous bindings (`fn pick(x, x) 
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+- Nonempty array literals accept one optional trailing comma (including grammar-only skipped operands) while preserving the 16-element cap, malformed-element errors, and C API output preservation. The 12-row fixture composes literals with built-ins and tests lazy paths.
 - Duplicate names within one function parameter list now return `duplicate parameter` at declaration time; distinct names and reuse in other scopes still work. An 11-row strict-C99 host contract and direct C API test cover diagnostics, output preservation, nested declarations and recovery.
 - Missing semicolons between adjacent evaluated statements now use the existing `expected semicolon` status after expression, assignment and `while`, with strict-C99 fixture and C API output-preservation evidence; unknown punctuation still returns trailing input.
 - The `break;`/`continue;` remainder scanner charges the shared step budget per source byte; 600 unreachable statements and nested selected `match`/skipped `if` paths now report `step limit exceeded` instead of scanning free. The direct C API test preserves output on failure; fixture cases cover nested braces, `continue`, skipped effects and missing-brace diagnostics. Other skip paths are not uniformly budgeted.
