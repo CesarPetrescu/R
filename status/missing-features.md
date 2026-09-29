@@ -11,6 +11,7 @@ Prioritized backlog for autonomous implementation.
 
 ## P1 — implementation depth
 - [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.
+- [x] Diagnose a missing semicolon between adjacent evaluated statements (`1 2`, assignment followed by a literal, or `while` followed by a literal) as `RUSTIC_ERR_EXPECTED_SEMICOLON`, while retaining accepted semicolon sequences, scoped blocks and generic trailing-input diagnostics for unknown tokens; verify output preservation through the C API.
 - [x] Bound the unreachable suffix scan after loop `break;`/`continue;` by charging the shared step budget for each consumed source byte, including nested braces; preserve short skipped side effects, malformed-brace diagnostics, and C API output on exhaustion.
 - [x] Charge every arm visited by an evaluated `match` expression to the shared 512-step budget, including arms after a selected match; fail with `step limit exceeded` before scanning unbounded arm lists, preserve small-match behavior and C API output on failure.
 - [x] Reject unparenthesized comparison chains in evaluated and grammar-only skipped operands so `3 > 2 > 1` does not silently compare a boolean integer with `1`; preserve explicitly parenthesized comparisons, logical composition, deterministic `expected operator` diagnostics, and unchanged C API output on failure (15-row host contract).
