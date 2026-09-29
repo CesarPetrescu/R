@@ -160,6 +160,12 @@ static int is_identifier_continue(char character) {
     return isalnum((unsigned char)character) || character == '_';
 }
 
+static int starts_adjacent_statement(const char *cursor) {
+    return isdigit((unsigned char)*cursor) || is_identifier_start(*cursor) ||
+           *cursor == '(' || *cursor == '{' || *cursor == '!' ||
+           *cursor == '-' || *cursor == '[';
+}
+
 static int parse_identifier(struct Parser *parser, char *out_name, size_t out_size) {
     size_t length = 0;
 
@@ -5989,6 +5995,9 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
+                if (starts_adjacent_statement(parser->cursor)) {
+                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                }
                 return value;
             }
             parser->cursor++;
@@ -6021,6 +6030,9 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
+                if (starts_adjacent_statement(parser->cursor)) {
+                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                }
                 return value;
             }
             parser->cursor++;
@@ -6041,6 +6053,9 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
 
         skip_spaces(parser);
         if (*parser->cursor != ';') {
+            if (starts_adjacent_statement(parser->cursor)) {
+                parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+            }
             return value;
         }
         parser->cursor++;

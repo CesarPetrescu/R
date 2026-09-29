@@ -3,6 +3,8 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
+The existing open PRs for deferred-function grammar and expression-step budget already own those packages; do not duplicate or modify their occupied worktrees. Prioritize their authenticated current-head reviews and merge gates when ownership and human-mandatory state permit.
+
 
 0. Finish independent authenticated reviewer/status gates for open PRs #582 (expression chains) and #583 (deferred function-body scanning); both are human-mandatory and the current-head verifier fails closed. Do not merge or duplicate their implementations.
 1. Test whether invalid statements in unselected `if`/`else` and zero-iteration `while` blocks are silently accepted (`if 0 { 1 + * } else { 7 }` currently returns `7`); decide and document the supported grammar, then close the gap test-first without evaluating effects in skipped bodies. Cover nested blocks, scope, malformed statements, and step limits. Separate local worktrees are already exploring this outcome; avoid duplicate implementation branches.
@@ -11,6 +13,7 @@ Select work by user-visible interpreter outcomes in [the product roadmap](../doc
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+- Missing semicolons between adjacent evaluated statements now use the existing `expected semicolon` status after expression, assignment and `while`, with strict-C99 fixture and C API output-preservation evidence; unknown punctuation still returns trailing input.
 - The `break;`/`continue;` remainder scanner charges the shared step budget per source byte; 600 unreachable statements and nested selected `match`/skipped `if` paths now report `step limit exceeded` instead of scanning free. The direct C API test preserves output on failure; fixture cases cover nested braces, `continue`, skipped effects and missing-brace diagnostics. Other skip paths are not uniformly budgeted.
 - Evaluated `match` now charges each parsed arm to the same 512-step budget as statement traversal, including unmatched arms and arms visited after a match. A 520-arm host RED/GREEN test covers both paths; a direct C API regression checks `step limit exceeded`, unchanged output and fresh-call recovery. Whole-match expressions skipped by short-circuiting still use brace scanning, and long arithmetic expression chains remain a separate budget gap.
 - Unparenthesized comparison chains now return `expected operator` in evaluated and short-circuited expressions instead of silently comparing boolean integers. The 15-case C-host contract covers mixed equality/ordering, match arms, logical composition, explicit parentheses, malformed operands, and separate statements; the direct C API fixture checks output preservation and recovery.
