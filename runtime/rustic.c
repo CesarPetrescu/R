@@ -5845,6 +5845,10 @@ static void parse_function_declaration(struct Parser *parser) {
                 break;
             }
             parser->cursor++;
+            skip_spaces(parser);
+            if (*parser->cursor == ')') {
+                break;
+            }
         }
     }
     skip_spaces(parser);
