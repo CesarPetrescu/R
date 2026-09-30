@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Accept bounded empty semicolon statements between and after evaluated statements (`1;;2`, nested blocks, functions and loops) without changing the last integer result; retain the error for a program/block with no value, charge each semicolon to the shared step budget, and preserve C API output on failure.
 - [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
 - [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.
 - [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.

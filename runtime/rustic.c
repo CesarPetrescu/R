@@ -5991,6 +5991,10 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             }
             return value;
         }
+        if (*parser->cursor == ';') {
+            parser->cursor++;
+            continue;
+        }
 
         if (cursor_starts_keyword(parser, "let")) {
             parse_let_statement(parser);

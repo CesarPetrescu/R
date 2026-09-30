@@ -1,0 +1,16 @@
+# Empty statements between or after evaluated statements do not change the integer result.
+1;;2 => 2
+let x = 2;; x => 2
+if 1 { ; 4 } else { 0 } => 4
+if 0 { 1 } else { ; 8; } => 8
+fn f() { ; 3 }; f() => 3
+let x = 0; while x < 2 { ; x = x + 1;; }; x => 2
+match 1 { 1 => { ; 4 }, _ => 0 } => 4
+let xs = [2];;; xs[0] => 2
+1; ; => 1
+1;;; => 1
+;; => expected integer
+{ ; } => expected integer
+1 2 => expected semicolon
+1; @ => expected integer
+1 @ => trailing input

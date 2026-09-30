@@ -271,6 +271,26 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    if (rustic_eval_expression("1;;2", &out) != RUSTIC_OK || out != 2) {
+        return 61;
+    }
+    out = 20;
+    if (rustic_eval_expression(";;", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 62;
+    }
+    {
+        char empty_statements[602];
+        memset(empty_statements, ';', 600);
+        empty_statements[600] = '7';
+        empty_statements[601] = '\0';
+        if (rustic_eval_expression(empty_statements, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 63;
+        }
+    }
+    if (rustic_eval_expression("3;;4", &out) != RUSTIC_OK || out != 4) {
+        return 64;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
