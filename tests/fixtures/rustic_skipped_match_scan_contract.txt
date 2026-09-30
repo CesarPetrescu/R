@@ -1,0 +1,6 @@
+# source => result or diagnostic; a skipped match balances braces but does not evaluate its arms.
+0 && match 0 { 0 => { missing }, _ => 7 } => 0
+1 || match 0 { 0 => 1, _ => missing } => 1
+0 && (match 0 { 0 => 1, _ => 7 }) => 0
+0 && match 0 { _ => 1 + * } => 0
+0 && match 0 { 0 => 1 => expected closing brace

@@ -32,6 +32,7 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Whole `match` expressions skipped by `&&` or `||` now charge the shared 512-step budget per brace-scan byte; hundreds of skipped arms return `step limit exceeded` rather than bypassing the limit, without evaluating the arms. Small skipped matches still balance nested braces, and failed C API calls preserve output. This scan does not validate skipped arm statements; unselected `if`/`while` blocks retain their separate brace-only behavior. See the [host contract](tests/fixtures/rustic_skipped_match_scan_contract.txt).
 Function calls now accept one optional trailing comma after a nonempty argument list: `fn add(a, b) { a + b }; add(2, 3,)` evaluates to `5`, and `sum([1, 2,],)` evaluates to `3`. The grammar-only short-circuit path accepts the same syntax without evaluating the call. Empty calls remain valid, doubled or leading commas return `expected integer`, and excess arguments still return `wrong argument count`. Function *parameter declarations* do not accept trailing commas. See the [call contract](tests/fixtures/rustic_call_trailing_comma_contract.txt) and direct C API output-preservation test.
 
 Array literals accept a single optional trailing comma after the final element: `sum([1, 2,])` evaluates to `3`. The same grammar is recognized in short-circuited operands (`0 && [1, 2,]` evaluates to `0` without evaluating the array). Empty `[]`, the 16-element cap and `expected integer` for doubled commas remain unchanged; this does not enable trailing commas in function declarations. The [executable 12-row contract](tests/fixtures/rustic_array_trailing_comma_contract.txt) covers composition, invalid forms and limits, with a direct C API output-preservation check.
@@ -59,7 +60,7 @@ The runtime in [`runtime/rustic.c`](runtime/rustic.c) implements a **bounded sub
 
 Adjacent evaluated statements require semicolons: `1 2` reports `expected semicolon`, while `1; 2` returns `2`. Unknown trailing punctuation retains `trailing input`. The [language/API contract](docs/rustic-language-contract.md) shows the supported diagnostic cases and C API output-preservation rule.
 
-This is not `rustc`: no Rust type system, ownership/borrowing, macros, crates, Cargo, strings, or general I/O. Bounds are fixed in the implementation (including 63-character identifiers, 16 elements per array, 8 functions, a 512-step evaluation budget, and at most 64 simultaneously active expression-factor frames (evaluated or skipped)); errors such as out-of-bounds access, division by zero, and step exhaustion return status codes. Each visited arm in an evaluated `match` now consumes a budget step, including arms after the first match; excessively long arm lists fail with `step limit exceeded` and leave C API output unchanged. Other expression traversal, including long arithmetic chains and short-circuited match bodies, is not uniformly budgeted. These limits make it a learning/prototype runtime, **not** a production sandbox or a compatible Rust implementation. The [roadmap](docs/ROADMAP.md) prioritizes real semantics and diagnostics over more helper suffixes.
+This is not `rustc`: no Rust type system, ownership/borrowing, macros, crates, Cargo, strings, or general I/O. Bounds are fixed in the implementation (including 63-character identifiers, 16 elements per array, 8 functions, a 512-step evaluation budget, and at most 64 simultaneously active expression-factor frames (evaluated or skipped)); errors such as out-of-bounds access, division by zero, and step exhaustion return status codes. Each visited arm in an evaluated `match` now consumes a budget step, including arms after the first match; excessively long arm lists fail with `step limit exceeded` and leave C API output unchanged. Other expression traversal, including long arithmetic chains and skipped `if`/`while` bodies, is not uniformly budgeted. These limits make it a learning/prototype runtime, **not** a production sandbox or a compatible Rust implementation. The [roadmap](docs/ROADMAP.md) prioritizes real semantics and diagnostics over more helper suffixes.
 
 ## Architecture
 
@@ -90,7 +91,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 582, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 281, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 583, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 282, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -102,7 +103,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 582 |
+| Completed backlog items | 583 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -111,7 +112,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 281 | 0 | None |
+| P1 | 282 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

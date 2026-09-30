@@ -417,7 +417,7 @@ static struct Value parse_expression(struct Parser *parser);
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator);
 static int skip_expression_operand(struct Parser *parser);
 
-static int skip_block(struct Parser *parser) {
+static int skip_block_impl(struct Parser *parser, int charge_bytes) {
     size_t depth = 0;
 
     if (!skip_spaces_after_loop_control(parser)) {
@@ -429,7 +429,7 @@ static int skip_block(struct Parser *parser) {
     }
 
     while (*parser->cursor != '\0') {
-        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+        if ((charge_bytes || parser->loop_control != LOOP_CONTROL_NONE) && !consume_step(parser)) {
             return 0;
         }
         if (*parser->cursor == '{') {
@@ -447,6 +447,10 @@ static int skip_block(struct Parser *parser) {
 
     parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
     return 0;
+}
+
+static int skip_block(struct Parser *parser) {
+    return skip_block_impl(parser, 0);
 }
 
 static struct Value parse_block_expression(struct Parser *parser) {
@@ -5510,7 +5514,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
             return 0;
         }
         skip_spaces(parser);
-        return skip_block(parser) && skip_index_postfix(parser);
+        return skip_block_impl(parser, 1) && skip_index_postfix(parser);
     }
     if (*parser->cursor == '[') {
         parser->cursor++;

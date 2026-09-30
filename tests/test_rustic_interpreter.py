@@ -1151,6 +1151,30 @@ def test_c_hosted_rustic_interpreter_charges_match_arms_to_step_budget(tmp_path)
         assert result.stderr == f"step limit exceeded: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_short_circuited_match_scan(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_skipped_match_scan_contract.txt"
+    fixture_cases = []
+    for line in fixture.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        source, expected = line.rsplit(" => ", 1)
+        fixture_cases.append((source, 0 if expected.isdigit() else 2, expected))
+    cases = (
+        ("0 && match 0 { " + "1 => 1, " * 80 + "_ => 7 }", 2, "step limit exceeded"),
+        ("1 || match 0 { " + "1 => 1, " * 80 + "_ => 7 }", 2, "step limit exceeded"),
+        *fixture_cases,
+    )
+    for source, code, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        assert result.returncode == code, result
+        if code == 0:
+            assert result.stdout == f"{source} => {expected}\n"
+        else:
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_match_showcase_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_match_showcase.txt"
