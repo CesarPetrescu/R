@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Bound whole `match` expressions skipped by logical short-circuiting to the shared 512-step budget by charging their brace scan per byte; retain lazy evaluation, balanced nested braces, short-match behavior, closing-brace diagnostics, and C API output preservation on exhaustion.
 - [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
 - [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.
 - [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.

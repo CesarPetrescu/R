@@ -184,6 +184,32 @@ int main(void) {
         }
     }
     out = 20;
+    {
+        char skipped_match[1024];
+        size_t used;
+        size_t i;
+        int written = snprintf(skipped_match, sizeof(skipped_match), "0 && match 0 { ");
+        if (written < 0 || (size_t)written >= sizeof(skipped_match)) {
+            return 52;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 80; i++) {
+            written = snprintf(skipped_match + used, sizeof(skipped_match) - used, "1 => 1, ");
+            if (written < 0 || (size_t)written >= sizeof(skipped_match) - used) {
+                return 53;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(skipped_match + used, sizeof(skipped_match) - used, "_ => 7 }");
+        if (written < 0 || (size_t)written >= sizeof(skipped_match) - used ||
+                rustic_eval_expression(skipped_match, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 54;
+        }
+        if (rustic_eval_expression("0 && match 0 { _ => 7 }", &out) != RUSTIC_OK || out != 0) {
+            return 55;
+        }
+        out = 20;
+    }
     if (rustic_eval_expression("while 0 { 1 } !0", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
         return 43;
     }
