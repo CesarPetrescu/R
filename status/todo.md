@@ -3,6 +3,8 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
+Empty semicolon statements are now accepted in evaluated sequences without replacing the last integer value. The 15-row host fixture and C API contract cover nested composition, no-value diagnostics, budget exhaustion and recovery. PR #590's independent isolated reviewer failed and its owner-authored CLEAR is not an authenticated review; leave it open without replaying or fabricating a verdict/status. Other occupied worktrees and human-mandatory PRs remain off limits.
+
 The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `add(2, 3,)` in evaluated and short-circuited operands; function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
