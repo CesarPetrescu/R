@@ -54,6 +54,31 @@ def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_array_literal(tmp
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_function_call(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn add(a, b) { a + b }; add(2, 3,)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_call_trailing_comma_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_call_trailing_comma_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if result.returncode == 0:
+            assert result.stdout == f"{source} => {expected}\n"
+            assert result.stderr == ""
+        else:
+            assert result.returncode == 2
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_skips_trailing_comma_array_operand(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "0 && [1, 2,]"

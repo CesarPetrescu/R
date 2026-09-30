@@ -3,7 +3,7 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
-The array-literal trailing-comma contract now accepts `[1, 2,]` in evaluated and short-circuited operands; calls and function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
+The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `add(2, 3,)` in evaluated and short-circuited operands; function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
 0. Finish independent authenticated reviewer/status gates for open PRs #582 (expression chains) and #583 (deferred function-body scanning); both are human-mandatory and the current-head verifier fails closed. Do not merge or duplicate their implementations.
@@ -13,6 +13,7 @@ The array-literal trailing-comma contract now accepts `[1, 2,]` in evaluated and
 4. Add a repository CI workflow through an authorized maintainer with the required permission; verify the strict C-host tests, documentation guards and container test service without claiming CI exists before it runs.
 
 ## Recently completed roadmap outcomes
+- Nonempty function and built-in calls accept one optional trailing comma without changing argument count; skipped calls already consumed the same grammar. The 11-row host fixture checks composition, malformed comma placement and arity, and the C API test preserves output on errors. Parameter declaration grammar is unchanged.
 - Nonempty array literals accept one optional trailing comma (including grammar-only skipped operands) while preserving the 16-element cap, malformed-element errors, and C API output preservation. The 12-row fixture composes literals with built-ins and tests lazy paths.
 - Duplicate names within one function parameter list now return `duplicate parameter` at declaration time; distinct names and reuse in other scopes still work. An 11-row strict-C99 host contract and direct C API test cover diagnostics, output preservation, nested declarations and recovery.
 - Missing semicolons between adjacent evaluated statements now use the existing `expected semicolon` status after expression, assignment and `while`, with strict-C99 fixture and C API output-preservation evidence; unknown punctuation still returns trailing input.

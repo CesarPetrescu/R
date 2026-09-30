@@ -1,0 +1,12 @@
+# source => value or diagnostic; calls accept one trailing comma, not empty arguments
+fn add(a, b) { a + b }; add(2, 3,) => 5
+fn id(x) { x }; id(sum([1, 2,],),) => 3
+sum([1, 2,],) => 3
+len([1, 2,],) => 2
+0 && missing(7,) => 0
+1 || missing(7,) => 1
+fn id(x) { x }; id(1, 2,) => wrong argument count
+sum(,) => expected integer
+sum([1],,) => expected integer
+0 && missing(1,,) => expected integer
+fn id(x) { x }; id(,1) => expected integer

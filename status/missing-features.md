@@ -11,6 +11,7 @@ Prioritized backlog for autonomous implementation.
 
 ## P1 — implementation depth
 - [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
+- [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.
 - [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.
 - [x] Diagnose a missing semicolon between adjacent evaluated statements (`1 2`, assignment followed by a literal, or `while` followed by a literal) as `RUSTIC_ERR_EXPECTED_SEMICOLON`, while retaining accepted semicolon sequences, scoped blocks and generic trailing-input diagnostics for unknown tokens; verify output preservation through the C API.
 - [x] Bound the unreachable suffix scan after loop `break;`/`continue;` by charging the shared step budget for each consumed source byte, including nested braces; preserve short skipped side effects, malformed-brace diagnostics, and C API output on exhaustion.
