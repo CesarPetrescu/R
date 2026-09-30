@@ -261,6 +261,16 @@ int main(void) {
             return 53;
         }
     }
+    if (rustic_eval_expression("0 && missing(1,,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 58;
+    }
+    if (rustic_eval_expression("fn add(a, b) { a + b }; add(2, 3,)", &out) != RUSTIC_OK || out != 5) {
+        return 59;
+    }
+    out = 20;
+    if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 60;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
