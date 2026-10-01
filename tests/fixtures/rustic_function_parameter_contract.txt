@@ -1,0 +1,12 @@
+# Source => integer result or error status message
+fn pick(x, y) { x }; pick(4, 9) => 4
+fn pick(x, y) { y }; pick(4, 9) => 9
+let x = 12; fn pick(x, y) { x + y }; pick(4, 9) + x => 25
+fn a(x) { x }; fn b(x) { x + 1 }; b(a(4)) => 5
+{ fn pick(x, y) { x + y }; pick(2, 3) } => 5
+fn pick(x, x) { x }; pick(1, 2) => duplicate parameter
+fn pick(x, y, x) { x }; pick(1, 2, 3) => duplicate parameter
+{ fn pick(x, x) { x }; 7 } => duplicate parameter
+fn pick(x, x) { 1 / 0 }; 7 => duplicate parameter
+fn pick(x, ) { x }; pick(1) => expected identifier
+fn pick(x, y) { x }; pick(1) => wrong argument count

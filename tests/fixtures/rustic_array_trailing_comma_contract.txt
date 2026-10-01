@@ -1,0 +1,13 @@
+# source => value or diagnostic (Rustic C99 host)
+let xs = [1, 2, ]; sum(xs) => 3
+[7,][0] => 7
+len([]) => 0
+len([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,]) => 16
+let xs = [1, 2,]; let ys = [3,]; sum(concat(xs, ys)) => 6
+0 && [1, 2,] => 0
+1 || [undefined,] => 1
+[1,,] => expected integer
+[1, => expected integer
+[1, 2 => expected closing bracket
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,] => too many bindings
+0 && [1,,] => expected integer

@@ -183,6 +183,20 @@ int main(void) {
             return 40;
         }
     }
+    out = 20;
+    if (rustic_eval_expression("while 0 { 1 } !0", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 43;
+    }
+    if (rustic_eval_expression("while 0 { 1 } -2", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 44;
+    }
+    if (rustic_eval_expression("while 0 { 1 } [2][0]", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
+        return 45;
+    }
+    if (rustic_eval_expression("1 (2)", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_SEMICOLON), "expected semicolon") != 0) {
+        return 42;
+    }
     if (rustic_eval_expression("match 0 { 0 => 7, _ => 8 }", &out) != RUSTIC_OK || out != 7) {
         return 41;
     }
@@ -196,13 +210,83 @@ int main(void) {
         strcat(deferred, "1 }; 7");
         if (rustic_eval_expression(deferred, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20 ||
                 strcmp(rustic_status_message(RUSTIC_ERR_STEP_LIMIT_EXCEEDED), "step limit exceeded") != 0) {
-            return 42;
+            return 61;
         }
     }
     if (rustic_eval_expression("fn add(x) { x + 1 }; add(5)", &out) != RUSTIC_OK || out != 6) {
-        return 43;
+        return 62;
     }
     out = 20;
+    if (rustic_eval_expression("fn choose(x, y, x) { x }; choose(1, 2, 3)", &out) !=
+            RUSTIC_ERR_DUPLICATE_PARAMETER || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_PARAMETER), "duplicate parameter") != 0) {
+        return 48;
+    }
+    if (rustic_eval_expression("fn choose(x, y) { y }; choose(1, 2)", &out) != RUSTIC_OK || out != 2) {
+        return 49;
+    }
+    out = 20;
+    {
+        char skipped[2048];
+        size_t used;
+        size_t i;
+        int written = snprintf(skipped, sizeof(skipped), "while 1 { break; ");
+        if (written < 0 || (size_t)written >= sizeof(skipped)) {
+            return 48;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(skipped + used, sizeof(skipped) - used, "0; ");
+            if (written < 0 || (size_t)written >= sizeof(skipped) - used) {
+                return 49;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(skipped + used, sizeof(skipped) - used, "}; 9");
+        if (written < 0 || (size_t)written >= sizeof(skipped) - used ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 50;
+        }
+    }
+    if (rustic_eval_expression("while 1 { break; { 3 }; 9 }; 7", &out) != RUSTIC_OK || out != 7) {
+        return 51;
+    }
+    if (rustic_eval_expression("sum([1, 2,])", &out) != RUSTIC_OK || out != 3) {
+        return 54;
+    }
+    if (rustic_eval_expression("[1,,][0]", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 3) {
+        return 55;
+    }
+    if (rustic_eval_expression("0 && [1, 2,]", &out) != RUSTIC_OK || out != 0) {
+        return 56;
+    }
+    out = 20;
+    {
+        char skipped[2048];
+        size_t used;
+        int written = snprintf(skipped, sizeof(skipped), "while 1 { if 1 { break; } else { ");
+        if (written < 0 || (size_t)written + 1024 + 16 >= sizeof(skipped)) {
+            return 52;
+        }
+        used = (size_t)written;
+        memset(skipped + used, ' ', 1024);
+        used += 1024;
+        written = snprintf(skipped + used, sizeof(skipped) - used, "0 }; 7 }; 9");
+        if (written < 0 || (size_t)written >= sizeof(skipped) - used ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 53;
+        }
+    }
+    if (rustic_eval_expression("0 && missing(1,,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 58;
+    }
+    if (rustic_eval_expression("fn add(a, b) { a + b }; add(2, 3,)", &out) != RUSTIC_OK || out != 5) {
+        return 59;
+    }
+    out = 20;
+    if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 60;
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
