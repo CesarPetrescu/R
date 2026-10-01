@@ -271,6 +271,71 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    {
+        char chain[4096];
+        size_t used;
+        size_t i;
+        int written = snprintf(chain, sizeof(chain), "1");
+        if (written < 0 || (size_t)written >= sizeof(chain)) {
+            return 61;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(chain + used, sizeof(chain) - used, " + 1");
+            if (written < 0 || (size_t)written >= sizeof(chain) - used) {
+                return 62;
+            }
+            used += (size_t)written;
+        }
+        if (rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 63;
+        }
+        used = 1;
+        chain[0] = '1';
+        chain[used] = '\0';
+        for (i = 0; i < 600; i++) {
+            const char *piece = i == 300 ? " + { 1 }" : " + 1";
+            written = snprintf(chain + used, sizeof(chain) - used, "%s", piece);
+            if (written < 0 || (size_t)written >= sizeof(chain) - used) {
+                return 64;
+            }
+            used += (size_t)written;
+        }
+        if (rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 65;
+        }
+    }
+    if (rustic_eval_expression("1 + 2 * 3", &out) != RUSTIC_OK || out != 7) {
+        return 66;
+    }
+    out = 20;
+    if (rustic_eval_expression("let n = 0; while (n < 100 && 1 && 1 && 1 && 1 && 1 && 1 && 1) { n = n + 1 }; n",
+            &out) != RUSTIC_OK || out != 100) {
+        return 67;
+    }
+    out = 20;
+    {
+        char condition[4096];
+        size_t used;
+        size_t i;
+        int written = snprintf(condition, sizeof(condition), "while (1");
+        if (written < 0 || (size_t)written >= sizeof(condition)) {
+            return 68;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(condition + used, sizeof(condition) - used, " && 1");
+            if (written < 0 || (size_t)written >= sizeof(condition) - used) {
+                return 69;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(condition + used, sizeof(condition) - used, ") { 1 }; 0");
+        if (written < 0 || (size_t)written >= sizeof(condition) - used ||
+                rustic_eval_expression(condition, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 70;
+        }
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
