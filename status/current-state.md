@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-30
+Last updated: 2026-10-02
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-09-30
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- Selected integer assignments now support `name += expr` and `name -= expr` in loops, functions, scopes and final statements. Both operands must be integers, unknown names retain `undefined identifier`, plain `=` still stores typed values, and addition/subtraction guard host-`long` overflow before updating the binding. The 24-row strict-C99 `tests/fixtures/rustic_compound_assignment_contract.txt` covers composition, bounds, invalid operands and lazy brace scanning. The direct C API host test proves error output preservation and fresh-call recovery. Unselected brace bodies on this base remain brace-scanned, so this package does not claim grammar checking there.
 - Nonempty function and built-in calls accept a single trailing comma (`add(2, 3,)`, `sum([1, 2,],)`); the grammar-only skip parser already accepts it without invoking the callee. Empty calls remain valid, leading/doubled commas still report `expected integer`, and extra arguments still report `wrong argument count`; function parameter declarations are unchanged. The 11-row `tests/fixtures/rustic_call_trailing_comma_contract.txt` and direct C API fixture cover composition, lazy paths, malformed input and output preservation.
 - Nonempty array literals allow one optional trailing comma (`sum([1, 2,])` yields `3`), including nested/composed expressions and the grammar-only short-circuit path (`0 && [1, 2,]` yields `0` without evaluation). `[]` and the 16-element cap remain; doubled commas and missing elements still report `expected integer`. The 12-row strict-C99 host contract `tests/fixtures/rustic_array_trailing_comma_contract.txt` and direct C API fixture check output preservation and recovery on failure. Function parameter declarations retain their existing comma grammar.
 - Function declarations reject duplicate parameter names with `RUSTIC_ERR_DUPLICATE_PARAMETER` / `duplicate parameter` rather than silently binding the last argument over the first. An 11-row strict-C99 host contract covers valid distinct parameter lists, binding reuse across outer/function scopes, nested declarations, repeated first/third names, malformed parameter syntax and unchanged call-arity diagnostics. A direct C API fixture verifies unchanged output on failure and successful subsequent evaluation. Skipped brace bodies retain their documented brace-only grammar behavior.
@@ -170,6 +171,7 @@ Last updated: 2026-09-30
 - `LICENSE` declares GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) terms so distributed and network-served modified versions remain open-source.
 
 ## Verified commands
+The compound-assignment package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'compound_assignment or adds_to_existing_binding or subtracts_from_existing_binding or c_api_contract'` to the focused strict C99 host matrix; full host, report, lint and fresh Docker verification below are required before push.
 The call trailing-comma package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'call_trailing_comma or trailing_comma_in_function_call or c_api_contract'` to the strict C99 host matrix; full host, report, lint and fresh Docker verification remain mandatory before push.
 The array literal trailing-comma package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'trailing_comma or c_api_contract'` to the focused strict-C99 matrix; full host, report, lint and fresh Docker checks remain mandatory before push.
 The duplicate-parameter package adds `python3 -m pytest -q tests/test_rustic_interpreter.py -k 'function_parameter_contract or rejects_duplicate_function_parameters or c_api_contract'` to the focused strict-C99 host matrix; full host, report, lint and fresh Docker checks remain mandatory before push.

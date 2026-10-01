@@ -5883,6 +5883,9 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value value;
     struct Value existing_value;
+    char compound_operator;
+    long left;
+    long right;
 
     if (!is_identifier_start(*parser->cursor)) {
         return 0;
@@ -5893,23 +5896,46 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     }
 
     skip_spaces(parser);
-    if (*parser->cursor != '=' || parser->cursor[1] == '=') {
+    compound_operator = ((parser->cursor[0] == '+' || parser->cursor[0] == '-') &&
+                         parser->cursor[1] == '=') ? parser->cursor[0] : '\0';
+    if (compound_operator == '\0' && (*parser->cursor != '=' || parser->cursor[1] == '=')) {
         parser->cursor = statement_start;
         parser->status = RUSTIC_OK;
         return 0;
     }
-    parser->cursor++;
+    parser->cursor += compound_operator != '\0' ? 2 : 1;
 
     if (!lookup_binding(parser, name, &existing_value)) {
         parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
         return 1;
     }
-
+    if (compound_operator != '\0' && !value_as_integer(parser, existing_value, &left)) {
+        return 1;
+    }
     value = parse_expression(parser);
     if (parser->status != RUSTIC_OK) {
         return 1;
     }
-
+    if (compound_operator != '\0') {
+        if (!value_as_integer(parser, value, &right)) {
+            return 1;
+        }
+        if (compound_operator == '+') {
+            if ((right > 0 && left > LONG_MAX - right) ||
+                (right < 0 && left < LONG_MIN - right)) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return 1;
+            }
+            value = integer_value(left + right);
+        } else {
+            if ((right < 0 && left > LONG_MAX + right) ||
+                (right > 0 && left < LONG_MIN + right)) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return 1;
+            }
+            value = integer_value(left - right);
+        }
+    }
     update_binding(parser, name, value);
     compact_unreferenced_arrays(parser, &value);
     *out_value = value;

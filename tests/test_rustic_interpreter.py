@@ -46,6 +46,51 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_adds_to_existing_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 4; x += 2 * 3; x"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 10\n"
+
+
+def test_c_hosted_rustic_interpreter_subtracts_from_existing_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 9; x -= 2 * 3; x"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_compound_assignment_operand(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && { let x = 1; x += missing; x }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_compound_assignment_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
+    fixture = ROOT / "tests" / "fixtures" / "rustic_compound_assignment_contract.txt"
+    rows = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+            if row and not row.startswith("#")]
+    assert len(rows) == 24
+    for template, expected in rows:
+        source = template.replace("{LONG_MAX}", str(long_max)).replace("{LONG_MIN}", str(-long_max - 1))
+        expected = expected.replace("{LONG_MAX}", str(long_max)).replace("{LONG_MIN}", str(-long_max - 1))
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.lstrip("-").isdigit():
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+            assert result.stderr == ""
+        else:
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_array_literal(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let xs = [1, 2,]; sum(xs)"

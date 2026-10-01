@@ -1,0 +1,25 @@
+# source => integer result or diagnostic, with host-long limits substituted by pytest.
+let x = 4; x += 2 * 3; x => 10
+let x = 9; x -= 2 * 3; x => 3
+let x = 1; x += 2; x -= 1 => 2
+let x = 2; while x < 5 { x += 1; }; x => 5
+let x = 3; { x -= 2; x } + x => 2
+let x = 0; x += { let y = 2; y + 2 }; x => 4
+fn f(n) { let x = n; x += 2; x }; f(3) => 5
+let x = 1; x += 2; x + 1 => 4
+0 && { let x = 1; x += missing; x } => 0
+let x = {LONG_MAX}; x += 0; x => {LONG_MAX}
+let x = {LONG_MIN}; x -= 0; x => {LONG_MIN}
+let x = {LONG_MAX}; x += 1 => integer overflow
+let x = {LONG_MIN}; x += -1 => integer overflow
+let x = {LONG_MIN}; x -= 1 => integer overflow
+let x = {LONG_MAX}; x -= -1 => integer overflow
+let x = 0; x -= {LONG_MIN} => integer overflow
+let x = [1, 2]; x += 1 => expected integer
+let x = 1; x += [2] => expected integer
+let x = 1; x -= [2] => expected integer
+missing += 1 => undefined identifier
+missing -= 1 => undefined identifier
+let x = 1; x += ; x => expected integer
+let x = 1; x -= ; x => expected integer
+let x = 1; x += 2 + * => expected integer
