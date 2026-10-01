@@ -478,43 +478,60 @@ static struct Value parse_block_expression(struct Parser *parser) {
 
 static struct Value parse_if_expression(struct Parser *parser) {
     long condition;
+    int matched = 0;
     struct Value condition_value;
     struct Value value = integer_value(0);
 
-    parser->cursor += 2;
-    condition_value = parse_expression(parser);
-    if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
-        return integer_value(0);
-    }
+    while (parser->status == RUSTIC_OK) {
+        parser->cursor += 2;
+        if (matched) {
+            if (!skip_expression_operand(parser)) {
+                return integer_value(0);
+            }
+            condition = 0;
+        } else {
+            condition_value = parse_expression(parser);
+            if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
+                return integer_value(0);
+            }
+        }
 
-    if (condition != 0) {
-        value = parse_block_expression(parser);
-        if (parser->status != RUSTIC_OK) {
+        if (condition != 0) {
+            value = parse_block_expression(parser);
+            if (parser->status != RUSTIC_OK) {
+                return integer_value(0);
+            }
+            matched = 1;
+        } else if (!skip_block(parser)) {
             return integer_value(0);
         }
-    } else if (!skip_block(parser)) {
-        return integer_value(0);
-    }
 
-    if (!skip_spaces_after_loop_control(parser)) {
-        return integer_value(0);
-    }
-    if (!cursor_starts_keyword(parser, "else")) {
-        parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
-        return integer_value(0);
-    }
-    parser->cursor += 4;
-
-    if (condition == 0) {
-        value = parse_block_expression(parser);
-        if (parser->status != RUSTIC_OK) {
+        if (!skip_spaces_after_loop_control(parser)) {
             return integer_value(0);
         }
-    } else if (!skip_block(parser)) {
-        return integer_value(0);
+        if (!cursor_starts_keyword(parser, "else")) {
+            parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
+            return integer_value(0);
+        }
+        parser->cursor += 4;
+        skip_spaces(parser);
+        if (cursor_starts_keyword(parser, "if")) {
+            if (!consume_step(parser)) {
+                return integer_value(0);
+            }
+            continue;
+        }
+        if (!matched) {
+            value = parse_block_expression(parser);
+            if (parser->status != RUSTIC_OK) {
+                return integer_value(0);
+            }
+        } else if (!skip_block(parser)) {
+            return integer_value(0);
+        }
+        return value;
     }
-
-    return value;
+    return integer_value(0);
 }
 
 static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
@@ -5488,21 +5505,31 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         return skip_block(parser) && skip_index_postfix(parser);
     }
     if (cursor_starts_keyword(parser, "if")) {
-        parser->cursor += 2;
-        if (!skip_expression_operand(parser)) {
-            return 0;
+        while (parser->status == RUSTIC_OK) {
+            parser->cursor += 2;
+            if (!skip_expression_operand(parser)) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (!skip_block(parser)) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (!cursor_starts_keyword(parser, "else")) {
+                parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
+                return 0;
+            }
+            parser->cursor += 4;
+            skip_spaces(parser);
+            if (cursor_starts_keyword(parser, "if")) {
+                if (!consume_step(parser)) {
+                    return 0;
+                }
+                continue;
+            }
+            return skip_block(parser) && skip_index_postfix(parser);
         }
-        skip_spaces(parser);
-        if (!skip_block(parser)) {
-            return 0;
-        }
-        skip_spaces(parser);
-        if (!cursor_starts_keyword(parser, "else")) {
-            parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
-            return 0;
-        }
-        parser->cursor += 4;
-        return skip_block(parser) && skip_index_postfix(parser);
+        return 0;
     }
     if (cursor_starts_keyword(parser, "match")) {
         parser->cursor += 5;

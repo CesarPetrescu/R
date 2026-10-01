@@ -852,6 +852,40 @@ def test_c_hosted_rustic_interpreter_rejects_unclosed_block_expression(tmp_path)
     assert "expected closing brace" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_selects_middle_else_if_arm(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 2; if x == 1 { 10 } else if x == 2 { 20 } else { 30 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 20\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_else_if_chain_in_short_circuit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "1 || if missing { 10 } else if 1 / 0 { 20 } else { 30 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1\n"
+
+
+def test_c_hosted_rustic_interpreter_else_if_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_else_if_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.lstrip("-").isdigit():
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+            assert result.stderr == ""
+        else:
+            assert result.returncode == 2, (source, result.stdout)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_if_else_true_branch(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
