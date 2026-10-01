@@ -10,6 +10,11 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
+- [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.
+- [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.
+- [x] Diagnose a missing semicolon between adjacent evaluated statements (`1 2`, assignment followed by a literal, or `while` followed by a literal) as `RUSTIC_ERR_EXPECTED_SEMICOLON`, while retaining accepted semicolon sequences, scoped blocks and generic trailing-input diagnostics for unknown tokens; verify output preservation through the C API.
+- [x] Bound the unreachable suffix scan after loop `break;`/`continue;` by charging the shared step budget for each consumed source byte, including nested braces; preserve short skipped side effects, malformed-brace diagnostics, and C API output on exhaustion.
 - [x] Charge every arm visited by an evaluated `match` expression to the shared 512-step budget, including arms after a selected match; fail with `step limit exceeded` before scanning unbounded arm lists, preserve small-match behavior and C API output on failure.
 - [x] Reject unparenthesized comparison chains in evaluated and grammar-only skipped operands so `3 > 2 > 1` does not silently compare a boolean integer with `1`; preserve explicitly parenthesized comparisons, logical composition, deterministic `expected operator` diagnostics, and unchanged C API output on failure (15-row host contract).
 

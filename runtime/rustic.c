@@ -152,12 +152,28 @@ static void skip_spaces(struct Parser *parser) {
     }
 }
 
+static int skip_spaces_after_loop_control(struct Parser *parser) {
+    while (isspace((unsigned char)*parser->cursor)) {
+        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+            return 0;
+        }
+        parser->cursor++;
+    }
+    return 1;
+}
+
 static int is_identifier_start(char character) {
     return isalpha((unsigned char)character) || character == '_';
 }
 
 static int is_identifier_continue(char character) {
     return isalnum((unsigned char)character) || character == '_';
+}
+
+static int starts_adjacent_statement(const char *cursor) {
+    return isdigit((unsigned char)*cursor) || is_identifier_start(*cursor) ||
+           *cursor == '(' || *cursor == '{' || *cursor == '!' ||
+           *cursor == '-' || *cursor == '[';
 }
 
 static int parse_identifier(struct Parser *parser, char *out_name, size_t out_size) {
@@ -414,13 +430,18 @@ static int skip_expression_operand(struct Parser *parser);
 static int skip_block(struct Parser *parser) {
     size_t depth = 0;
 
-    skip_spaces(parser);
+    if (!skip_spaces_after_loop_control(parser)) {
+        return 0;
+    }
     if (*parser->cursor != '{') {
         parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
         return 0;
     }
 
     while (*parser->cursor != '\0') {
+        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+            return 0;
+        }
         if (*parser->cursor == '{') {
             depth++;
         } else if (*parser->cursor == '}') {
@@ -485,7 +506,9 @@ static struct Value parse_if_expression(struct Parser *parser) {
         return integer_value(0);
     }
 
-    skip_spaces(parser);
+    if (!skip_spaces_after_loop_control(parser)) {
+        return integer_value(0);
+    }
     if (!cursor_starts_keyword(parser, "else")) {
         parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
         return integer_value(0);
@@ -538,6 +561,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
 static struct Value parse_match_expression(struct Parser *parser) {
     struct Value scrutinee_value;
     struct Value value = integer_value(0);
+    size_t skipped_depth;
     long scrutinee;
     long pattern = 0;
     int is_default = 0;
@@ -584,11 +608,28 @@ static struct Value parse_match_expression(struct Parser *parser) {
             return integer_value(0);
         }
 
-        skip_spaces(parser);
+        if (!skip_spaces_after_loop_control(parser)) {
+            return integer_value(0);
+        }
         if (parser->loop_control != LOOP_CONTROL_NONE) {
-            while (*parser->cursor != '\0' && *parser->cursor != '}') {
+            skipped_depth = 0;
+            while (*parser->cursor != '\0') {
+                if (!consume_step(parser)) {
+                    return integer_value(0);
+                }
+                if (*parser->cursor == '{') {
+                    skipped_depth++;
+                } else if (*parser->cursor == '}') {
+                    if (skipped_depth == 0) {
+                        parser->cursor++;
+                        return value;
+                    }
+                    skipped_depth--;
+                }
                 parser->cursor++;
             }
+            parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            return integer_value(0);
         }
         if (*parser->cursor == ',') {
             parser->cursor++;
@@ -654,7 +695,9 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
     long index;
 
     while (parser->status == RUSTIC_OK) {
-        skip_spaces(parser);
+        if (!skip_spaces_after_loop_control(parser)) {
+            return integer_value(0);
+        }
         if (*parser->cursor != '[') {
             return value;
         }
@@ -728,6 +771,9 @@ static struct Value parse_array_literal(struct Parser *parser) {
             }
             parser->cursor++;
             skip_spaces(parser);
+            if (*parser->cursor == ']') {
+                break;
+            }
         }
     }
 
@@ -995,6 +1041,10 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                         break;
                     }
                     parser->cursor++;
+                    skip_spaces(parser);
+                    if (*parser->cursor == ')') {
+                        break;
+                    }
                 }
             }
             skip_spaces(parser);
@@ -5492,6 +5542,9 @@ static int skip_factor_expression_impl(struct Parser *parser) {
                 }
                 parser->cursor++;
                 skip_spaces(parser);
+                if (*parser->cursor == ']') {
+                    break;
+                }
             }
         }
         if (*parser->cursor != ']') {
@@ -5780,6 +5833,7 @@ static void parse_let_statement(struct Parser *parser) {
 static void parse_function_declaration(struct Parser *parser) {
     struct Function *function;
     const char *block_start;
+    size_t previous;
 
     if (parser->function_count >= RUSTIC_MAX_FUNCTIONS) {
         parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
@@ -5811,6 +5865,13 @@ static void parse_function_declaration(struct Parser *parser) {
                     function->parameters[function->parameter_count],
                     sizeof(function->parameters[function->parameter_count]))) {
                 return;
+            }
+            for (previous = 0; previous < function->parameter_count; previous++) {
+                if (strcmp(function->parameters[previous],
+                           function->parameters[function->parameter_count]) == 0) {
+                    parser->status = RUSTIC_ERR_DUPLICATE_PARAMETER;
+                    return;
+                }
             }
             function->parameter_count++;
             skip_spaces(parser);
@@ -5921,6 +5982,9 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
         if (block_depth == 0 && *parser->cursor == terminator) {
             return 1;
         }
+        if (!consume_step(parser)) {
+            return 0;
+        }
         if (*parser->cursor == '{') {
             block_depth++;
         } else if (*parser->cursor == '}') {
@@ -5984,6 +6048,9 @@ static struct Value parse_statement_sequence_body(struct Parser *parser, char te
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
+                if (starts_adjacent_statement(parser->cursor)) {
+                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                }
                 return value;
             }
             parser->cursor++;
@@ -6016,6 +6083,9 @@ static struct Value parse_statement_sequence_body(struct Parser *parser, char te
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
+                if (starts_adjacent_statement(parser->cursor)) {
+                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                }
                 return value;
             }
             parser->cursor++;
@@ -6036,6 +6106,9 @@ static struct Value parse_statement_sequence_body(struct Parser *parser, char te
 
         skip_spaces(parser);
         if (*parser->cursor != ';') {
+            if (starts_adjacent_statement(parser->cursor)) {
+                parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+            }
             return value;
         }
         parser->cursor++;
@@ -6145,6 +6218,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "integer overflow";
     case RUSTIC_ERR_IDENTIFIER_TOO_LONG:
         return "identifier too long";
+    case RUSTIC_ERR_DUPLICATE_PARAMETER:
+        return "duplicate parameter";
     default:
         return "unknown rustic interpreter error";
     }
