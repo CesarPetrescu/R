@@ -13,11 +13,12 @@ cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtu
 /tmp/rustic-expression-demo 'let x = 2 + 3; x * 4'
 /tmp/rustic-expression-demo 'fn add(a, b) { a + b }; add(2, 3)'
 /tmp/rustic-expression-demo 'let offset = -2; let xs = [4, -5, 7]; xs[1] * offset'
+/tmp/rustic-expression-demo 'let x = 2; while x < 5 { x += 1; }; x'
 /tmp/rustic-expression-demo 'let n = -2; match n { -2 => 8, _ => 0 }'
 /tmp/rustic-expression-demo 'let low = -9223372036854775808; low / 2' # on 64-bit-long hosts
 ```
 
-The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth matches a negative integer arm and prints `8`; the fifth demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
+The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth prints `5` using checked `+=` inside a loop; the fifth matches a negative integer arm and prints `8`; the last demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
 
 ## Run with Docker
 
@@ -32,6 +33,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Integer bindings accept `x += expression` and `x -= expression` as statement-level updates, including inside loops and scoped blocks. They preserve the ordinary expression precedence and reject host-`long` overflow with `RUSTIC_ERR_INTEGER_OVERFLOW` before changing the binding or C API output; unknown bindings and array operands retain deterministic errors. Plain `=` still accepts typed values, including arrays. [The 24-row host contract](tests/fixtures/rustic_compound_assignment_contract.txt) exercises both operations and portable boundaries. Skipped brace bodies remain brace-scanned on this base; this change does not claim full statement-grammar validation there.
+
 Function calls now accept one optional trailing comma after a nonempty argument list: `fn add(a, b) { a + b }; add(2, 3,)` evaluates to `5`, and `sum([1, 2,],)` evaluates to `3`. The grammar-only short-circuit path accepts the same syntax without evaluating the call. Empty calls remain valid, doubled or leading commas return `expected integer`, and excess arguments still return `wrong argument count`. Function *parameter declarations* do not accept trailing commas. See the [call contract](tests/fixtures/rustic_call_trailing_comma_contract.txt) and direct C API output-preservation test.
 
 Array literals accept a single optional trailing comma after the final element: `sum([1, 2,])` evaluates to `3`. The same grammar is recognized in short-circuited operands (`0 && [1, 2,]` evaluates to `0` without evaluating the array). Empty `[]`, the 16-element cap and `expected integer` for doubled commas remain unchanged; this does not enable trailing commas in function declarations. The [executable 12-row contract](tests/fixtures/rustic_array_trailing_comma_contract.txt) covers composition, invalid forms and limits, with a direct C API output-preservation check.
@@ -90,7 +93,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 582, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 281, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 583, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 282, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -102,7 +105,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 582 |
+| Completed backlog items | 583 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -111,7 +114,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 281 | 0 | None |
+| P1 | 282 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

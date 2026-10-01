@@ -271,6 +271,22 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    if (snprintf(source, sizeof(source), "let x = %ld; x += 1", LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 61;
+    }
+    if (snprintf(source, sizeof(source), "let x = %ld; x -= 1", LONG_MIN) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 20) {
+        return 62;
+    }
+    if (rustic_eval_expression("let x = [1]; x += 1", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 63;
+    }
+    if (rustic_eval_expression("let x = 4; x += 3; x -= 2", &out) != RUSTIC_OK || out != 5) {
+        return 64;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

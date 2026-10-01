@@ -32,8 +32,10 @@ typedef enum RusticStatus {
     RUSTIC_ERR_DUPLICATE_PARAMETER = 23,
 } RusticStatus;
 
-/* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
- * result is outside host long; / and % report it for LONG_MIN with divisor -1.
+/* Integer binding += and -=, and evaluated expression +, binary -, and *,
+ * report INTEGER_OVERFLOW when the result is outside host long. Compound
+ * assignment requires integer operands; plain = retains typed-value support.
+ * Evaluated expression / and % report it for LONG_MIN with divisor -1.
  * sum(array), prefix_sum(array), window_sum(array, n),
  * moving_average_sum(array, n), and chunk_sum(array, n) check each
  * intermediate addition. adjacent_diff(array) checks each subtraction.
