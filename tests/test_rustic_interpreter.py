@@ -300,6 +300,15 @@ def test_c_hosted_rustic_interpreter_nested_block_does_not_reset_outer_operator_
     assert result.stderr == f"step limit exceeded: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_restarts_operator_budget_for_each_while_condition(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; while (n < 100" + " && 1" * 7 + ") { n = n + 1 }; n"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, result
+    assert result.stdout == f"{source} => 100\n"
+    assert result.stderr == ""
+
+
 def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     binary = tmp_path / "rustic-api-contract"
     build = subprocess.run(

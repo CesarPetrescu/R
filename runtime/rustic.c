@@ -657,6 +657,7 @@ static struct Value parse_while_statement(struct Parser *parser) {
     while (parser->status == RUSTIC_OK) {
         parser->cursor = condition_start;
         condition_array_count = parser->array_count;
+        parser->operator_steps_remaining = RUSTIC_MAX_STEPS;
         condition_value = parse_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
             parser->array_count = condition_array_count;

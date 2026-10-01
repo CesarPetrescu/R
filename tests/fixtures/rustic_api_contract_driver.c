@@ -309,6 +309,33 @@ int main(void) {
         return 66;
     }
     out = 20;
+    if (rustic_eval_expression("let n = 0; while (n < 100 && 1 && 1 && 1 && 1 && 1 && 1 && 1) { n = n + 1 }; n",
+            &out) != RUSTIC_OK || out != 100) {
+        return 67;
+    }
+    out = 20;
+    {
+        char condition[4096];
+        size_t used;
+        size_t i;
+        int written = snprintf(condition, sizeof(condition), "while (1");
+        if (written < 0 || (size_t)written >= sizeof(condition)) {
+            return 68;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(condition + used, sizeof(condition) - used, " && 1");
+            if (written < 0 || (size_t)written >= sizeof(condition) - used) {
+                return 69;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(condition + used, sizeof(condition) - used, ") { 1 }; 0");
+        if (written < 0 || (size_t)written >= sizeof(condition) - used ||
+                rustic_eval_expression(condition, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 20) {
+            return 70;
+        }
+    }
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
