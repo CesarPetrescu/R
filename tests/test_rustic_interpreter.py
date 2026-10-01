@@ -13231,6 +13231,15 @@ def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
     assert result.stdout == f"{source} => 5\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_deferred_function_body_statements(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn unused() { " + "1; " * 520 + "1 }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_duplicate_function_parameters(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn pick(x, x) { x }; pick(1, 2)"
