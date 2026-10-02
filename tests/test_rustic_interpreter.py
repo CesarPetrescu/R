@@ -62,6 +62,32 @@ def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_function_call(tmp
     assert result.stdout == f"{source} => 5\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_reserved_binding_name(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let if = 5; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2, result
+    assert result.stdout == ""
+    assert result.stderr == f"reserved identifier: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reserved_identifiers_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_reserved_identifiers_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 16
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_call_trailing_comma_contract(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_call_trailing_comma_contract.txt"
