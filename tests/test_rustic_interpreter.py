@@ -886,6 +886,16 @@ def test_c_hosted_rustic_interpreter_else_if_contract(tmp_path):
             assert result.stderr == f"{expected}: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_charges_else_separators_after_break(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for suffix in ("{ 0 }", "if 0 { 0 } else { 1 }"):
+        source = "while 1 { if 1 { break; } else " + " " * 1100 + suffix + " }; 9"
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        assert result.returncode == 2, result.stdout
+        assert result.stdout == ""
+        assert result.stderr == f"step limit exceeded: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_if_else_true_branch(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

@@ -514,7 +514,9 @@ static struct Value parse_if_expression(struct Parser *parser) {
             return integer_value(0);
         }
         parser->cursor += 4;
-        skip_spaces(parser);
+        if (!skip_spaces_after_loop_control(parser)) {
+            return integer_value(0);
+        }
         if (cursor_starts_keyword(parser, "if")) {
             if (!consume_step(parser)) {
                 return integer_value(0);
