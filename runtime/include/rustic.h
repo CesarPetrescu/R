@@ -30,6 +30,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_INTEGER_OVERFLOW = 21,
     RUSTIC_ERR_IDENTIFIER_TOO_LONG = 22,
     RUSTIC_ERR_DUPLICATE_PARAMETER = 23,
+    RUSTIC_ERR_RESERVED_IDENTIFIER = 24,
 } RusticStatus;
 
 /* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
@@ -60,6 +61,9 @@ typedef enum RusticStatus {
  * than aliasing their first 63 characters, including skipped expressions.
  * Repeated names in one function parameter list report DUPLICATE_PARAMETER;
  * different functions and outer bindings may reuse a name.
+ * Declaration names equal to a parser keyword (let, fn, if, else, while,
+ * break, continue, match) report RESERVED_IDENTIFIER; longer identifiers
+ * containing those words are still accepted.
  * Evaluated and skipped expression-factor nesting is capped at 64 active
  * factors; exceeding it reports STEP_LIMIT_EXCEEDED (also used for the
  * independent 512-step execution budget).

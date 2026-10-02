@@ -1,0 +1,17 @@
+# source => integer result or error:diagnostic
+let if = 5; 7 => error:reserved identifier
+let while = 5; 7 => error:reserved identifier
+let match = 5; 7 => error:reserved identifier
+let else = 5; 7 => error:reserved identifier
+let break = 5; 7 => error:reserved identifier
+let continue = 5; 7 => error:reserved identifier
+let let = 5; 7 => error:reserved identifier
+let fn = 5; 7 => error:reserved identifier
+fn while(x) { x }; 9 => error:reserved identifier
+fn id(match) { match }; 9 => error:reserved identifier
+fn outer(x) { fn if(y) { y }; x }; outer(3) => error:reserved identifier
+let if_else = 5; if_else + 1 => 6
+let match2 = 5; match2 => 5
+fn while_loop(if_value) { if_value }; while_loop(3) => 3
+match 0 { 0 => 2, _ => 3 } => 2
+if 0 { let if = 5; 9 } else { 7 } => 7

@@ -3,6 +3,7 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
+Reserved parser keywords are now rejected in selected declarations with a dedicated diagnostic rather than creating unreferenceable bindings; ordinary prefixed names remain valid. Next, preserve the already occupied skipped-block/deferred-body work and explore match-arm ambiguity (for example duplicate wildcard patterns) with a failing host example and agreed diagnostic before changing syntax.
 The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `add(2, 3,)` in evaluated and short-circuited operands; function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
