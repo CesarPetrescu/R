@@ -271,6 +271,39 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    if (rustic_eval_expression("if 0 { 1 } else if 1 { 22 } else { 3 }", &out) != RUSTIC_OK || out != 22) {
+        return 61;
+    }
+    if (rustic_eval_expression("if 1 { 4 } else if 2 + * { 5 } else { 6 }", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 22) {
+        return 62;
+    }
+    {
+        char chain[20000];
+        size_t used = 0;
+        size_t i;
+        int written = snprintf(chain, sizeof(chain), "if 0 { 0 }");
+        if (written < 0 || (size_t)written >= sizeof(chain)) {
+            return 63;
+        }
+        used = (size_t)written;
+        for (i = 0; i < 600; i++) {
+            written = snprintf(chain + used, sizeof(chain) - used, " else if 0 { 0 }");
+            if (written < 0 || (size_t)written >= sizeof(chain) - used) {
+                return 63;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(chain + used, sizeof(chain) - used, " else { 9 }");
+        if (written < 0 || (size_t)written >= sizeof(chain) - used ||
+                rustic_eval_expression(chain, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 22) {
+            return 64;
+        }
+    }
+    if (rustic_eval_expression("2 + 3", &out) != RUSTIC_OK || out != 5) {
+        return 65;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

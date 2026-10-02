@@ -1,0 +1,16 @@
+# Accepted selected-arm behavior, laziness, nesting and diagnostics.
+if 1 { 11 } else if missing { 22 } else { 33 } => 11
+if 0 { 11 } else if 1 { 22 } else { 33 } => 22
+if 0 { 11 } else if 0 { 22 } else { 33 } => 33
+let x = 3; if x == 1 { 10 } else if x == 2 { 20 } else if x == 3 { 30 } else { 40 } => 30
+let x = 0; if x { 1 } else if 1 { { let y = 7; y + 2 } } else { 3 } => 9
+if 0 { 1 } else if 1 { [4, 5] } else { [6] }[1] => 5
+0 && if missing { 1 } else if 1 / 0 { 2 } else { 3 } => 0
+1 || if missing { 1 } else if 1 / 0 { 2 } else { 3 } => 1
+if 1 { 4 } else if 2 + * { 5 } else { 6 } => expected integer
+if 0 { 4 } else if 1 + * { 5 } else { 6 } => expected integer
+if 0 { 4 } else if missing { 5 } else { 6 } => undefined identifier
+if 0 { 4 } else if [1] { 5 } else { 6 } => expected integer
+if 0 { 4 } else if 1 { 5 } => expected identifier
+if 0 { 4 } else if 1 { 5 } else 6 => expected closing brace
+1 || if missing { 1 } else if 1 { 2 } => expected identifier
