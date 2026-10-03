@@ -1,0 +1,9 @@
+# A while condition may mutate an outer binding through a call; its live array must survive condition cleanup.
+let xs = 0; fn save() { xs = [7]; 0 }; while save() { 9 }; xs[0] => 7
+let stable = [4]; let xs = 0; fn save() { xs = [7]; 0 }; while save() { 9 }; stable[0] + xs[0] => 11
+let xs = 0; let n = 0; fn tick() { xs = [n]; n = n + 1; n < 3 }; while tick() { sum([9]); }; xs[0] => 2
+let xs = 0; fn save() { xs = push([7], 8); 0 }; while save() { 9 }; xs[1] => 8
+let xs = 0; fn save() { xs = [7]; len([1]) - 1 }; while save() { 9 }; xs[0] => 7
+fn test() { let xs = 0; fn save() { xs = [7]; 0 }; while save() { 9 }; xs[0] }; test() => 7
+let xs = 0; fn invalid() { xs = [8]; [1] }; while invalid() { 9 }; xs[0] => expected integer
+let xs = 0; fn save() { xs = [7]; 0 }; while save() { missing }; xs[0] => 7

@@ -271,6 +271,19 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    if (rustic_eval_expression("let xs = 0; fn save() { xs = [7]; 0 }; while save() { 9 }; xs[0]", &out) !=
+            RUSTIC_OK || out != 7) {
+        return 61;
+    }
+    out = 20;
+    if (rustic_eval_expression("let xs = 0; fn invalid() { xs = [8]; [1] }; while invalid() { 9 }; xs[0]", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 62;
+    }
+    if (rustic_eval_expression("2 + 3", &out) != RUSTIC_OK || out != 5) {
+        return 63;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
