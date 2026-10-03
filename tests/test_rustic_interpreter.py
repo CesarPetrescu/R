@@ -1204,6 +1204,39 @@ def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_preserves_temporary_array_during_index_evaluation(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "[9][len(push([0], 1))-2]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 9\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_index_base_lifetime_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_index_base_lifetime_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 10
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_temporary_index_bases(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + [1][len(push([0], 1))-2]; n = n + 1; 0 }; total"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
+
+
 def test_c_hosted_rustic_interpreter_indexes_scoped_array_results(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
