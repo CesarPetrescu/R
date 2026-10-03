@@ -639,20 +639,17 @@ static struct Value parse_while_statement(struct Parser *parser) {
     const char *condition_start;
     long condition;
     struct Value condition_value;
-    size_t condition_array_count;
     struct Value value = integer_value(0);
 
     parser->cursor += 5;
     condition_start = parser->cursor;
     while (parser->status == RUSTIC_OK) {
         parser->cursor = condition_start;
-        condition_array_count = parser->array_count;
         condition_value = parse_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, condition_value, &condition)) {
-            parser->array_count = condition_array_count;
             return integer_value(0);
         }
-        parser->array_count = condition_array_count;
+        compact_unreferenced_arrays(parser, NULL);
 
         if (condition == 0) {
             if (!skip_block(parser)) {

@@ -925,6 +925,31 @@ def test_c_hosted_rustic_interpreter_skips_false_while_body(tmp_path):
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_preserves_array_assigned_by_false_while_condition(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let xs = 0; fn save() { xs = [7]; 0 }; while save() { 9 }; xs[0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_while_condition_array_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_while_condition_array_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if result.returncode == 0:
+            assert result.stdout == f"{source} => {expected}\n"
+            assert result.stderr == ""
+        else:
+            assert result.returncode == 2
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_breaks_out_of_while_loop(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
