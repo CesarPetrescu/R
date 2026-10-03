@@ -271,6 +271,17 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
+    if (rustic_eval_expression("[9][len(push([0], 1))-2]", &out) != RUSTIC_OK || out != 9) {
+        return 61;
+    }
+    if (rustic_eval_expression("[9][len(push([0], 1))-1]", &out) !=
+            RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS || out != 9) {
+        return 62;
+    }
+    if (rustic_eval_expression("[9][len(push([0], 1))-2]", &out) != RUSTIC_OK || out != 9) {
+        return 63;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

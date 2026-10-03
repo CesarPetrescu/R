@@ -692,7 +692,31 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
             return value;
         }
         parser->cursor++;
-        index_value = parse_expression(parser);
+        if (value.kind == VALUE_ARRAY) {
+            struct Value *saved_roots = parser->array_roots;
+            size_t saved_count = parser->array_root_count;
+            struct Value roots[RUSTIC_MAX_ARRAY_ROOTS];
+            size_t root_index;
+            if (saved_count >= RUSTIC_MAX_ARRAY_ROOTS) {
+                parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                return integer_value(0);
+            }
+            for (root_index = 0; root_index < saved_count; root_index++) {
+                roots[root_index] = saved_roots[root_index];
+            }
+            roots[saved_count] = value;
+            parser->array_roots = roots;
+            parser->array_root_count = saved_count + 1;
+            index_value = parse_expression(parser);
+            value = roots[saved_count];
+            for (root_index = 0; root_index < saved_count; root_index++) {
+                saved_roots[root_index] = roots[root_index];
+            }
+            parser->array_roots = saved_roots;
+            parser->array_root_count = saved_count;
+        } else {
+            index_value = parse_expression(parser);
+        }
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, index_value, &index)) {
             return integer_value(0);
         }
