@@ -852,6 +852,47 @@ def test_c_hosted_rustic_interpreter_rejects_unclosed_block_expression(tmp_path)
     assert "expected closing brace" in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_accepts_if_without_else_true_branch(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 1; if x { x = 2; x }; x"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 2\n"
+
+
+def test_c_hosted_rustic_interpreter_accepts_if_without_else_false_branch(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 4; if 0 { x = missing }; x + (if 0 { 9 })"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 4\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_if_without_else_in_short_circuit(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && if 1 { missing }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_optional_else_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_optional_else_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_evaluates_if_else_true_branch(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
