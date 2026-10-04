@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Allow `if condition { expression }` without `else` in evaluated and short-circuited expressions; return zero for an unselected branch, retain selected block value/scope, explicit-else and malformed-block behavior, and C API output preservation.
 - [x] Preserve an unbound array expression as a live root while its postfix index expression allocates and compacts arrays, so `[9][len(push([0], 1))-2]` returns `9` instead of a spurious out-of-bounds error; cover composition, invalid indices, temporary cleanup and C API output preservation.
 - [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
 - [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.

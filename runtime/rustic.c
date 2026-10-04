@@ -500,8 +500,7 @@ static struct Value parse_if_expression(struct Parser *parser) {
         return integer_value(0);
     }
     if (!cursor_starts_keyword(parser, "else")) {
-        parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
-        return integer_value(0);
+        return value;
     }
     parser->cursor += 4;
 
@@ -5522,8 +5521,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         }
         skip_spaces(parser);
         if (!cursor_starts_keyword(parser, "else")) {
-            parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
-            return 0;
+            return skip_index_postfix(parser);
         }
         parser->cursor += 4;
         return skip_block(parser) && skip_index_postfix(parser);

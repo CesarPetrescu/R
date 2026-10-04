@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+`if` may omit its `else`: `let x = 1; if x { x = 2; x }; x` evaluates to `2`, and `if 0 { missing }` returns integer `0` without evaluating its block. Short-circuited operands accept the same syntax; an explicit `else` still needs a block. This is Rustic's integer convention, not Rust unit typing or `else if`. The [executable optional-else contract](tests/fixtures/rustic_optional_else_contract.txt) covers loop composition, scope and failures; errors preserve the C API output.
+
 Index expressions can now call array-allocating helpers without losing an unbound temporary base: `[9][len(push([0], 1))-2]` evaluates to `9`, rather than an incorrect out-of-bounds error. Index bounds/type failures still return diagnostics without changing the C API output; the [executable index-lifetime contract](tests/fixtures/rustic_index_base_lifetime_contract.txt) covers composition, failures and cleanup.
 
 Function calls now accept one optional trailing comma after a nonempty argument list: `fn add(a, b) { a + b }; add(2, 3,)` evaluates to `5`, and `sum([1, 2,],)` evaluates to `3`. The grammar-only short-circuit path accepts the same syntax without evaluating the call. Empty calls remain valid, doubled or leading commas return `expected integer`, and excess arguments still return `wrong argument count`. Function *parameter declarations* do not accept trailing commas. See the [call contract](tests/fixtures/rustic_call_trailing_comma_contract.txt) and direct C API output-preservation test.
@@ -92,7 +94,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 583, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 282, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 584, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 283, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -104,7 +106,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 583 |
+| Completed backlog items | 584 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -113,7 +115,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 282 | 0 | None |
+| P1 | 283 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

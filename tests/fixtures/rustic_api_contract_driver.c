@@ -281,6 +281,15 @@ int main(void) {
     if (rustic_eval_expression("[9][len(push([0], 1))-2]", &out) != RUSTIC_OK || out != 9) {
         return 63;
     }
+    if (rustic_eval_expression("if 0 { missing }", &out) != RUSTIC_OK || out != 0) {
+        return 64;
+    }
+    if (rustic_eval_expression("if 1 { 2 } else", &out) != RUSTIC_ERR_EXPECTED_CLOSING_BRACE || out != 0) {
+        return 65;
+    }
+    if (rustic_eval_expression("if 1 { 3 }", &out) != RUSTIC_OK || out != 3) {
+        return 66;
+    }
     out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;

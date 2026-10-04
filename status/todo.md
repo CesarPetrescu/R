@@ -3,6 +3,7 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
+Optional-else `if` expressions now work in selected and grammar-only skipped paths; the 18-row host contract covers state mutation, loop composition, scope and error preservation. The existing else-if-chains PR #592 is a separate human-mandatory work package; do not overwrite its checkout or treat this branch as review authorization for it.
 The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `add(2, 3,)` in evaluated and short-circuited operands; function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
@@ -14,6 +15,7 @@ The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `ad
 5. After human review of overlapping parser PRs, test unbound temporary arrays used as left operands in other nested expression forms; add a direct host RED case before changing any additional root path. Do not duplicate the existing while-condition lifetime PR #595.
 
 ## Recently completed roadmap outcomes
+- Optional `else` in an `if` expression: selected blocks retain their value and scoped mutations, while a false condition with no `else` yields integer `0`. The grammar-only path consumes the same optional syntax without evaluating skipped bodies. An 18-row executable host contract and direct C API fixture cover loop composition, malformed blocks and output preservation. This does not add `else if` or full Rust unit types.
 - Preserved unbound array values through postfix index evaluation even when nested `push`/`concat` compacts slots. The 10-row host contract covers literal, function and scoped bases, lazy paths and errors; direct C API tests check output preservation and next-call recovery, and a 65-iteration host program checks temporary cleanup.
 - Nonempty function and built-in calls accept one optional trailing comma without changing argument count; skipped calls already consumed the same grammar. The 11-row host fixture checks composition, malformed comma placement and arity, and the C API test preserves output on errors. Parameter declaration grammar is unchanged.
 - Nonempty array literals accept one optional trailing comma (including grammar-only skipped operands) while preserving the 16-element cap, malformed-element errors, and C API output preservation. The 12-row fixture composes literals with built-ins and tests lazy paths.
