@@ -63,6 +63,32 @@ def test_c_hosted_rustic_interpreter_rejects_second_match_default(tmp_path):
             assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_duplicate_match_literal(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "match 0 { 0 => 1, 0 => 2 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"duplicate match pattern: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_duplicate_match_literal_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_duplicate_match_literal_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_array_literal(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let xs = [1, 2,]; sum(xs)"
@@ -1159,8 +1185,8 @@ def test_c_hosted_rustic_interpreter_runs_loop_control_showcase_fixture(tmp_path
 def test_c_hosted_rustic_interpreter_charges_match_arms_to_step_budget(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     for source in (
-        "match 0 { " + "1 => 1, " * 520 + "_ => 7 }",
-        "match 0 { 0 => 7, " + "1 => 1, " * 520 + "_ => 8 }",
+        "match 0 { " + "".join(f"{i} => 1, " for i in range(1, 521)) + "_ => 7 }",
+        "match 0 { 0 => 7, " + "".join(f"{i} => 1, " for i in range(1, 521)) + "_ => 8 }",
     ):
         result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
         assert result.returncode == 2, result

@@ -171,7 +171,7 @@ int main(void) {
         }
         used = (size_t)written;
         for (i = 0; i < 520; i++) {
-            written = snprintf(match_source + used, sizeof(match_source) - used, "1 => 1, ");
+            written = snprintf(match_source + used, sizeof(match_source) - used, "%zu => 1, ", i + 1);
             if (written < 0 || (size_t)written >= sizeof(match_source) - used) {
                 return 39;
             }
@@ -286,6 +286,11 @@ int main(void) {
             RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT || out != 20 ||
             strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT), "duplicate match default") != 0) {
         return 64;
+    }
+    if (rustic_eval_expression("match 0 { 0 => 7, 0 => 8 }", &out) !=
+            RUSTIC_ERR_DUPLICATE_MATCH_PATTERN || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_MATCH_PATTERN), "duplicate match pattern") != 0) {
+        return 66;
     }
     if (rustic_eval_expression("match 0 { _ => 6 }", &out) != RUSTIC_OK || out != 6) {
         return 65;

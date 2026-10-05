@@ -552,6 +552,9 @@ static struct Value parse_match_expression(struct Parser *parser) {
     struct Value scrutinee_value;
     struct Value value = integer_value(0);
     size_t skipped_depth;
+    long seen_patterns[RUSTIC_MAX_STEPS];
+    size_t pattern_count = 0;
+    size_t index;
     long scrutinee;
     long pattern = 0;
     int is_default = 0;
@@ -594,6 +597,14 @@ static struct Value parse_match_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             seen_default = 1;
+        } else {
+            for (index = 0; index < pattern_count; index++) {
+                if (seen_patterns[index] == pattern) {
+                    parser->status = RUSTIC_ERR_DUPLICATE_MATCH_PATTERN;
+                    return integer_value(0);
+                }
+            }
+            seen_patterns[pattern_count++] = pattern;
         }
 
         if (!matched && (is_default || pattern == scrutinee)) {
@@ -6211,6 +6222,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate parameter";
     case RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT:
         return "duplicate match default";
+    case RUSTIC_ERR_DUPLICATE_MATCH_PATTERN:
+        return "duplicate match pattern";
     default:
         return "unknown rustic interpreter error";
     }
