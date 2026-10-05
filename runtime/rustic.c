@@ -556,6 +556,7 @@ static struct Value parse_match_expression(struct Parser *parser) {
     long pattern = 0;
     int is_default = 0;
     int matched = 0;
+    int seen_default = 0;
 
     parser->cursor += 5;
     scrutinee_value = parse_expression(parser);
@@ -586,6 +587,13 @@ static struct Value parse_match_expression(struct Parser *parser) {
 
         if (!parse_match_arm_pattern(parser, &pattern, &is_default)) {
             return integer_value(0);
+        }
+        if (is_default) {
+            if (seen_default) {
+                parser->status = RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT;
+                return integer_value(0);
+            }
+            seen_default = 1;
         }
 
         if (!matched && (is_default || pattern == scrutinee)) {
@@ -6201,6 +6209,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "identifier too long";
     case RUSTIC_ERR_DUPLICATE_PARAMETER:
         return "duplicate parameter";
+    case RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT:
+        return "duplicate match default";
     default:
         return "unknown rustic interpreter error";
     }

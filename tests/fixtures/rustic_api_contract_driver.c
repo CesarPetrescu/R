@@ -282,6 +282,15 @@ int main(void) {
         return 63;
     }
     out = 20;
+    if (rustic_eval_expression("match 0 { 0 => 7, _ => 8, _ => 9 }", &out) !=
+            RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT), "duplicate match default") != 0) {
+        return 64;
+    }
+    if (rustic_eval_expression("match 0 { _ => 6 }", &out) != RUSTIC_OK || out != 6) {
+        return 65;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
