@@ -463,6 +463,30 @@ def test_c_hosted_rustic_interpreter_updates_existing_binding(tmp_path):
     assert result.stdout == "let x = 1; x = x + 2; x => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_assigns_array_element_without_mutating_alias(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let xs = [2, 3]; let alias = xs; xs[1] = 9; xs[1] + alias[1]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 12\n"
+
+
+def test_c_hosted_rustic_interpreter_array_element_assignment_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    rows = (ROOT / "tests" / "fixtures" / "rustic_array_element_assignment_contract.txt").read_text().splitlines()
+    rows = [row.rsplit(" => ", 1) for row in rows if row and not row.startswith("#")]
+    assert len(rows) == 23
+    for source, expected in rows:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_assignment_to_undefined_name(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 

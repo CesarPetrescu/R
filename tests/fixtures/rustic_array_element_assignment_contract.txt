@@ -1,0 +1,24 @@
+# source => result or error:diagnostic
+let xs = [2, 3]; xs[0] = 7; xs[0] + xs[1] => 10
+let xs = [2, 3]; let alias = xs; xs[1] = 9; xs[1] + alias[1] => 12
+let xs = [2]; xs[0] = 9 => 9
+let xs = [2]; xs[0] = 9; sum(xs) => 9
+let xs = [1]; let n = 0; xs[{ n = n + 1; 0 }]; n => 1
+let xs = [1]; xs[len(push([0], 1))-2] = 4; xs[0] => 4
+let xs = [1]; xs[0] = if 1 { 8 } else { 9 }; xs[0] => 8
+let xs = [1]; { xs[0] = 7; 0 }; xs[0] => 7
+let xs = [1]; xs[2] = 8 => error:array index out of bounds
+let xs = [1]; xs[-1] = 8 => error:array index out of bounds
+let xs = [1]; xs[[0]] = 8 => error:expected integer
+let xs = [1]; xs[0] = [2] => error:expected integer
+let xs = [1]; xs[0] = 1 / 0 => error:division by zero
+let xs = 1; xs[0] = 3 => error:expected array
+xs[0] = 3 => error:undefined identifier
+let xs = [1]; xs[1 + *] = 3 => error:expected integer
+let xs = [1]; xs[0] == 1 => 1
+let xs = [1]; xs[0] + 2 => 3
+let xs = [1]; xs[0] = 7; xs[0] = 8; xs[0] => 8
+let xs = [1]; let alias = xs; xs[0] = 9; alias[0] => 1
+let xs=[1]; let alias=xs; xs[{xs=[4]; 0}]=9; alias[0]+xs[0] => 10
+let xs=[1]; let n=0; while n<40 { xs[0]=n; n=n+1; }; xs[0] => 39
+let xs=[1]; let n=0; xs[{n=n+1; 0}]=n; xs[0]+n => 2
