@@ -5841,6 +5841,7 @@ static void parse_let_statement(struct Parser *parser) {
 
 static void parse_function_declaration(struct Parser *parser) {
     struct Function *function;
+    struct Function *existing;
     const char *block_start;
     size_t previous;
 
@@ -5905,6 +5906,11 @@ static void parse_function_declaration(struct Parser *parser) {
     block_start = parser->cursor;
     function->body_start = block_start + 1;
     if (!skip_block(parser)) {
+        return;
+    }
+    existing = lookup_function(parser, function->name);
+    if (existing != NULL && existing->scope_depth == parser->scope_depth) {
+        parser->status = RUSTIC_ERR_DUPLICATE_FUNCTION;
         return;
     }
     function->body_end = parser->cursor - 1;
@@ -6224,6 +6230,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate match default";
     case RUSTIC_ERR_DUPLICATE_MATCH_PATTERN:
         return "duplicate match pattern";
+    case RUSTIC_ERR_DUPLICATE_FUNCTION:
+        return "duplicate function";
     default:
         return "unknown rustic interpreter error";
     }

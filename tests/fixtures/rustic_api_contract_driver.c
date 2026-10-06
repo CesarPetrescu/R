@@ -296,6 +296,15 @@ int main(void) {
         return 65;
     }
     out = 20;
+    if (rustic_eval_expression("fn f() { 1 }; fn f() { 2 }; f()", &out) !=
+            RUSTIC_ERR_DUPLICATE_FUNCTION || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_FUNCTION), "duplicate function") != 0) {
+        return 67;
+    }
+    if (rustic_eval_expression("fn f() { 1 }; { fn f() { 2 }; f() } + f()", &out) != RUSTIC_OK || out != 3) {
+        return 68;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

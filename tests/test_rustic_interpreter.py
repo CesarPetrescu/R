@@ -13307,6 +13307,39 @@ def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
     assert result.stdout == f"{source} => 5\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_duplicate_function_declarations(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn choose() { 1 }; fn choose() { 2 }; choose()"
+    result = subprocess.run(
+        [str(binary), source], text=True, capture_output=True, timeout=2
+    )
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"duplicate function: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_duplicate_function_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_duplicate_function_contract.txt"
+    cases = [
+        row.rsplit(" => ", 1)
+        for row in fixture.read_text(encoding="utf-8").splitlines()
+        if row and not row.startswith("#")
+    ]
+    assert len(cases) == 11
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source], text=True, capture_output=True, timeout=2
+        )
+        if expected.lstrip("-").isdigit():
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+        else:
+            assert result.returncode == 2, (source, result.stdout)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_duplicate_function_parameters(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn pick(x, x) { x }; pick(1, 2)"

@@ -32,6 +32,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_DUPLICATE_PARAMETER = 23,
     RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT = 24,
     RUSTIC_ERR_DUPLICATE_MATCH_PATTERN = 25,
+    RUSTIC_ERR_DUPLICATE_FUNCTION = 26,
 } RusticStatus;
 
 /* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
@@ -62,6 +63,8 @@ typedef enum RusticStatus {
  * than aliasing their first 63 characters, including skipped expressions.
  * Repeated names in one function parameter list report DUPLICATE_PARAMETER;
  * different functions and outer bindings may reuse a name.
+ * Repeated function declarations in one scope report DUPLICATE_FUNCTION;
+ * a nested scope may shadow an outer function without replacing it.
  * A second wildcard arm in a visited match reports DUPLICATE_MATCH_DEFAULT.
  * Repeated numeric arms in a visited match report DUPLICATE_MATCH_PATTERN;
  * signed zero and zero denote the same pattern. Whole skipped matches remain
