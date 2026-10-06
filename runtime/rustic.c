@@ -5840,16 +5840,12 @@ static void parse_let_statement(struct Parser *parser) {
 }
 
 static void parse_function_declaration(struct Parser *parser) {
-    struct Function *function;
+    struct Function declaration;
+    struct Function *function = &declaration;
+    struct Function *existing;
     const char *block_start;
     size_t previous;
 
-    if (parser->function_count >= RUSTIC_MAX_FUNCTIONS) {
-        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
-        return;
-    }
-
-    function = &parser->functions[parser->function_count];
     parser->cursor += 2;
     if (!parse_identifier(parser, function->name, sizeof(function->name))) {
         return;
@@ -5908,17 +5904,25 @@ static void parse_function_declaration(struct Parser *parser) {
         return;
     }
     function->body_end = parser->cursor - 1;
-    function->scope_depth = parser->scope_depth;
-    function->id = parser->next_function_id;
-    parser->next_function_id++;
-    parser->function_count++;
-
     skip_spaces(parser);
     if (*parser->cursor != ';') {
         parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
         return;
     }
     parser->cursor++;
+
+    existing = lookup_function(parser, function->name);
+    if (existing != NULL && existing->scope_depth == parser->scope_depth) {
+        parser->status = RUSTIC_ERR_DUPLICATE_FUNCTION;
+        return;
+    }
+    if (parser->function_count >= RUSTIC_MAX_FUNCTIONS) {
+        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+        return;
+    }
+    function->scope_depth = parser->scope_depth;
+    function->id = parser->next_function_id++;
+    parser->functions[parser->function_count++] = declaration;
 }
 
 static int parse_assignment_statement(struct Parser *parser, struct Value *out_value) {
@@ -6224,6 +6228,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate match default";
     case RUSTIC_ERR_DUPLICATE_MATCH_PATTERN:
         return "duplicate match pattern";
+    case RUSTIC_ERR_DUPLICATE_FUNCTION:
+        return "duplicate function";
     default:
         return "unknown rustic interpreter error";
     }
