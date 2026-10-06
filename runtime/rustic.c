@@ -5940,6 +5940,106 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     }
 
     skip_spaces(parser);
+    if (*parser->cursor == '[') {
+        const char *index_start = parser->cursor + 1;
+        size_t saved_steps = parser->steps_remaining;
+        size_t saved_depth = parser->expression_depth;
+        int indexed_assignment;
+        parser->cursor = index_start;
+        indexed_assignment = skip_expression_operand(parser);
+        if (indexed_assignment) {
+            skip_spaces(parser);
+            indexed_assignment = *parser->cursor == ']';
+            if (indexed_assignment) {
+                parser->cursor++;
+                skip_spaces(parser);
+                indexed_assignment = *parser->cursor == '=' && parser->cursor[1] != '=';
+            }
+        }
+        parser->steps_remaining = saved_steps;
+        parser->expression_depth = saved_depth;
+        parser->status = RUSTIC_OK;
+        parser->cursor = indexed_assignment ? index_start : statement_start;
+        if (indexed_assignment) {
+            struct Value *saved_roots = parser->array_roots;
+            size_t saved_count = parser->array_root_count;
+            struct Value roots[RUSTIC_MAX_ARRAY_ROOTS];
+            struct Value index_value;
+            struct ArrayValue *source_array;
+            struct ArrayValue *rebuilt_array;
+            long index, element;
+            size_t root_index;
+
+            if (!lookup_binding(parser, name, &existing_value)) {
+                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                return 1;
+            }
+            if (array_from_value(parser, existing_value) == NULL) {
+                parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                return 1;
+            }
+            if (saved_count >= RUSTIC_MAX_ARRAY_ROOTS) {
+                parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                return 1;
+            }
+            for (root_index = 0; root_index < saved_count; root_index++) {
+                roots[root_index] = saved_roots[root_index];
+            }
+            roots[saved_count] = existing_value;
+            parser->array_roots = roots;
+            parser->array_root_count = saved_count + 1;
+            index_value = parse_expression(parser);
+            if (parser->status == RUSTIC_OK && !value_as_integer(parser, index_value, &index)) {
+                /* value_as_integer sets the diagnostic. */
+            }
+            if (parser->status == RUSTIC_OK) {
+                skip_spaces(parser);
+                if (*parser->cursor != ']') {
+                    parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACKET;
+                } else {
+                    parser->cursor++;
+                    skip_spaces(parser);
+                    parser->cursor++;
+                    value = parse_expression(parser);
+                    if (parser->status == RUSTIC_OK) {
+                        value_as_integer(parser, value, &element);
+                    }
+                }
+            }
+            for (root_index = 0; root_index < saved_count; root_index++) {
+                saved_roots[root_index] = roots[root_index];
+            }
+            parser->array_roots = saved_roots;
+            parser->array_root_count = saved_count;
+            if (parser->status != RUSTIC_OK) {
+                return 1;
+            }
+            existing_value = roots[saved_count];
+            source_array = array_from_value(parser, existing_value);
+            if (source_array == NULL || index < 0 || (size_t)index >= source_array->element_count) {
+                parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
+                return 1;
+            }
+            compact_unreferenced_arrays(parser, &existing_value);
+            if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                return 1;
+            }
+            source_array = array_from_value(parser, existing_value);
+            rebuilt_array = &parser->arrays[parser->array_count];
+            *rebuilt_array = *source_array;
+            rebuilt_array->scope_depth = parser->scope_depth;
+            rebuilt_array->id = parser->next_array_id++;
+            rebuilt_array->under_construction = 0;
+            rebuilt_array->elements[index] = element;
+            existing_value = array_value(parser->array_count++, rebuilt_array->id);
+            update_binding(parser, name, existing_value);
+            compact_unreferenced_arrays(parser, &existing_value);
+            *out_value = integer_value(element);
+            return 1;
+        }
+        return 0;
+    }
     if (*parser->cursor != '=' || parser->cursor[1] == '=') {
         parser->cursor = statement_start;
         parser->status = RUSTIC_OK;

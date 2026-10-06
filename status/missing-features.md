@@ -297,6 +297,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Bound recursive evaluated and grammar-only skipped expression nesting at 64 factors, returning `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` instead of overflowing the C host stack; test unary and parentheses, output preservation, and fresh subsequent C API calls.
 - [x] Reject identifiers longer than 63 characters with a distinct C API status instead of silently truncating/aliasing bindings or functions; cover declarations, references, assignments, calls, parameters, skipped expressions, valid boundary and output preservation.
 - [x] Diagnose repeated numeric patterns in evaluated `match` arms, even after an earlier match, with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN`; cover signed-zero aliases, nesting, lazy whole matches, unchanged C API output and a separate step-budget fixture of distinct arms.
+- [x] Allow `name[index] = integer` for bound arrays as copy-on-write element assignment; preserve aliases, evaluate the index only once, check type/bounds, keep the base live through nested allocations, and preserve C API output on failure with a host fixture.
 
 ## P2 — project quality
 
