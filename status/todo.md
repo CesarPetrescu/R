@@ -3,7 +3,7 @@
 Select work by user-visible interpreter outcomes in [the product roadmap](../docs/ROADMAP.md), not by the number of checked helper entries. The historical [backlog](missing-features.md) records completed work but is not a mandate to continue balance suffixes. Complete a concrete, testable implementation package when safe; report a blocker rather than manufacture a low-value task.
 
 ## Next recommended tasks
-An evaluated `match` now rejects duplicate `_` arms with a stable C API status; the result and error contract is covered by `rustic_match_default_contract.txt`. Numeric duplicate patterns still select their first match, which is an independently testable diagnostic policy decision after overlapping parser PRs settle. Keep skipped whole-match and loop-exit scans separate from evaluated pattern checking.
+An evaluated `match` rejects duplicate `_` arms and repeated numeric patterns with distinct stable C API statuses; signed-zero aliases compare numerically. Both error contracts have executable host fixtures. Keep skipped whole-match and loop-exit scans separate from evaluated pattern checking.
 The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `add(2, 3,)` in evaluated and short-circuited operands; function parameter lists remain unchanged. The duplicate-parameter contract rejects ambiguous bindings; the missing-semicolon diagnostic has merged. Open PRs for deferred-function grammar and expression-step budget own those separate packages and review gates; do not duplicate or modify their occupied worktrees. Separate workers are already exploring skipped blocks.
 
 
@@ -15,6 +15,7 @@ The array-literal and call trailing-comma contracts now accept `[1, 2,]` and `ad
 5. After human review of overlapping parser PRs, test unbound temporary arrays used as left operands in other nested expression forms; add a direct host RED case before changing any additional root path. Do not duplicate the existing while-condition lifetime PR #595.
 
 ## Recently completed roadmap outcomes
+- Evaluated `match` arms reject repeated numeric patterns with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN`, including after a selected arm; independent nested matches can reuse a literal. The 10-row host contract and direct C API test check diagnostic text and output preservation. The step-budget test now uses distinct literals so it still tests exhaustion, not duplicates.
 - Rejected duplicate wildcard arms in evaluated `match` expressions, even after a prior arm matches; a 10-row C-host fixture covers positive/negative/nested/grammar cases and the direct C API contract preserves output on error and recovers on the next call.
 - Preserved unbound array values through postfix index evaluation even when nested `push`/`concat` compacts slots. The 10-row host contract covers literal, function and scoped bases, lazy paths and errors; direct C API tests check output preservation and next-call recovery, and a 65-iteration host program checks temporary cleanup.
 - Nonempty function and built-in calls accept one optional trailing comma without changing argument count; skipped calls already consumed the same grammar. The 11-row host fixture checks composition, malformed comma placement and arity, and the C API test preserves output on errors. Parameter declaration grammar is unchanged.
