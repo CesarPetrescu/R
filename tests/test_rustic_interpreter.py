@@ -46,6 +46,49 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_rejects_second_match_default(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_match_default_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_duplicate_match_literal(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "match 0 { 0 => 1, 0 => 2 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"duplicate match pattern: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_duplicate_match_literal_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_duplicate_match_literal_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_array_literal(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let xs = [1, 2,]; sum(xs)"
@@ -418,6 +461,30 @@ def test_c_hosted_rustic_interpreter_updates_existing_binding(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == "let x = 1; x = x + 2; x => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_assigns_array_element_without_mutating_alias(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let xs = [2, 3]; let alias = xs; xs[1] = 9; xs[1] + alias[1]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 12\n"
+
+
+def test_c_hosted_rustic_interpreter_array_element_assignment_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    rows = (ROOT / "tests" / "fixtures" / "rustic_array_element_assignment_contract.txt").read_text().splitlines()
+    rows = [row.rsplit(" => ", 1) for row in rows if row and not row.startswith("#")]
+    assert len(rows) == 23
+    for source, expected in rows:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
 
 
 def test_c_hosted_rustic_interpreter_rejects_assignment_to_undefined_name(tmp_path):
@@ -1142,8 +1209,8 @@ def test_c_hosted_rustic_interpreter_runs_loop_control_showcase_fixture(tmp_path
 def test_c_hosted_rustic_interpreter_charges_match_arms_to_step_budget(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     for source in (
-        "match 0 { " + "1 => 1, " * 520 + "_ => 7 }",
-        "match 0 { 0 => 7, " + "1 => 1, " * 520 + "_ => 8 }",
+        "match 0 { " + "".join(f"{i} => 1, " for i in range(1, 521)) + "_ => 7 }",
+        "match 0 { 0 => 7, " + "".join(f"{i} => 1, " for i in range(1, 521)) + "_ => 8 }",
     ):
         result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
         assert result.returncode == 2, result
@@ -1202,6 +1269,39 @@ def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
 
         assert result.returncode == 0, result.stderr
         assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_preserves_temporary_array_during_index_evaluation(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "[9][len(push([0], 1))-2]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 9\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_index_base_lifetime_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_index_base_lifetime_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 10
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_temporary_index_bases(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 0; let total = 0; while n < 65 { total = total + [1][len(push([0], 1))-2]; n = n + 1; 0 }; total"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 65\n"
 
 
 def test_c_hosted_rustic_interpreter_indexes_scoped_array_results(tmp_path):
@@ -13238,6 +13338,59 @@ def test_c_hosted_rustic_interpreter_bounds_deferred_function_body_statements(tm
     assert result.returncode == 2, result
     assert result.stdout == ""
     assert result.stderr == f"step limit exceeded: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_duplicate_function_declarations(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn choose() { 1 }; fn choose() { 2 }; choose()"
+    result = subprocess.run(
+        [str(binary), source], text=True, capture_output=True, timeout=2
+    )
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"duplicate function: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_missing_semicolon_before_duplicate_function(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn choose() { 1 }; fn choose() { 2 } 0"
+    result = subprocess.run(
+        [str(binary), source], text=True, capture_output=True, timeout=2
+    )
+    assert result.returncode == 2
+    assert result.stderr == f"expected semicolon: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_duplicate_function_at_capacity(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "".join(f"fn f{i}() {{ {i} }}; " for i in range(8)) + "fn f0() { 9 }; 0"
+    result = subprocess.run(
+        [str(binary), source], text=True, capture_output=True, timeout=2
+    )
+    assert result.returncode == 2
+    assert result.stderr == f"duplicate function: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_duplicate_function_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_duplicate_function_contract.txt"
+    cases = [
+        row.rsplit(" => ", 1)
+        for row in fixture.read_text(encoding="utf-8").splitlines()
+        if row and not row.startswith("#")
+    ]
+    assert len(cases) == 11
+    for source, expected in cases:
+        result = subprocess.run(
+            [str(binary), source], text=True, capture_output=True, timeout=2
+        )
+        if expected.lstrip("-").isdigit():
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+        else:
+            assert result.returncode == 2, (source, result.stdout)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected}: {source}\n"
 
 
 def test_c_hosted_rustic_interpreter_rejects_duplicate_function_parameters(tmp_path):

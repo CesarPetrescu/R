@@ -10,6 +10,9 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Reject repeated named `fn` declarations within one active lexical scope with a dedicated C API status/message while allowing inner block/function-body shadowing, preserving outer resolution, skipped-body behavior and output on failure; exercise an executable positive/negative host contract.
+- [x] Reject a second `_` arm in an evaluated Rustic `match`, including after an earlier arm matched; provide a dedicated C API status/message, retain single-default/zero-default behavior and lazy arm grammar, and preserve output on failure.
+- [x] Preserve an unbound array expression as a live root while its postfix index expression allocates and compacts arrays, so `[9][len(push([0], 1))-2]` returns `9` instead of a spurious out-of-bounds error; cover composition, invalid indices, temporary cleanup and C API output preservation.
 - [x] Accept one optional trailing comma in a nonempty Rustic array literal, including grammar-only skipped operands, without evaluating skipped elements or changing the 16-element cap; preserve malformed-element diagnostics and C API output on failure with an executable host contract.
 - [x] Accept one optional trailing comma in nonempty Rustic function and built-in calls, retaining lazy grammar-only skip, malformed-comma/arity diagnostics, and C API output preservation with executable host examples; leave parameter declarations unchanged.
 - [x] Reject duplicate names within one function parameter list at declaration time, with a dedicated C API status, unchanged output on failure, nested declaration and recovery coverage, while allowing outer binding/function-scope reuse.
@@ -294,6 +297,8 @@ Prioritized backlog for autonomous implementation.
 - [x] Bound recursive evaluated and grammar-only skipped expression nesting at 64 factors, returning `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` instead of overflowing the C host stack; test unary and parentheses, output preservation, and fresh subsequent C API calls.
 - [x] Reject identifiers longer than 63 characters with a distinct C API status instead of silently truncating/aliasing bindings or functions; cover declarations, references, assignments, calls, parameters, skipped expressions, valid boundary and output preservation.
 - [x] Bound deferred function bodies and other brace-scanned blocks by charging each non-whitespace source byte to the shared 512-step budget; reject unused declarations with excessive statements, preserving C API output and normal short calls.
+- [x] Diagnose repeated numeric patterns in evaluated `match` arms, even after an earlier match, with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN`; cover signed-zero aliases, nesting, lazy whole matches, unchanged C API output and a separate step-budget fixture of distinct arms.
+- [x] Allow `name[index] = integer` for bound arrays as copy-on-write element assignment; preserve aliases, evaluate the index only once, check type/bounds, keep the base live through nested allocations, and preserve C API output on failure with a host fixture.
 
 ## P2 — project quality
 

@@ -34,6 +34,12 @@ The image is a development/test environment, not a packaged interpreter CLI. Cha
 ## What works today
 Deferred function declarations and other brace-scanned blocks spend the shared 512-step budget for each non-whitespace byte scanned. An unused function with an excessive body now fails with `step limit exceeded` without changing the C API output; short functions remain callable. The scan still defers malformed body syntax until a call. See the [strict C99 host/API contract](tests/fixtures/rustic_api_contract_driver.c).
 
+Bound array elements can be assigned directly: `let xs = [2, 3]; xs[0] = 7; xs[0]` yields `7`. The assignment copies the array into the binding, preserving other aliases; its index and value must be integers and the index must be in bounds. This is one-level assignment to a named array binding, not arbitrary nested lvalues. The [23-row host contract](tests/fixtures/rustic_array_element_assignment_contract.txt) tests aliases, nested expressions, errors and cleanup; failed C API calls preserve the output pointer.
+Repeated `fn` declarations in the same scope now return `RUSTIC_ERR_DUPLICATE_FUNCTION` / `duplicate function` instead of silently replacing a named function. Nested blocks and function bodies may shadow an outer function without changing it after scope exit; unselected brace-scanned bodies remain unchecked. The [11-row host contract](tests/fixtures/rustic_duplicate_function_contract.txt) and [C API check](tests/fixtures/rustic_api_contract_driver.c) cover both outcomes and unchanged output on error.
+An evaluated `match` rejects repeated numeric arm patterns (`match 0 { 0 => 1, 0 => 2 }`) with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN` / `duplicate match pattern`, including patterns after an earlier arm matched and `-0` versus `0`. Nested matches track their own arms; short-circuited whole matches remain brace-scanned. The [host cases](tests/fixtures/rustic_duplicate_match_literal_contract.txt) and [C API check](tests/fixtures/rustic_api_contract_driver.c) cover failures without changing the output pointer.
+Evaluated `match` expressions reject a second `_` wildcard arm with `duplicate match default`, including after another arm matched; single-default and default-free matches retain first-match behavior, while unselected arm expressions are not evaluated. The [host contract](tests/fixtures/rustic_match_default_contract.txt) and [C API fixture](tests/fixtures/rustic_api_contract_driver.c) check diagnostics and unchanged output on error. Entire matches skipped by short-circuiting still receive only brace scanning.
+Index expressions can now call array-allocating helpers without losing an unbound temporary base: `[9][len(push([0], 1))-2]` evaluates to `9`, rather than an incorrect out-of-bounds error. Index bounds/type failures still return diagnostics without changing the C API output; the [executable index-lifetime contract](tests/fixtures/rustic_index_base_lifetime_contract.txt) covers composition, failures and cleanup.
+
 Function calls now accept one optional trailing comma after a nonempty argument list: `fn add(a, b) { a + b }; add(2, 3,)` evaluates to `5`, and `sum([1, 2,],)` evaluates to `3`. The grammar-only short-circuit path accepts the same syntax without evaluating the call. Empty calls remain valid, doubled or leading commas return `expected integer`, and excess arguments still return `wrong argument count`. Function *parameter declarations* do not accept trailing commas. See the [call contract](tests/fixtures/rustic_call_trailing_comma_contract.txt) and direct C API output-preservation test.
 
 Array literals accept a single optional trailing comma after the final element: `sum([1, 2,])` evaluates to `3`. The same grammar is recognized in short-circuited operands (`0 && [1, 2,]` evaluates to `0` without evaluating the array). Empty `[]`, the 16-element cap and `expected integer` for doubled commas remain unchanged; this does not enable trailing commas in function declarations. The [executable 12-row contract](tests/fixtures/rustic_array_trailing_comma_contract.txt) covers composition, invalid forms and limits, with a direct C API output-preservation check.
@@ -92,7 +98,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 583, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 282, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 588, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 287, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -104,7 +110,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 583 |
+| Completed backlog items | 588 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -113,7 +119,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 282 | 0 | None |
+| P1 | 287 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
