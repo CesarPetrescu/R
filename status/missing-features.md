@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Bound each NUL-terminated C API source to 65,536 bytes before parsing, so whitespace-only and malformed oversized inputs cannot bypass the parser's 512-step budget; retain an exactly-at-limit program, output preservation on rejection, and recovery on the next call in a strict-C99 host contract.
 - [x] Reject repeated named `fn` declarations within one active lexical scope with a dedicated C API status/message while allowing inner block/function-body shadowing, preserving outer resolution, skipped-body behavior and output on failure; exercise an executable positive/negative host contract.
 - [x] Reject a second `_` arm in an evaluated Rustic `match`, including after an earlier arm matched; provide a dedicated C API status/message, retain single-default/zero-default behavior and lazy arm grammar, and preserve output on failure.
 - [x] Preserve an unbound array expression as a live root while its postfix index expression allocates and compacts arrays, so `[9][len(push([0], 1))-2]` returns `9` instead of a spurious out-of-bounds error; cover composition, invalid indices, temporary cleanup and C API output preservation.
