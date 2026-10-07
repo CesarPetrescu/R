@@ -747,6 +747,10 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
         }
         parser->cursor++;
 
+        if (value.kind != VALUE_ARRAY) {
+            parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+            return integer_value(0);
+        }
         array = array_from_value(parser, value);
         if (array == NULL || index < 0 || (size_t)index >= array->element_count) {
             parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
