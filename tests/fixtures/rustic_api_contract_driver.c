@@ -317,6 +317,20 @@ int main(void) {
         return 71;
     }
     out = 20;
+    if (rustic_eval_expression("let n = 4; n[0]", &out) != RUSTIC_ERR_EXPECTED_ARRAY || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_ARRAY), "expected array") != 0) {
+        return 72;
+    }
+    if (rustic_eval_expression("4[1 / 0]", &out) != RUSTIC_ERR_DIVISION_BY_ZERO || out != 20) {
+        return 73;
+    }
+    if (rustic_eval_expression("[9][1]", &out) != RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS || out != 20) {
+        return 74;
+    }
+    if (rustic_eval_expression("[9][0]", &out) != RUSTIC_OK || out != 9) {
+        return 75;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

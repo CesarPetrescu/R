@@ -1,0 +1,14 @@
+# Indexing a scalar is a type error; array bounds are a separate error.
+4[0] => error:expected array
+let n = 4; n[0] => error:expected array
+(2 + 3)[0] => error:expected array
+fn f() { 7 }; f()[0] => error:expected array
+fn f() { 7 }; f[0] => error:expected array
+[9][0][0] => error:expected array
+let xs = [9]; xs[0] => 9
+[9][1] => error:array index out of bounds
+4[1 / 0] => error:division by zero
+4[0 => error:expected closing bracket
+0 && 4[1 / 0] => 0
+1 || 4[1 / 0] => 1
+if 1 { [5][0] } else { 4[0] } => 5

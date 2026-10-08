@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Indexing a non-array value now reports `expected array` instead of misleading `array index out of bounds` (`4[0]` fails; `[4][0]` returns `4`). The index expression still runs first, genuine array bounds retain their error, and a failed C API call preserves its output pointer. See the [13-row host contract](tests/fixtures/rustic_index_base_type_contract.txt).
+
 The C entry point accepts at most 65,536 source bytes before parsing; an oversized NUL-terminated input, including whitespace-only input, returns `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` and leaves the output unchanged. This source-size ceiling complements the 512-step evaluation budget, but is not a security sandbox. An exactly-at-limit source still works; see the [strict-C99 C API fixture](tests/fixtures/rustic_source_size_driver.c).
 Bound array elements can be assigned directly: `let xs = [2, 3]; xs[0] = 7; xs[0]` yields `7`. The assignment copies the array into the binding, preserving other aliases; its index and value must be integers and the index must be in bounds. This is one-level assignment to a named array binding, not arbitrary nested lvalues. The [23-row host contract](tests/fixtures/rustic_array_element_assignment_contract.txt) tests aliases, nested expressions, errors and cleanup; failed C API calls preserve the output pointer.
 Repeated `fn` declarations in the same scope now return `RUSTIC_ERR_DUPLICATE_FUNCTION` / `duplicate function` instead of silently replacing a named function. Nested blocks and function bodies may shadow an outer function without changing it after scope exit; unselected brace-scanned bodies remain unchecked. The [11-row host contract](tests/fixtures/rustic_duplicate_function_contract.txt) and [C API check](tests/fixtures/rustic_api_contract_driver.c) cover both outcomes and unchanged output on error.
@@ -97,7 +99,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 588, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 287, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 589, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 288, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -109,7 +111,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 588 |
+| Completed backlog items | 589 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -118,7 +120,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 287 | 0 | None |
+| P1 | 288 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

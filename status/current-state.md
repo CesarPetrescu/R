@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-09-30
+Last updated: 2026-10-07
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-09-30
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- Indexing an integer or function value such as `4[0]` or `fn f(){7}; f[0]` now returns `RUSTIC_ERR_EXPECTED_ARRAY` / `expected array`, not `array index out of bounds`. The index expression and closing bracket are still parsed first, so `4[1 / 0]` remains division by zero and `4[0` remains expected closing bracket. Real array bounds, short-circuited index syntax and success/recovery behavior are unchanged. The 13-row strict-C99 `tests/fixtures/rustic_index_base_type_contract.txt` and the direct C API fixture verify those cases and unchanged output on error.
 - The C API preflights at most 65,536 source bytes before constructing/evaluating parser state; 65,537-byte input (even all whitespace) returns `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` without changing `*out_value`. An exactly-at-limit `1` padded with whitespace still succeeds, and the next call starts fresh. The strict-C99 `tests/fixtures/rustic_source_size_driver.c` covers boundaries, unchanged output, status text and recovery. This ceiling supplements rather than replaces the 512-step runtime budget and is not a sandbox.
 - Array bindings now support `xs[index] = integer` as an evaluated statement: it replaces the binding with a copied array (other aliases keep the old value), yields the assigned integer, and preserves the base array while computing an index and right-hand side that allocate or change bindings. Invalid bases, index/value types and bounds retain their existing stable diagnostics; the C API leaves output unchanged on error. The 23-row `tests/fixtures/rustic_array_element_assignment_contract.txt` checks ordinary indexing stays single-evaluation, nested mutation, aliasing, 40-iteration cleanup, and error paths; the direct C API fixture tests output preservation and recovery. Only a named binding with one index is assignable, not an arbitrary postfix expression or nested indexed lvalue.
 - Repeated named function declarations in the same active lexical scope now return `RUSTIC_ERR_DUPLICATE_FUNCTION` / `duplicate function` rather than silently replacing the earlier declaration. A nested block or function body can shadow an outer function and scope exit restores its resolution. The full declaration syntax is checked first, so a missing semicolon still reports `expected semicolon`; duplicate names take precedence over the 8-function capacity when both apply. The 11-row `tests/fixtures/rustic_duplicate_function_contract.txt` covers same-scope rejection, distinct names, nested shadowing, unselected brace scans and malformed parameter diagnostics; two focused precedence tests and the direct C API fixture cover the other error paths, unchanged output on failure and subsequent recovery.
