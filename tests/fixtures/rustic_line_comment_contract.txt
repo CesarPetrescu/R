@@ -1,0 +1,13 @@
+# Source uses \n to represent a real newline; expectations describe the strict C host.
+let x = 2; // } is not a block end\nx + 1 => 3
+fn inc(x) { // } is ignored\n x + 1 }; inc(4) => 5
+if 0 { // } is ignored\n missing / 0 } else { 7 } => 7
+if 1 { 7 } // between branches\n else { 1 / 0 } => 7
+while 1 { break; // } is ignored\n 1 / 0 }; 7 => 7
+while 1 { match 0 { 0 => { break; 1 }, // } is ignored\n _ => 2 }; 9 }; 7 => 7
+0 && (missing // skipped value\n / 0) => 0
+8 / 2 // division still works => 4
+1 // comment at EOF => 1
+// only a comment => error:expected integer
+1 // ignored\n + * => error:expected integer
+if 0 { // } is ignored at EOF => error:expected closing brace

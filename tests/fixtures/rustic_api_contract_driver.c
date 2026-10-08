@@ -345,6 +345,17 @@ int main(void) {
         return 79;
     }
     out = 20;
+    if (rustic_eval_expression("if 0 { // } remains inside comment\n 1 / 0 } else { 7 }", &out) !=
+            RUSTIC_OK || out != 7) {
+        return 80;
+    }
+    if (rustic_eval_expression("1 // comment\n + *", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 7) {
+        return 81;
+    }
+    if (rustic_eval_expression("3 // comment\n + 4", &out) != RUSTIC_OK || out != 7) {
+        return 82;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }

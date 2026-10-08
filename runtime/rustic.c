@@ -138,19 +138,38 @@ static int consume_step(struct Parser *parser) {
 }
 
 static void skip_spaces(struct Parser *parser) {
-    while (isspace((unsigned char)*parser->cursor)) {
-        parser->cursor++;
+    for (;;) {
+        while (isspace((unsigned char)*parser->cursor)) {
+            parser->cursor++;
+        }
+        if (parser->cursor[0] != '/' || parser->cursor[1] != '/') {
+            return;
+        }
+        parser->cursor += 2;
+        while (*parser->cursor != '\0' && *parser->cursor != '\n') {
+            parser->cursor++;
+        }
     }
 }
 
 static int skip_spaces_after_loop_control(struct Parser *parser) {
-    while (isspace((unsigned char)*parser->cursor)) {
-        if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
-            return 0;
+    for (;;) {
+        while (isspace((unsigned char)*parser->cursor)) {
+            if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+                return 0;
+            }
+            parser->cursor++;
         }
-        parser->cursor++;
+        if (parser->cursor[0] != '/' || parser->cursor[1] != '/') {
+            return 1;
+        }
+        while (*parser->cursor != '\0' && *parser->cursor != '\n') {
+            if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+                return 0;
+            }
+            parser->cursor++;
+        }
     }
-    return 1;
 }
 
 static int is_identifier_start(char character) {
@@ -433,6 +452,16 @@ static int skip_block(struct Parser *parser) {
         if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
             return 0;
         }
+        if (parser->cursor[0] == '/' && parser->cursor[1] == '/') {
+            parser->cursor++;
+            while (*parser->cursor != '\0' && *parser->cursor != '\n') {
+                if (parser->loop_control != LOOP_CONTROL_NONE && !consume_step(parser)) {
+                    return 0;
+                }
+                parser->cursor++;
+            }
+            continue;
+        }
         if (*parser->cursor == '{') {
             depth++;
         } else if (*parser->cursor == '}') {
@@ -624,6 +653,15 @@ static struct Value parse_match_expression(struct Parser *parser) {
         if (parser->loop_control != LOOP_CONTROL_NONE) {
             skipped_depth = 0;
             while (*parser->cursor != '\0') {
+                if (parser->cursor[0] == '/' && parser->cursor[1] == '/') {
+                    while (*parser->cursor != '\0' && *parser->cursor != '\n') {
+                        if (!consume_step(parser)) {
+                            return integer_value(0);
+                        }
+                        parser->cursor++;
+                    }
+                    continue;
+                }
                 if (!consume_step(parser)) {
                     return integer_value(0);
                 }
@@ -6101,6 +6139,15 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
     }
 
     while (*parser->cursor != '\0') {
+        if (parser->cursor[0] == '/' && parser->cursor[1] == '/') {
+            while (*parser->cursor != '\0' && *parser->cursor != '\n') {
+                if (!consume_step(parser)) {
+                    return 0;
+                }
+                parser->cursor++;
+            }
+            continue;
+        }
         if (block_depth == 0 && *parser->cursor == terminator) {
             return 1;
         }

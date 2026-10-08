@@ -46,6 +46,64 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_ignores_line_comment_between_statements(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 2; // explanation with a closing brace }\nx + 1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_ignores_braces_in_skipped_line_comment(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 0 { // } is not a block end\n missing / 0 } else { 7 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_accepts_line_comment_before_else(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "if 1 { 7 } // comment between branches\n else { 1 / 0 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_ignores_comment_braces_after_break(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 1 { break; // } not a block end\n 1 / 0 }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_ignores_comment_braces_after_match_break(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "while 1 { match 0 { 0 => { break; 1 }, // } not match end\n _ => 2 }; 9 }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
+def test_c_hosted_rustic_interpreter_line_comment_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_line_comment_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 12
+    for encoded_source, expected in cases:
+        source = encoded_source.replace("\\n", "\n")
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_reports_noncallable_binding(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let x = 3; x()"
