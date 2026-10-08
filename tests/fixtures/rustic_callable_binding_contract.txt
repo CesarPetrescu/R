@@ -1,0 +1,14 @@
+# Bound integers/arrays are present but cannot be called; missing or stale functions stay distinct.
+let x = 3; x() => error:expected function
+let xs = [1, 2]; xs(0) => error:expected function
+fn f() { 7 }; let f = 3; f() => error:expected function
+fn f() { 7 }; { let f = [1]; f() } => error:expected function
+let x = 3; x(1 / 0) => error:division by zero
+let x = 3; x(1,,) => error:expected integer
+let x = 3; 0 && x() => 0
+let x = 3; match 0 { 0 => 5, _ => x() } => 5
+missing() => error:undefined identifier
+let f = { fn inner() { 7 }; inner }; f() => error:undefined identifier
+fn f(x) { x + 1 }; let g = f; g(4) => 5
+fn f() { 7 }; { let f = 3; 1 }; f() => 7
+let xs = [3]; len(xs) => 1

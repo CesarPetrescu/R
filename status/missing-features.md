@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Diagnose a call through a bound integer or array as `RUSTIC_ERR_EXPECTED_FUNCTION` instead of `undefined identifier`; preserve argument-error precedence, unknown/expired function diagnostics, function aliases, lexical shadowing, skipped calls and C API output on failure with an executable host contract.
 - [x] Diagnose indexing an integer/function value with `RUSTIC_ERR_EXPECTED_ARRAY` rather than an out-of-bounds error, while preserving index-expression error precedence, genuine array bounds, lazy skipping, output preservation and successful subsequent C API calls in a strict-C99 host contract.
 - [x] Bound each NUL-terminated C API source to 65,536 bytes before parsing, so whitespace-only and malformed oversized inputs cannot bypass the parser's 512-step budget; retain an exactly-at-limit program, output preservation on rejection, and recovery on the next call in a strict-C99 host contract.
 - [x] Reject repeated named `fn` declarations within one active lexical scope with a dedicated C API status/message while allowing inner block/function-body shadowing, preserving outer resolution, skipped-body behavior and output on failure; exercise an executable positive/negative host contract.

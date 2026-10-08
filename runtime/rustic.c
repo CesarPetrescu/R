@@ -5212,6 +5212,10 @@ static struct Value parse_factor_impl(struct Parser *parser) {
             }
 
             if (lookup_binding(parser, name, &value)) {
+                if (value.kind != VALUE_FUNCTION) {
+                    parser->status = RUSTIC_ERR_EXPECTED_FUNCTION;
+                    return integer_value(0);
+                }
                 function = function_from_value(parser, value);
                 if (function == NULL) {
                     parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
@@ -6342,6 +6346,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate match pattern";
     case RUSTIC_ERR_DUPLICATE_FUNCTION:
         return "duplicate function";
+    case RUSTIC_ERR_EXPECTED_FUNCTION:
+        return "expected function";
     default:
         return "unknown rustic interpreter error";
     }
