@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Deferred function declarations and other brace-scanned blocks charge non-whitespace bytes to the shared 512-step budget. An unused function with an excessive body now fails with `step limit exceeded` without changing the C API output; short functions remain callable. Malformed body syntax is still deferred until a call. The source-size ceiling remains a separate bound; see the [strict C99 host/API contract](tests/fixtures/rustic_api_contract_driver.c).
+
 Indexing a non-array value now reports `expected array` instead of misleading `array index out of bounds` (`4[0]` fails; `[4][0]` returns `4`). The index expression still runs first, genuine array bounds retain their error, and a failed C API call preserves its output pointer. See the [13-row host contract](tests/fixtures/rustic_index_base_type_contract.txt).
 
 The C entry point accepts at most 65,536 source bytes before parsing; an oversized NUL-terminated input, including whitespace-only input, returns `RUSTIC_ERR_STEP_LIMIT_EXCEEDED` and leaves the output unchanged. This source-size ceiling complements the 512-step evaluation budget, but is not a security sandbox. An exactly-at-limit source still works; see the [strict-C99 C API fixture](tests/fixtures/rustic_source_size_driver.c).
@@ -99,7 +101,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 589, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 288, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 590, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 289, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -111,7 +113,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 589 |
+| Completed backlog items | 590 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -120,7 +122,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 288 | 0 | None |
+| P1 | 289 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
