@@ -171,7 +171,7 @@ int main(void) {
         }
         used = (size_t)written;
         for (i = 0; i < 520; i++) {
-            written = snprintf(match_source + used, sizeof(match_source) - used, "1 => 1, ");
+            written = snprintf(match_source + used, sizeof(match_source) - used, "%zu => 1, ", i + 1);
             if (written < 0 || (size_t)written >= sizeof(match_source) - used) {
                 return 39;
             }
@@ -271,15 +271,75 @@ int main(void) {
     if (rustic_eval_expression("sum([1],,)", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 60;
     }
-    if (rustic_eval_expression("let if = 5; 7", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20 ||
-            strcmp(rustic_status_message(RUSTIC_ERR_RESERVED_IDENTIFIER), "reserved identifier") != 0) {
+    if (rustic_eval_expression("[9][len(push([0], 1))-2]", &out) != RUSTIC_OK || out != 9) {
         return 61;
     }
-    if (rustic_eval_expression("fn use(match) { match }; 9", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20) {
+    if (rustic_eval_expression("[9][len(push([0], 1))-1]", &out) !=
+            RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS || out != 9) {
         return 62;
     }
-    if (rustic_eval_expression("let if_value = 5; if_value", &out) != RUSTIC_OK || out != 5) {
+    if (rustic_eval_expression("[9][len(push([0], 1))-2]", &out) != RUSTIC_OK || out != 9) {
         return 63;
+    }
+    out = 20;
+    if (rustic_eval_expression("match 0 { 0 => 7, _ => 8, _ => 9 }", &out) !=
+            RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT), "duplicate match default") != 0) {
+        return 64;
+    }
+    if (rustic_eval_expression("match 0 { 0 => 7, 0 => 8 }", &out) !=
+            RUSTIC_ERR_DUPLICATE_MATCH_PATTERN || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_MATCH_PATTERN), "duplicate match pattern") != 0) {
+        return 66;
+    }
+    if (rustic_eval_expression("match 0 { _ => 6 }", &out) != RUSTIC_OK || out != 6) {
+        return 65;
+    }
+    out = 20;
+    if (rustic_eval_expression("fn f() { 1 }; fn f() { 2 }; f()", &out) !=
+            RUSTIC_ERR_DUPLICATE_FUNCTION || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_DUPLICATE_FUNCTION), "duplicate function") != 0) {
+        return 67;
+    }
+    if (rustic_eval_expression("fn f() { 1 }; { fn f() { 2 }; f() } + f()", &out) != RUSTIC_OK || out != 3) {
+        return 68;
+    }
+    out = 20;
+    if (rustic_eval_expression("let xs = [1]; xs[1] = 9; xs[0]", &out) !=
+            RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS || out != 20) {
+        return 69;
+    }
+    if (rustic_eval_expression("let xs = [1]; xs[0] = [2]", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
+        return 70;
+    }
+    if (rustic_eval_expression("let xs = [1]; xs[0] = 9; xs[0]", &out) != RUSTIC_OK || out != 9) {
+        return 71;
+    }
+    out = 20;
+    if (rustic_eval_expression("let n = 4; n[0]", &out) != RUSTIC_ERR_EXPECTED_ARRAY || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_ARRAY), "expected array") != 0) {
+        return 72;
+    }
+    if (rustic_eval_expression("4[1 / 0]", &out) != RUSTIC_ERR_DIVISION_BY_ZERO || out != 20) {
+        return 73;
+    }
+    if (rustic_eval_expression("[9][1]", &out) != RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS || out != 20) {
+        return 74;
+    }
+    if (rustic_eval_expression("[9][0]", &out) != RUSTIC_OK || out != 9) {
+        return 75;
+    }
+    out = 20;
+    if (rustic_eval_expression("let if = 5; 7", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_RESERVED_IDENTIFIER), "reserved identifier") != 0) {
+        return 76;
+    }
+    if (rustic_eval_expression("fn use(match) { match }; 9", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20) {
+        return 77;
+    }
+    if (rustic_eval_expression("let if_value = 5; if_value", &out) != RUSTIC_OK || out != 5) {
+        return 78;
     }
     out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
