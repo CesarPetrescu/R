@@ -46,6 +46,32 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_reports_noncallable_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x = 3; x()"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"expected function: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_callable_binding_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_callable_binding_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 13
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_second_match_default(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_match_default_contract.txt"
@@ -13629,7 +13655,7 @@ def test_c_hosted_rustic_interpreter_rejects_integer_that_matches_function_value
 
     assert result.returncode == 2
     assert result.stdout == ""
-    assert "undefined identifier" in result.stderr
+    assert result.stderr == f"expected function: {source}\n"
 
 
 def test_c_hosted_rustic_interpreter_rejects_stale_block_function_value_after_slot_reuse(tmp_path):
