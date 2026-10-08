@@ -288,6 +288,20 @@ def test_c_hosted_rustic_interpreter_rejects_out_of_range_match_arm_pattern(tmp_
     assert result.stderr == f"integer overflow: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_bounds_source_bytes_before_parsing(tmp_path):
+    binary = tmp_path / "rustic-source-size-contract"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "runtime" / "include"),
+         str(ROOT / "runtime" / "rustic.c"), str(ROOT / "tests" / "fixtures" / "rustic_source_size_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, (result.returncode, result.stderr)
+    assert result.stdout == "C API bounded source and recovery: ok\n"
+
+
 def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     binary = tmp_path / "rustic-api-contract"
     build = subprocess.run(
@@ -1269,6 +1283,32 @@ def test_c_hosted_rustic_interpreter_evaluates_array_literal_indexing(tmp_path):
 
         assert result.returncode == 0, result.stderr
         assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_rejects_scalar_index_base_as_type_error(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n = 4; n[0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"expected array: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_runs_index_base_type_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_index_base_type_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 13
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
 
 
 def test_c_hosted_rustic_interpreter_preserves_temporary_array_during_index_evaluation(tmp_path):

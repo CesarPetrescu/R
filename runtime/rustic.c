@@ -14,6 +14,7 @@
 #define RUSTIC_MAX_ARRAY_ELEMENTS 16
 #define RUSTIC_MAX_PARAMETERS 8
 #define RUSTIC_MAX_STEPS 512
+#define RUSTIC_MAX_SOURCE_LENGTH 65536
 #define RUSTIC_MAX_EXPRESSION_DEPTH 64
 #define RUSTIC_MAX_ARRAY_ROOTS 64
 
@@ -747,6 +748,10 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
         }
         parser->cursor++;
 
+        if (value.kind != VALUE_ARRAY) {
+            parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+            return integer_value(0);
+        }
         array = array_from_value(parser, value);
         if (array == NULL || index < 0 || (size_t)index >= array->element_count) {
             parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
@@ -6238,9 +6243,16 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     struct Parser parser;
     struct Value value;
     long integer;
+    size_t source_length = 0;
 
     if (source == NULL || out_value == NULL) {
         return RUSTIC_ERR_EXPECTED_INTEGER;
+    }
+    while (source[source_length] != '\0') {
+        if (source_length == RUSTIC_MAX_SOURCE_LENGTH) {
+            return RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+        }
+        source_length++;
     }
 
     parser.cursor = source;
