@@ -189,6 +189,20 @@ static int parse_identifier(struct Parser *parser, char *out_name, size_t out_si
     return 1;
 }
 
+static int parse_declared_identifier(struct Parser *parser, char *out_name, size_t out_size) {
+    if (!parse_identifier(parser, out_name, out_size)) {
+        return 0;
+    }
+    if (strcmp(out_name, "let") == 0 || strcmp(out_name, "fn") == 0 ||
+        strcmp(out_name, "if") == 0 || strcmp(out_name, "else") == 0 ||
+        strcmp(out_name, "while") == 0 || strcmp(out_name, "break") == 0 ||
+        strcmp(out_name, "continue") == 0 || strcmp(out_name, "match") == 0) {
+        parser->status = RUSTIC_ERR_RESERVED_IDENTIFIER;
+        return 0;
+    }
+    return 1;
+}
+
 static int cursor_starts_keyword(const struct Parser *parser, const char *keyword) {
     size_t length = strlen(keyword);
 
@@ -5818,7 +5832,7 @@ static void parse_let_statement(struct Parser *parser) {
     struct Value value;
 
     parser->cursor += 3;
-    if (!parse_identifier(parser, name, sizeof(name))) {
+    if (!parse_declared_identifier(parser, name, sizeof(name))) {
         return;
     }
 
@@ -5852,7 +5866,7 @@ static void parse_function_declaration(struct Parser *parser) {
     size_t previous;
 
     parser->cursor += 2;
-    if (!parse_identifier(parser, function->name, sizeof(function->name))) {
+    if (!parse_declared_identifier(parser, function->name, sizeof(function->name))) {
         return;
     }
 
@@ -5870,7 +5884,7 @@ static void parse_function_declaration(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                 return;
             }
-            if (!parse_identifier(
+            if (!parse_declared_identifier(
                     parser,
                     function->parameters[function->parameter_count],
                     sizeof(function->parameters[function->parameter_count]))) {
@@ -6336,6 +6350,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "identifier too long";
     case RUSTIC_ERR_DUPLICATE_PARAMETER:
         return "duplicate parameter";
+    case RUSTIC_ERR_RESERVED_IDENTIFIER:
+        return "reserved identifier";
     case RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT:
         return "duplicate match default";
     case RUSTIC_ERR_DUPLICATE_MATCH_PATTERN:

@@ -331,6 +331,17 @@ int main(void) {
         return 75;
     }
     out = 20;
+    if (rustic_eval_expression("let if = 5; 7", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_RESERVED_IDENTIFIER), "reserved identifier") != 0) {
+        return 76;
+    }
+    if (rustic_eval_expression("fn use(match) { match }; 9", &out) != RUSTIC_ERR_RESERVED_IDENTIFIER || out != 20) {
+        return 77;
+    }
+    if (rustic_eval_expression("let if_value = 5; if_value", &out) != RUSTIC_OK || out != 5) {
+        return 78;
+    }
+    out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;
     }
