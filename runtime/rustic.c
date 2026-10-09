@@ -6125,6 +6125,7 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
     struct Value value = integer_value(0);
     int saw_statement = 0;
+    int saw_value = 0;
 
     while (parser->status == RUSTIC_OK) {
         if (!consume_step(parser)) {
@@ -6142,7 +6143,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
                 return integer_value(0);
             }
-            if (!saw_statement) {
+            if (!saw_statement || !saw_value) {
                 parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
             }
             return value;
@@ -6166,6 +6167,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 return integer_value(0);
             }
             saw_statement = 1;
+            saw_value = 1;
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
@@ -6201,6 +6203,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 return integer_value(0);
             }
             saw_statement = 1;
+            saw_value = 1;
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
@@ -6218,6 +6221,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             return integer_value(0);
         }
         saw_statement = 1;
+        saw_value = 1;
         if (parser->loop_control != LOOP_CONTROL_NONE) {
             if (!skip_to_sequence_terminator(parser, terminator)) {
                 return integer_value(0);

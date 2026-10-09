@@ -1,0 +1,11 @@
+# A C API call yields an integer only when the top-level statement sequence has a value.
+let x = 3; => error:expected integer
+fn f() { 7 }; => error:expected integer
+let x = 3; fn f() { x }; => error:expected integer
+let x = 3; x => 3
+fn f() { 7 }; f() => 7
+let x = 3; x = 4; => 4
+while 0 { 1 }; => 0
+1; let x = 3; => 1
+{ let x = 3; x } => 3
+let x = ; => error:expected integer
