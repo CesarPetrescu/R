@@ -345,11 +345,20 @@ int main(void) {
         return 79;
     }
     out = 20;
-    if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
-        return 4;
+    if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_INVALID_ARGUMENT || out != 20) {
+        return 80;
     }
-    if (rustic_eval_expression("1", NULL) != RUSTIC_ERR_EXPECTED_INTEGER) {
-        return 5;
+    if (rustic_eval_expression("1", NULL) != RUSTIC_ERR_INVALID_ARGUMENT) {
+        return 81;
+    }
+    if (rustic_eval_expression(NULL, NULL) != RUSTIC_ERR_INVALID_ARGUMENT) {
+        return 82;
+    }
+    if (strcmp(rustic_status_message(RUSTIC_ERR_INVALID_ARGUMENT), "invalid argument") != 0) {
+        return 83;
+    }
+    if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
+        return 84;
     }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;

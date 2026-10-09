@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-10-08
+Last updated: 2026-10-10
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-10-08
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- The C API rejects NULL source and/or output pointers with `RUSTIC_ERR_INVALID_ARGUMENT` / `invalid argument`, distinct from an actual source `expected integer` diagnostic; the new enum value does not renumber existing statuses. A non-NULL output remains unchanged on failure, including a NULL source; a following valid call succeeds. The strict-C99 `tests/fixtures/rustic_api_contract_driver.c` exercises each pointer combination, status text and recovery.
 - The C API no longer returns a fabricated `0` for top-level declaration-only sources such as `let x = 3;` and `fn f() { 7 };`; they now report `RUSTIC_ERR_EXPECTED_INTEGER` / `expected integer` and leave the output unchanged. A top-level expression, assignment or `while` yields an integer as before; earlier expression results survive later declarations, and statement-only inner blocks retain their existing behavior. The 10-row `tests/fixtures/rustic_top_level_result_contract.txt` and a direct strict-C99 C API driver cover errors, success and recovery.
 - Calls through integer/array bindings now report `RUSTIC_ERR_EXPECTED_FUNCTION` / `expected function`, while unknown names and stale function handles retain `undefined identifier`; a valid aliased function still calls normally. Argument errors take precedence over target type, skipped calls do not resolve the target, and lexical shadowing is retained. The 13-row `tests/fixtures/rustic_callable_binding_contract.txt` and direct C API test cover status/message, unchanged output on error, valid calls and recovery. Only named targets are callable, not arbitrary callee expressions.
 - Indexing an integer or function value such as `4[0]` or `fn f(){7}; f[0]` now returns `RUSTIC_ERR_EXPECTED_ARRAY` / `expected array`, not `array index out of bounds`. The index expression and closing bracket are still parsed first, so `4[1 / 0]` remains division by zero and `4[0` remains expected closing bracket. Real array bounds, short-circuited index syntax and success/recovery behavior are unchanged. The 13-row strict-C99 `tests/fixtures/rustic_index_base_type_contract.txt` and the direct C API fixture verify those cases and unchanged output on error.
@@ -179,6 +180,7 @@ Last updated: 2026-10-08
 - `LICENSE` declares GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) terms so distributed and network-served modified versions remain open-source.
 
 ## Verified commands
+The NULL argument diagnostic package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_c_api_contract` for the strict-C99 direct C API test; the host/report/lint/fresh Docker matrix below remains mandatory before push.
 The top-level integer-result package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'top_level_integer_result or top_level_result_c_api'` for the 10-row host contract and direct C API output-preservation/recovery check; the baseline matrix below is mandatory before push.
 The noncallable-binding diagnostic package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'noncallable_binding or callable_binding_contract or c_api_contract or rejects_integer_that_matches_function_value_encoding or rejects_stale_block_function_value_after_slot_reuse'` to focused strict-C99 host checks; the full host/report/lint/fresh Docker matrix below remains mandatory before push.
 The source-size package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py::test_c_hosted_rustic_interpreter_bounds_source_bytes_before_parsing` to focused strict-C99 host checks; the full host/report/lint/fresh Docker matrix below is required before push.

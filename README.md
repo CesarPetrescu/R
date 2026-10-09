@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+The C API rejects NULL source/output pointers with `RUSTIC_ERR_INVALID_ARGUMENT` / `invalid argument`, instead of a misleading source-syntax error. Non-NULL outputs stay unchanged on failure and a subsequent valid call works; the [strict-C99 API driver](tests/fixtures/rustic_api_contract_driver.c) checks all three NULL argument combinations.
+
 A top-level source consisting only of `let`/`fn` declarations (for example, `let x = 3;`) now reports `expected integer` rather than fabricating a result of `0`: the C API returns `RUSTIC_ERR_EXPECTED_INTEGER` and leaves its output unchanged. End with an integer-valued statement such as `let x = 3; x`; previous expression results remain available when a later declaration follows. Inner statement-only blocks retain their existing semantics. See the [executable host contract](tests/fixtures/rustic_top_level_result_contract.txt) and [direct C API check](tests/fixtures/rustic_top_level_result_driver.c).
 
 Calling a binding that holds an integer or array now reports `RUSTIC_ERR_EXPECTED_FUNCTION` / `expected function` instead of claiming its identifier is undefined: `let x = 3; x()` fails, while `fn f(){7}; let g=f; g()` returns `7`. Call arguments are parsed first, so an invalid argument retains its own diagnostic; unknown names and expired function handles retain `undefined identifier`. The [13-row host contract](tests/fixtures/rustic_callable_binding_contract.txt) and direct C API test cover shadowing, skipped calls and output preservation.
@@ -103,7 +105,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 591, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 290, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 592, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 291, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -115,7 +117,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 591 |
+| Completed backlog items | 592 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -124,7 +126,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 290 | 0 | None |
+| P1 | 291 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
