@@ -1,0 +1,10 @@
+# Source => integer result or C status message
+fn inc(x) { x + 1 } inc(2) => 3
+fn one() { 1 } fn two() { one() + 1 } two() => 2
+{ fn twice(x) { x * 2 } twice(3) } => 6
+fn fib(n) { if n < 2 { n } else { fib(n - 1) + fib(n - 2) } } fib(5) => 5
+fn inc(x) { x + 1 }; inc(2) => 3
+fn same() { 1 } fn same() { 2 } same() => error:duplicate function
+fn nope( { 1 } 7 => error:expected identifier
+fn broken() { 1 7 => error:expected closing brace
+fn broken() { 1 } @ => error:expected integer

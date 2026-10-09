@@ -11,13 +11,13 @@ From the repository root, with a C99 compiler (`cc`) installed:
 ```bash
 cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtures/rustic_expression_driver.c -o /tmp/rustic-expression-demo
 /tmp/rustic-expression-demo 'let x = 2 + 3; x * 4'
-/tmp/rustic-expression-demo 'fn add(a, b) { a + b }; add(2, 3)'
+/tmp/rustic-expression-demo 'fn add(a, b) { a + b } add(2, 3)'
 /tmp/rustic-expression-demo 'let offset = -2; let xs = [4, -5, 7]; xs[1] * offset'
 /tmp/rustic-expression-demo 'let n = -2; match n { -2 => 8, _ => 0 }'
 /tmp/rustic-expression-demo 'let low = -9223372036854775808; low / 2' # on 64-bit-long hosts
 ```
 
-The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth matches a negative integer arm and prints `8`; the fifth demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
+The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function without a declaration separator (the optional `};` form still works); the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth matches a negative integer arm and prints `8`; the fifth demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
 
 ## Run with Docker
 
@@ -68,7 +68,7 @@ Identifiers of up to 63 characters work in bindings, functions, parameters and e
 
 The runtime in [`runtime/rustic.c`](runtime/rustic.c) implements a **bounded subset**: integer arithmetic (including unary `-` on expressions) and comparisons, boolean-integer `!`/`&&`/`||`, `let` and assignment, scoped blocks, `if`/`else`, `while` with `break`/`continue`, integer-arm `match`, named/recursive functions and function values, and arrays of integers with checked indexing. Unary `-` binds tighter than multiplication and composes with `!` and nested expressions. Skipped expression operands are grammar-checked except within brace-delimited bodies, which are only scanned for matching braces. A missing or non-integer operand fails when parsed; decimal literals and match patterns outside host `long`, negating a computed `LONG_MIN`, and evaluated `+`, binary `-`, `*`, `/`, `%` at the host `long` boundary return `RUSTIC_ERR_INTEGER_OVERFLOW` rather than wrapping or crashing (for division/remainder the overflow pair is `LONG_MIN` and `-1`; division by zero retains its separate status). The operator checks do not imply a Rust integer type system. Selected array operations include `len`, `set`, `push`, `sum`, `prefix_sum`, `map`, `filter`, and `fold`. `sum`, `prefix_sum`, `window_sum`, `moving_average_sum` and `chunk_sum` check every intermediate addition and report integer overflow rather than wrapping; the moving average divides each in-range window sum using C99 truncation toward zero. `adjacent_diff` also checks every subsequent subtraction against host `long` bounds while preserving the first element. `variance_sum` checks mean accumulation, each difference, its square, and the sum of squares before signed overflow; an overflowing intermediate fails even if a later value might cancel it. For even-length arrays, `median` checks the two middle elements' addition before division, rejecting overflow even when the mathematical midpoint fits in `long`; an odd-length median selects the middle value directly. `top_sum(array, n)` checks every descending selected addition before host-long overflow, even when a later selected negative element would cancel an overflowing prefix. `weighted_score(array, fn)` likewise checks each integer callback result before accumulation, rejecting overflowing prefixes. Other array/statistics built-in intermediate arithmetic is **not** covered by these checks. The large threshold/outlier and statistics helper families are **showcase built-ins**; their names and number do not imply corresponding Rust syntax or standard-library coverage. See [the language/API contract](docs/rustic-language-contract.md), [interpreter tests](tests/test_rustic_interpreter.py), [literal boundary fixture](tests/fixtures/rustic_integer_literal_contract.txt), [unary-minus fixture](tests/fixtures/rustic_unary_minus_showcase.txt), [checked arithmetic fixture](tests/fixtures/rustic_checked_arithmetic_contract.txt), [prefix-sum boundary fixture](tests/fixtures/rustic_prefix_sum_overflow_contract.txt), [window-sum boundary fixture](tests/fixtures/rustic_window_sum_overflow_contract.txt), [moving-average boundary fixture](tests/fixtures/rustic_moving_average_overflow_contract.txt), [chunk-sum boundary fixture](tests/fixtures/rustic_chunk_sum_overflow_contract.txt), [adjacent-diff boundary fixture](tests/fixtures/rustic_adjacent_diff_overflow_contract.txt), [variance-sum boundary fixture](tests/fixtures/rustic_variance_sum_overflow_contract.txt), [median midpoint fixture](tests/fixtures/rustic_median_midpoint_contract.txt), [top-sum overflow fixture](tests/fixtures/rustic_top_sum_overflow_contract.txt), [weighted-score overflow fixture](tests/fixtures/rustic_weighted_score_overflow_contract.txt) and [current state](status/current-state.md) for the precise implemented slice.
 
-Adjacent evaluated statements require semicolons: `1 2` reports `expected semicolon`, while `1; 2` returns `2`. Unknown trailing punctuation retains `trailing input`. The [language/API contract](docs/rustic-language-contract.md) shows the supported diagnostic cases and C API output-preservation rule.
+Adjacent evaluated expressions require semicolons: `1 2` reports `expected semicolon`, while `1; 2` returns `2`. Named `fn` declarations may instead be followed directly by the next statement, or by the older optional `;`. Unknown trailing punctuation retains `trailing input`. The [language/API contract](docs/rustic-language-contract.md) shows the supported diagnostic cases and C API output-preservation rule.
 
 This is not `rustc`: no Rust type system, ownership/borrowing, macros, crates, Cargo, strings, or general I/O. Bounds are fixed in the implementation (including 63-character identifiers, 16 elements per array, 8 functions, a 512-step evaluation budget, and at most 64 simultaneously active expression-factor frames (evaluated or skipped)); errors such as out-of-bounds access, division by zero, and step exhaustion return status codes. Each visited arm in an evaluated `match` now consumes a budget step, including arms after the first match; excessively long arm lists fail with `step limit exceeded` and leave C API output unchanged. Other expression traversal, including long arithmetic chains and short-circuited match bodies, is not uniformly budgeted. These limits make it a learning/prototype runtime, **not** a production sandbox or a compatible Rust implementation. The [roadmap](docs/ROADMAP.md) prioritizes real semantics and diagnostics over more helper suffixes.
 
@@ -101,7 +101,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 590, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 289, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 591, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 290, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -113,7 +113,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 590 |
+| Completed backlog items | 591 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -122,7 +122,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 289 | 0 | None |
+| P1 | 290 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

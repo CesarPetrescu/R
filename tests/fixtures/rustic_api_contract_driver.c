@@ -344,6 +344,16 @@ int main(void) {
     if (rustic_eval_expression("fn f() { 7 }; let g = f; g()", &out) != RUSTIC_OK || out != 7) {
         return 79;
     }
+    if (rustic_eval_expression("fn inc(x) { x + 1 } inc(2)", &out) != RUSTIC_OK || out != 3) {
+        return 80;
+    }
+    if (rustic_eval_expression("fn inc(x) { x + 1 } fn inc(y) { y } inc(2)", &out) !=
+            RUSTIC_ERR_DUPLICATE_FUNCTION || out != 3) {
+        return 81;
+    }
+    if (rustic_eval_expression("fn id(x) { x }; id(7)", &out) != RUSTIC_OK || out != 7) {
+        return 82;
+    }
     out = 20;
     if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
         return 4;

@@ -5914,11 +5914,9 @@ static void parse_function_declaration(struct Parser *parser) {
     }
     function->body_end = parser->cursor - 1;
     skip_spaces(parser);
-    if (*parser->cursor != ';') {
-        parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
-        return;
+    if (*parser->cursor == ';') {
+        parser->cursor++;
     }
-    parser->cursor++;
 
     existing = lookup_function(parser, function->name);
     if (existing != NULL && existing->scope_depth == parser->scope_depth) {

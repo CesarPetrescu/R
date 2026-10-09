@@ -13408,14 +13408,31 @@ def test_c_hosted_rustic_interpreter_rejects_duplicate_function_declarations(tmp
     assert result.stderr == f"duplicate function: {source}\n"
 
 
-def test_c_hosted_rustic_interpreter_reports_missing_semicolon_before_duplicate_function(tmp_path):
+def test_c_hosted_rustic_interpreter_function_declaration_separator_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_function_declaration_separator_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 9
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_reports_duplicate_function_without_separator(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn choose() { 1 }; fn choose() { 2 } 0"
     result = subprocess.run(
         [str(binary), source], text=True, capture_output=True, timeout=2
     )
     assert result.returncode == 2
-    assert result.stderr == f"expected semicolon: {source}\n"
+    assert result.stderr == f"duplicate function: {source}\n"
 
 
 def test_c_hosted_rustic_interpreter_reports_duplicate_function_at_capacity(tmp_path):

@@ -302,6 +302,8 @@ Prioritized backlog for autonomous implementation.
 - [x] Diagnose repeated numeric patterns in evaluated `match` arms, even after an earlier match, with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN`; cover signed-zero aliases, nesting, lazy whole matches, unchanged C API output and a separate step-budget fixture of distinct arms.
 - [x] Allow `name[index] = integer` for bound arrays as copy-on-write element assignment; preserve aliases, evaluate the index only once, check type/bounds, keep the base live through nested allocations, and preserve C API output on failure with a host fixture.
 
+- [x] Allow a named function declaration to omit its trailing semicolon before the next statement, while preserving the legacy `};` form, recursive calls, nested scopes, duplicate-name diagnostics, and unchanged C API output on errors with an executable host contract.
+
 ## P2 — project quality
 
 - [x] Improve README with real usage examples.
