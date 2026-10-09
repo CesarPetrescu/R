@@ -46,6 +46,37 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     assert result.stdout == "1 + 2 * 3 => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_requires_top_level_integer_result(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_top_level_result_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 10
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_top_level_result_c_api(tmp_path):
+    binary = tmp_path / "rustic-top-level-result-api"
+    compile_result = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_top_level_result_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_reports_noncallable_binding(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let x = 3; x()"
