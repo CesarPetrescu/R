@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Return a dedicated invalid-argument C API status for NULL source and/or output pointers rather than misleading source-syntax `expected integer`; retain the integer syntax error for valid pointers, unchanged non-NULL output on failure, stable status text and successful next-call recovery in the strict-C99 host contract.
 - [x] Require a value-producing top-level statement before returning an integer through the C API: declaration-only programs (`let x = 3;` or `fn f() { 7 };`) report `RUSTIC_ERR_EXPECTED_INTEGER` instead of a fabricated zero; preserve prior integer results, block-local statement behavior and output on failure with strict-C99 host tests.
 - [x] Diagnose a call through a bound integer or array as `RUSTIC_ERR_EXPECTED_FUNCTION` instead of `undefined identifier`; preserve argument-error precedence, unknown/expired function diagnostics, function aliases, lexical shadowing, skipped calls and C API output on failure with an executable host contract.
 - [x] Diagnose indexing an integer/function value with `RUSTIC_ERR_EXPECTED_ARRAY` rather than an out-of-bounds error, while preserving index-expression error precedence, genuine array bounds, lazy skipping, output preservation and successful subsequent C API calls in a strict-C99 host contract.

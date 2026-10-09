@@ -6253,7 +6253,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     size_t source_length = 0;
 
     if (source == NULL || out_value == NULL) {
-        return RUSTIC_ERR_EXPECTED_INTEGER;
+        return RUSTIC_ERR_INVALID_ARGUMENT;
     }
     while (source[source_length] != '\0') {
         if (source_length == RUSTIC_MAX_SOURCE_LENGTH) {
@@ -6352,6 +6352,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate function";
     case RUSTIC_ERR_EXPECTED_FUNCTION:
         return "expected function";
+    case RUSTIC_ERR_INVALID_ARGUMENT:
+        return "invalid argument";
     default:
         return "unknown rustic interpreter error";
     }

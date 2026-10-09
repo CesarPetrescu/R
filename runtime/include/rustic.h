@@ -34,6 +34,7 @@ typedef enum RusticStatus {
     RUSTIC_ERR_DUPLICATE_MATCH_PATTERN = 25,
     RUSTIC_ERR_DUPLICATE_FUNCTION = 26,
     RUSTIC_ERR_EXPECTED_FUNCTION = 27,
+    RUSTIC_ERR_INVALID_ARGUMENT = 28,
 } RusticStatus;
 
 /* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
@@ -78,7 +79,8 @@ typedef enum RusticStatus {
  * Scanning the unreachable remainder of a loop body after break/continue
  * charges one budget step per source byte (including selected match/if paths
  * and their intervening whitespace).
- * On any error, *out_value is left unchanged. */
+ * A NULL source or output pointer reports INVALID_ARGUMENT before parsing.
+ * On any error, a non-NULL *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
 
