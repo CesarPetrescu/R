@@ -373,6 +373,53 @@ def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     assert result.stdout == "C API success, overflow, output preservation and NULL diagnostics: ok\n"
 
 
+def test_c_hosted_rustic_interpreter_accepts_grouped_decimal_digits(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let limit = 1_000; limit + 2"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1002\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_long_zero_padded_literals(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0" * 80 + "_1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1\n"
+
+
+def test_c_hosted_rustic_interpreter_decimal_separator_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_decimal_separators_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 14
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_decimal_separator_c_api(tmp_path):
+    binary = tmp_path / "rustic-decimal-separators-api"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_decimal_separators_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+    assert result.stdout == "C API decimal separators, bounds, laziness, output and recovery: ok\n"
+
+
 def test_c_hosted_rustic_interpreter_runs_integer_literal_contract_fixture(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1

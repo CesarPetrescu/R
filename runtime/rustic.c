@@ -1,7 +1,6 @@
 #include "rustic.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -518,9 +517,40 @@ static struct Value parse_if_expression(struct Parser *parser) {
     return value;
 }
 
-static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
-    char *end = NULL;
+/* A separator belongs to a decimal token only when followed by another digit. */
+static int decimal_token_digit(const char *cursor) {
+    return isdigit((unsigned char)*cursor) ||
+           (*cursor == '_' && isdigit((unsigned char)cursor[1]));
+}
 
+static int parse_decimal_token(struct Parser *parser, long *out_integer) {
+    const char *cursor = parser->cursor;
+    int negative = *cursor == '-';
+    unsigned long magnitude = 0;
+    unsigned long limit = (unsigned long)LONG_MAX + (negative ? 1UL : 0UL);
+
+    if (negative) {
+        cursor++;
+    }
+    while (decimal_token_digit(cursor)) {
+        if (*cursor != '_') {
+            unsigned long digit = (unsigned long)(*cursor - '0');
+            if (magnitude > (limit - digit) / 10UL) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return 0;
+            }
+            magnitude = magnitude * 10UL + digit;
+        }
+        cursor++;
+    }
+    *out_integer = negative ? (magnitude == (unsigned long)LONG_MAX + 1UL
+                                   ? LONG_MIN : -(long)magnitude)
+                            : (long)magnitude;
+    parser->cursor = cursor;
+    return 1;
+}
+
+static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
     skip_spaces(parser);
     *out_is_default = 0;
     if (*parser->cursor == '_') {
@@ -528,11 +558,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
         *out_is_default = 1;
     } else if (isdigit((unsigned char)*parser->cursor) ||
                (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
-        errno = 0;
-        *out_pattern = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_decimal_token(parser, out_pattern)) {
             return 0;
         }
     } else {
@@ -953,7 +979,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     size_t index;
     struct Value value = integer_value(0);
     long integer;
-    char *end = NULL;
+
     struct Function *function;
     const char *call_return;
     size_t saved_loop_depth;
@@ -961,11 +987,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
 
     skip_spaces(parser);
     if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
-        errno = 0;
-        integer = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_decimal_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -1018,11 +1040,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     }
 
     if (isdigit((unsigned char)*parser->cursor)) {
-        errno = 0;
-        integer = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_decimal_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -5604,7 +5622,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         return skip_index_postfix(parser);
     }
     if (isdigit((unsigned char)*parser->cursor)) {
-        while (isdigit((unsigned char)*parser->cursor)) {
+        while (decimal_token_digit(parser->cursor)) {
             parser->cursor++;
         }
         return skip_index_postfix(parser);
