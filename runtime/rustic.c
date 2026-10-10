@@ -517,29 +517,53 @@ static struct Value parse_if_expression(struct Parser *parser) {
     return value;
 }
 
-/* A separator belongs to a decimal token only when followed by another digit. */
-static int decimal_token_digit(const char *cursor) {
-    return isdigit((unsigned char)*cursor) ||
-           (*cursor == '_' && isdigit((unsigned char)cursor[1]));
+static int integer_digit(char character, int hexadecimal) {
+    if (isdigit((unsigned char)character)) {
+        return character - '0';
+    }
+    if (hexadecimal && character >= 'a' && character <= 'f') {
+        return character - 'a' + 10;
+    }
+    if (hexadecimal && character >= 'A' && character <= 'F') {
+        return character - 'A' + 10;
+    }
+    return -1;
 }
 
-static int parse_decimal_token(struct Parser *parser, long *out_integer) {
+/* A separator belongs to a token only when followed by another digit. */
+static int integer_token_digit(const char *cursor, int hexadecimal) {
+    return integer_digit(*cursor, hexadecimal) >= 0 ||
+           (*cursor == '_' && integer_digit(cursor[1], hexadecimal) >= 0);
+}
+
+static int parse_integer_token(struct Parser *parser, long *out_integer) {
     const char *cursor = parser->cursor;
     int negative = *cursor == '-';
+    int hexadecimal;
+    unsigned long base;
     unsigned long magnitude = 0;
     unsigned long limit = (unsigned long)LONG_MAX + (negative ? 1UL : 0UL);
 
     if (negative) {
         cursor++;
     }
-    while (decimal_token_digit(cursor)) {
+    hexadecimal = cursor[0] == '0' && cursor[1] == 'x';
+    base = hexadecimal ? 16UL : 10UL;
+    if (hexadecimal) {
+        cursor += 2;
+        if (integer_digit(*cursor, 1) < 0) {
+            parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+            return 0;
+        }
+    }
+    while (integer_token_digit(cursor, hexadecimal)) {
         if (*cursor != '_') {
-            unsigned long digit = (unsigned long)(*cursor - '0');
-            if (magnitude > (limit - digit) / 10UL) {
+            unsigned long digit = (unsigned long)integer_digit(*cursor, hexadecimal);
+            if (magnitude > (limit - digit) / base) {
                 parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
                 return 0;
             }
-            magnitude = magnitude * 10UL + digit;
+            magnitude = magnitude * base + digit;
         }
         cursor++;
     }
@@ -558,7 +582,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
         *out_is_default = 1;
     } else if (isdigit((unsigned char)*parser->cursor) ||
                (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
-        if (!parse_decimal_token(parser, out_pattern)) {
+        if (!parse_integer_token(parser, out_pattern)) {
             return 0;
         }
     } else {
@@ -987,7 +1011,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
 
     skip_spaces(parser);
     if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
-        if (!parse_decimal_token(parser, &integer)) {
+        if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -1040,7 +1064,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     }
 
     if (isdigit((unsigned char)*parser->cursor)) {
-        if (!parse_decimal_token(parser, &integer)) {
+        if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -5622,9 +5646,19 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         return skip_index_postfix(parser);
     }
     if (isdigit((unsigned char)*parser->cursor)) {
-        while (decimal_token_digit(parser->cursor)) {
-            parser->cursor++;
+        const char *cursor = parser->cursor;
+        int hexadecimal = cursor[0] == '0' && cursor[1] == 'x';
+        if (hexadecimal) {
+            cursor += 2;
+            if (integer_digit(*cursor, 1) < 0) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                return 0;
+            }
         }
+        while (integer_token_digit(cursor, hexadecimal)) {
+            cursor++;
+        }
+        parser->cursor = cursor;
         return skip_index_postfix(parser);
     }
     if (is_identifier_start(*parser->cursor)) {
