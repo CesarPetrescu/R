@@ -1,0 +1,17 @@
+# source => integer result or error:diagnostic
+let flags = 0x10; flags + 2 => 18
+fn offset(x) { x + 0xA }; offset(0x5) => 15
+let xs = [0x0, 0xF]; xs[1] => 15
+0xF_F => 255
+-0xA => -10
+match 0xA { 0xA => 7, _ => 0 } => 7
+match -0xA { -0xA => 9, _ => 0 } => 9
+match 10 { 0xA => 1, 10 => 2 } => error:duplicate match pattern
+0 && 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF => 0
+1 || -0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF => 1
+match 0 { 0 => 3, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF => 4 } => error:integer overflow
+0x => error:expected integer
+0x_1 => error:expected integer
+0x1_ => error:expected semicolon
+0x1__2 => error:expected semicolon
+0xG => error:expected integer

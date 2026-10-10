@@ -32,6 +32,7 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Hexadecimal integer literals are accepted in ordinary expressions and evaluated `match` patterns: `let flags = 0x10; flags + 2` returns `18`, while `match -0xA { -0xA => 9, _ => 0 }` returns `9`. Use lowercase `0x` and at least one hexadecimal digit; A–F may be uppercase or lowercase, with single underscores between digits (`0xF_F`). Signed literals reach host `LONG_MIN` without an intermediate positive overflow. Out-of-range evaluated tokens return `integer overflow`; skipped logical operands check spelling without evaluating magnitude. See the [16-row host contract](tests/fixtures/rustic_hex_literal_contract.txt) and [portable C API driver](tests/fixtures/rustic_hex_literal_driver.c).
 Decimal literals and evaluated `match` patterns now accept underscores between decimal digits, e.g. `let n = 1_000; n + 2` returns `1002`, and `match -1_2 { -1_2 => 7, _ => 0 }` returns `7`. Leading, trailing or doubled underscores are not part of the literal. Host-`long` overflow still returns `integer overflow`, while short-circuited operands do not range-check skipped digits. The [language/API contract](docs/rustic-language-contract.md#embedding-and-failures), [host cases](tests/fixtures/rustic_decimal_separators_contract.txt) and [direct C API test](tests/fixtures/rustic_decimal_separators_driver.c) specify boundaries and error preservation.
 
 The C API rejects NULL source/output pointers with `RUSTIC_ERR_INVALID_ARGUMENT` / `invalid argument`, instead of a misleading source-syntax error. Non-NULL outputs stay unchanged on failure and a subsequent valid call works; the [strict-C99 API driver](tests/fixtures/rustic_api_contract_driver.c) checks all three NULL argument combinations.
@@ -107,7 +108,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 593, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 292, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 594, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 293, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -119,7 +120,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 593 |
+| Completed backlog items | 594 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -128,7 +129,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 292 | 0 | None |
+| P1 | 293 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
