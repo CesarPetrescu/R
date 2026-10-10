@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Parse binary `0b` flags in evaluated expressions and `match` patterns (including signed host-long boundaries and numeric duplicate arms); consume spelling but not magnitude in skipped logical operands, reject undigited prefixes, and prove C API output preservation/recovery with portable strict-C99 tests.
 - [x] Parse signed `0x` hexadecimal integer literals in evaluated expressions and match arms with single between-digit separators; keep grammar-only skipped operands lazy, reject missing digits and host-long overflow deterministically, preserve output on C API failure and recovery, and prove portable `LONG_MIN`/`LONG_MAX` boundaries with strict-C99 host fixtures.
 - [x] Accept single underscore separators only between decimal digits in evaluated expression literals, signed match patterns and lazy grammar-only operands; retain portable `LONG_MIN`/`LONG_MAX` overflow diagnostics, unlimited zero padding, invalid-placement errors, unchanged C API output on failure, and fresh-call recovery with executable host contracts.
 - [x] Return a dedicated invalid-argument C API status for NULL source and/or output pointers rather than misleading source-syntax `expected integer`; retain the integer syntax error for valid pointers, unchanged non-NULL output on failure, stable status text and successful next-call recovery in the strict-C99 host contract.
