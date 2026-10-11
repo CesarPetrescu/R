@@ -32,7 +32,9 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
-Integer bitwise `&` now composes with readable binary flag masks: `let flags = 0b1010; flags & 0b1100` returns `8`. It binds tighter than comparisons and looser than `+`/`-`; unlike `&&`, it evaluates both integer operands. `&&`/`||` still short-circuit and grammar-check skipped `&` expressions without evaluating them. Missing/non-integer operands return `expected integer`, and failed C API calls preserve the output. See the [17-row host contract](tests/fixtures/rustic_bitwise_and_contract.txt) and [strict-C99 C API fixture](tests/fixtures/rustic_bitwise_and_driver.c). Other bitwise operators remain unsupported; negative operands use the host C `long` representation.
+Integer bitwise `|` combines binary permission flags: `let read = 0b0001; let write = 0b0010; let permissions = read | write; permissions & write` returns `2`. It evaluates both host-`long` integer operands and binds after additive arithmetic and `&`, before comparisons; unlike boolean `||`, it does not short-circuit. Skipped logical operands check its grammar but do not evaluate effects. Missing/non-integer operands return `expected integer` without modifying the C API output. See the [18-row host contract](tests/fixtures/rustic_bitwise_or_contract.txt) and [strict-C99 C API fixture](tests/fixtures/rustic_bitwise_or_driver.c). Other bitwise operators besides `&` and `|` remain unsupported; negative values use host signed-`long` representation.
+
+Integer bitwise `&` now composes with readable binary flag masks: `let flags = 0b1010; flags & 0b1100` returns `8`. It binds tighter than comparisons and looser than `+`/`-`; unlike `&&`, it evaluates both integer operands. `&&`/`||` still short-circuit and grammar-check skipped `&` expressions without evaluating them. Missing/non-integer operands return `expected integer`, and failed C API calls preserve the output. See the [17-row host contract](tests/fixtures/rustic_bitwise_and_contract.txt) and [strict-C99 C API fixture](tests/fixtures/rustic_bitwise_and_driver.c). Other bitwise operators besides `&` and `|` remain unsupported; negative operands use the host C `long` representation.
 
 Binary `0b` literals make small flag masks readable: `let flags = 0b1010; flags + 0b0011` returns `13`, while `match -0b10 { -0b10 => 9, _ => 0 }` returns `9`. The prefix must be lowercase and followed by `0` or `1`; single underscores may separate digits. Evaluated values outside host `long` return `integer overflow`, but short-circuited expression operands only check spelling. Octal prefixes remain unsupported. See the [17-row host contract](tests/fixtures/rustic_binary_literal_contract.txt) and [portable direct C API driver](tests/fixtures/rustic_binary_literal_driver.c).
 Hexadecimal integer literals are accepted in ordinary expressions and evaluated `match` patterns: `let flags = 0x10; flags + 2` returns `18`, while `match -0xA { -0xA => 9, _ => 0 }` returns `9`. Use lowercase `0x` and at least one hexadecimal digit; A–F may be uppercase or lowercase, with single underscores between digits (`0xF_F`). Signed literals reach host `LONG_MIN` without an intermediate positive overflow. Out-of-range evaluated tokens return `integer overflow`; skipped logical operands check spelling without evaluating magnitude. See the [16-row host contract](tests/fixtures/rustic_hex_literal_contract.txt) and [portable C API driver](tests/fixtures/rustic_hex_literal_driver.c).
@@ -111,7 +113,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 596, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 295, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 597, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 296, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -123,7 +125,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 596 |
+| Completed backlog items | 597 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -132,7 +134,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 295 | 0 | None |
+| P1 | 296 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

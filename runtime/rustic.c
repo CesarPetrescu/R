@@ -5474,11 +5474,35 @@ static struct Value parse_bitwise_and_expression(struct Parser *parser) {
     return value;
 }
 
+static struct Value parse_bitwise_or_expression(struct Parser *parser) {
+    struct Value value = parse_bitwise_and_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '|' || parser->cursor[1] == '|') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor++;
+        right_value = parse_bitwise_and_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(left | right);
+    }
+    return value;
+}
+
 static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
     int saw_comparison = 0;
-    struct Value value = parse_bitwise_and_expression(parser);
+    struct Value value = parse_bitwise_or_expression(parser);
     struct Value right_value;
 
     while (parser->status == RUSTIC_OK) {
@@ -5495,7 +5519,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5505,7 +5529,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5515,7 +5539,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5525,7 +5549,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5535,7 +5559,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor++;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5545,7 +5569,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor++;
-            right_value = parse_bitwise_and_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5773,9 +5797,26 @@ static int skip_bitwise_and_expression(struct Parser *parser) {
     return 1;
 }
 
+static int skip_bitwise_or_expression(struct Parser *parser) {
+    if (!skip_bitwise_and_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '|' || parser->cursor[1] == '|') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_bitwise_and_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int skip_comparison_expression(struct Parser *parser) {
     int saw_comparison = 0;
-    if (!skip_bitwise_and_expression(parser)) {
+    if (!skip_bitwise_or_expression(parser)) {
         return 0;
     }
     while (parser->status == RUSTIC_OK) {
@@ -5797,7 +5838,7 @@ static int skip_comparison_expression(struct Parser *parser) {
         } else {
             return 1;
         }
-        if (!skip_bitwise_and_expression(parser)) {
+        if (!skip_bitwise_or_expression(parser)) {
             return 0;
         }
         saw_comparison = 1;
