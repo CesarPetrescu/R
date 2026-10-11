@@ -40,6 +40,45 @@ def test_c_hosted_rustic_interpreter_combines_binary_permissions_with_bitwise_or
     assert result.stdout == f"{source} => 2\n"
 
 
+def test_c_hosted_rustic_interpreter_toggles_binary_permission_with_xor(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let permissions = 0b0111; permissions ^ 0b0010"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_xor_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_bitwise_xor_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 20
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_xor_c_api(tmp_path):
+    binary = tmp_path / "rustic-bitwise-xor-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_bitwise_xor_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_bitwise_or_contract(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_bitwise_or_contract.txt"
