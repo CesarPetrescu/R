@@ -11,6 +11,7 @@ Prioritized backlog for autonomous implementation.
 
 ## P1 — implementation depth
 - [x] Clear bounded binary permission masks with unary integer `~` at factor precedence (`flags & ~mask`), including evaluated and short-circuited syntax, deterministic missing/type errors, C API output preservation and recovery; exercise 19 host rows and a direct strict-C99 C API fixture.
+- [x] Construct permission masks with checked nonnegative host-`long` `<<`, defining additive/bitwise precedence, accepted count/value bounds, overflow and type diagnostics, grammar-only skipped operands and unchanged C API output; demonstrate composed flags and host-portable boundaries in strict-C99 fixtures.
 - [x] Toggle binary permission masks with eager integer bitwise `^`, between `&` and `|` precedence, while preserving short-circuited operand grammar, deterministic integer diagnostics and C API output on failure; verify with a 20-row strict-C99 host contract and direct C API recovery fixture.
 - [x] Combine binary permission flags with integer bitwise `|` below `&` and above comparisons; distinguish eager integer `|` from short-circuit boolean `||`, grammar-check skipped operands, preserve C API output on failure and recovery, and exercise strict-C99 host examples.
 - [x] Evaluate integer bitwise `&` for composed binary flag-mask programs, with additive/comparison precedence, separate short-circuit `&&` grammar, skipped-operand syntax checks, deterministic type/missing-operand diagnostics, and C API output-preservation/recovery verified by strict-C99 host fixtures.
