@@ -5450,8 +5450,38 @@ static struct Value parse_additive_expression(struct Parser *parser) {
     return value;
 }
 
-static struct Value parse_bitwise_and_expression(struct Parser *parser) {
+/* Shift counts address only the value bits of a nonnegative host long. */
+static struct Value parse_shift_expression(struct Parser *parser) {
     struct Value value = parse_additive_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        right_value = parse_additive_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        if (left < 0 || right < 0 || right >= (long)(sizeof(long) * CHAR_BIT - 1) ||
+            (unsigned long)left > ((unsigned long)LONG_MAX >> (unsigned int)right)) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return integer_value(0);
+        }
+        value = integer_value((long)((unsigned long)left << (unsigned int)right));
+    }
+    return value;
+}
+
+static struct Value parse_bitwise_and_expression(struct Parser *parser) {
+    struct Value value = parse_shift_expression(parser);
     struct Value right_value;
     long left;
     long right;
@@ -5465,7 +5495,7 @@ static struct Value parse_bitwise_and_expression(struct Parser *parser) {
             return integer_value(0);
         }
         parser->cursor++;
-        right_value = parse_additive_expression(parser);
+        right_value = parse_shift_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
             return integer_value(0);
         }
@@ -5804,8 +5834,25 @@ static int skip_additive_expression(struct Parser *parser) {
     return 1;
 }
 
-static int skip_bitwise_and_expression(struct Parser *parser) {
+static int skip_shift_expression(struct Parser *parser) {
     if (!skip_additive_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+            return 1;
+        }
+        parser->cursor += 2;
+        if (!skip_additive_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_bitwise_and_expression(struct Parser *parser) {
+    if (!skip_shift_expression(parser)) {
         return 0;
     }
     while (parser->status == RUSTIC_OK) {
@@ -5814,7 +5861,7 @@ static int skip_bitwise_and_expression(struct Parser *parser) {
             return 1;
         }
         parser->cursor++;
-        if (!skip_additive_expression(parser)) {
+        if (!skip_shift_expression(parser)) {
             return 0;
         }
     }
