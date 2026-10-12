@@ -32,6 +32,248 @@ def compile_rustic_driver(tmp_path: Path) -> Path:
     return binary
 
 
+def test_c_hosted_rustic_interpreter_builds_permission_mask_with_left_shift(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let read = 1 << 0; let write = 1 << 2; (read | write) & write"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 4\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_valid_left_shift_without_evaluating(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && (1 << (1 / 0))"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_left_shift_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_left_shift_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 21
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_left_shift_c_api(tmp_path):
+    binary = tmp_path / "rustic-left-shift-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_left_shift_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
+def test_c_hosted_rustic_interpreter_combines_binary_permissions_with_bitwise_or(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let read = 0b0001; let write = 0b0010; let permissions = read | write; permissions & write"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 2\n"
+
+
+def test_c_hosted_rustic_interpreter_toggles_binary_permission_with_xor(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let permissions = 0b0111; permissions ^ 0b0010"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 5\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_xor_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_bitwise_xor_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 20
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_xor_c_api(tmp_path):
+    binary = tmp_path / "rustic-bitwise-xor-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_bitwise_xor_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
+def test_c_hosted_rustic_interpreter_bitwise_or_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_bitwise_or_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 18
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_or_c_api(tmp_path):
+    binary = tmp_path / "rustic-bitwise-or-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_bitwise_or_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
+def test_c_hosted_rustic_interpreter_masks_binary_flags_with_bitwise_and(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let flags = 0b1010; flags & 0b1100"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 8\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_and_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_bitwise_and_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 17
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_bitwise_and_c_api(tmp_path):
+    binary = tmp_path / "rustic-bitwise-and-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_bitwise_and_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
+def test_c_hosted_rustic_interpreter_binary_literal_in_program(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let flags = 0b1010; flags + 0b0011"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 13\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_binary_literal_without_evaluating(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0 && 0b1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_binary_literal_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_binary_literal_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 17
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_binary_literal_c_api(tmp_path):
+    binary = tmp_path / "rustic-binary-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_binary_literal_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
+def test_c_hosted_rustic_interpreter_hex_literal_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_hex_literal_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 16
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_hex_literal_c_api(tmp_path):
+    binary = tmp_path / "rustic-hex-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_hex_literal_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
@@ -44,46 +286,6 @@ def test_c_hosted_rustic_interpreter_evaluates_integer_expression(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert result.stdout == "1 + 2 * 3 => 7\n"
-
-
-def test_c_hosted_rustic_interpreter_ignores_line_comment_between_statements(tmp_path):
-    binary = compile_rustic_driver(tmp_path)
-    source = "let x = 2; // explanation with a closing brace }\nx + 1"
-    result = subprocess.run([str(binary), source], text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 3\n"
-
-
-def test_c_hosted_rustic_interpreter_ignores_braces_in_skipped_line_comment(tmp_path):
-    binary = compile_rustic_driver(tmp_path)
-    source = "if 0 { // } is not a block end\n missing / 0 } else { 7 }"
-    result = subprocess.run([str(binary), source], text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 7\n"
-
-
-def test_c_hosted_rustic_interpreter_accepts_line_comment_before_else(tmp_path):
-    binary = compile_rustic_driver(tmp_path)
-    source = "if 1 { 7 } // comment between branches\n else { 1 / 0 }"
-    result = subprocess.run([str(binary), source], text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 7\n"
-
-
-def test_c_hosted_rustic_interpreter_ignores_comment_braces_after_break(tmp_path):
-    binary = compile_rustic_driver(tmp_path)
-    source = "while 1 { break; // } not a block end\n 1 / 0 }; 7"
-    result = subprocess.run([str(binary), source], text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 7\n"
-
-
-def test_c_hosted_rustic_interpreter_ignores_comment_braces_after_match_break(tmp_path):
-    binary = compile_rustic_driver(tmp_path)
-    source = "while 1 { match 0 { 0 => { break; 1 }, // } not match end\n _ => 2 }; 9 }; 7"
-    result = subprocess.run([str(binary), source], text=True, capture_output=True)
-    assert result.returncode == 0, result.stderr
-    assert result.stdout == f"{source} => 7\n"
 
 
 def test_c_hosted_rustic_interpreter_line_comment_contract(tmp_path):
@@ -102,6 +304,37 @@ def test_c_hosted_rustic_interpreter_line_comment_contract(tmp_path):
         else:
             assert result.returncode == 0, (source, result)
             assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_requires_top_level_integer_result(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_top_level_result_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 10
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_top_level_result_c_api(tmp_path):
+    binary = tmp_path / "rustic-top-level-result-api"
+    compile_result = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_top_level_result_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compile_result.returncode == 0, compile_result.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
 
 
 def test_c_hosted_rustic_interpreter_reports_noncallable_binding(tmp_path):
@@ -398,6 +631,53 @@ def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     result = subprocess.run([str(binary)], text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
     assert result.stdout == "C API success, overflow, output preservation and NULL diagnostics: ok\n"
+
+
+def test_c_hosted_rustic_interpreter_accepts_grouped_decimal_digits(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let limit = 1_000; limit + 2"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1002\n"
+
+
+def test_c_hosted_rustic_interpreter_keeps_long_zero_padded_literals(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "0" * 80 + "_1"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 1\n"
+
+
+def test_c_hosted_rustic_interpreter_decimal_separator_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_decimal_separators_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 14
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_decimal_separator_c_api(tmp_path):
+    binary = tmp_path / "rustic-decimal-separators-api"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_decimal_separators_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+    assert result.stdout == "C API decimal separators, bounds, laziness, output and recovery: ok\n"
 
 
 def test_c_hosted_rustic_interpreter_runs_integer_literal_contract_fixture(tmp_path):

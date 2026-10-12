@@ -1,0 +1,18 @@
+# source => integer result, or error:diagnostic
+let flags = 0b1010; flags & 0b1100 => 8
+0xF & 0b1010 => 10
+3 & 1 & 7 => 1
+1 + 2 & 6 => 2
+2 & 1 == 0 => 1
+let flags = 0b1010; if flags & 2 == 2 { 7 } else { 0 } => 7
+fn mask(x) { x & 0b0011 }; mask(0b1010) => 2
+match 1 { 1 => 5 & 3, _ => 0 } => 1
+2 && 1 & 2 => 0
+0 && 1 / 0 & 3 => 0
+1 || 9 & (1 / 0) => 1
+0 && 1 & => error:expected integer
+1 & => error:expected integer
+[1] & 1 => error:expected integer
+1 & [1] => error:expected integer
+1 && 2 => 1
+1 || 2 => 1

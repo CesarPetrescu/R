@@ -1,7 +1,6 @@
 #include "rustic.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -547,9 +546,69 @@ static struct Value parse_if_expression(struct Parser *parser) {
     return value;
 }
 
-static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
-    char *end = NULL;
+static int integer_digit(char character, unsigned long base) {
+    if (isdigit((unsigned char)character)) {
+        int digit = character - '0';
+        return (unsigned long)digit < base ? digit : -1;
+    }
+    if (base == 16UL && character >= 'a' && character <= 'f') {
+        return character - 'a' + 10;
+    }
+    if (base == 16UL && character >= 'A' && character <= 'F') {
+        return character - 'A' + 10;
+    }
+    return -1;
+}
 
+static unsigned long integer_token_base(const char *cursor) {
+    if (cursor[0] == '0' && cursor[1] == 'x') return 16UL;
+    if (cursor[0] == '0' && cursor[1] == 'b') return 2UL;
+    return 10UL;
+}
+
+/* A separator belongs to a token only when followed by another digit. */
+static int integer_token_digit(const char *cursor, unsigned long base) {
+    return integer_digit(*cursor, base) >= 0 ||
+           (*cursor == '_' && integer_digit(cursor[1], base) >= 0);
+}
+
+static int parse_integer_token(struct Parser *parser, long *out_integer) {
+    const char *cursor = parser->cursor;
+    int negative = *cursor == '-';
+    unsigned long base;
+    unsigned long magnitude = 0;
+    unsigned long limit = (unsigned long)LONG_MAX + (negative ? 1UL : 0UL);
+
+    if (negative) {
+        cursor++;
+    }
+    base = integer_token_base(cursor);
+    if (base != 10UL) {
+        cursor += 2;
+        if (integer_digit(*cursor, base) < 0) {
+            parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+            return 0;
+        }
+    }
+    while (integer_token_digit(cursor, base)) {
+        if (*cursor != '_') {
+            unsigned long digit = (unsigned long)integer_digit(*cursor, base);
+            if (magnitude > (limit - digit) / base) {
+                parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+                return 0;
+            }
+            magnitude = magnitude * base + digit;
+        }
+        cursor++;
+    }
+    *out_integer = negative ? (magnitude == (unsigned long)LONG_MAX + 1UL
+                                   ? LONG_MIN : -(long)magnitude)
+                            : (long)magnitude;
+    parser->cursor = cursor;
+    return 1;
+}
+
+static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
     skip_spaces(parser);
     *out_is_default = 0;
     if (*parser->cursor == '_') {
@@ -557,11 +616,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
         *out_is_default = 1;
     } else if (isdigit((unsigned char)*parser->cursor) ||
                (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
-        errno = 0;
-        *out_pattern = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_integer_token(parser, out_pattern)) {
             return 0;
         }
     } else {
@@ -991,7 +1046,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     size_t index;
     struct Value value = integer_value(0);
     long integer;
-    char *end = NULL;
+
     struct Function *function;
     const char *call_return;
     size_t saved_loop_depth;
@@ -999,11 +1054,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
 
     skip_spaces(parser);
     if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
-        errno = 0;
-        integer = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -1056,11 +1107,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     }
 
     if (isdigit((unsigned char)*parser->cursor)) {
-        errno = 0;
-        integer = strtol(parser->cursor, &end, 10);
-        parser->cursor = end;
-        if (errno == ERANGE) {
-            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+        if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
         return parse_index_postfix(parser, integer_value(integer));
@@ -5441,11 +5488,113 @@ static struct Value parse_additive_expression(struct Parser *parser) {
     return value;
 }
 
+/* Shift counts address only the value bits of a nonnegative host long. */
+static struct Value parse_shift_expression(struct Parser *parser) {
+    struct Value value = parse_additive_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor += 2;
+        right_value = parse_additive_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        if (left < 0 || right < 0 || right >= (long)(sizeof(long) * CHAR_BIT - 1) ||
+            (unsigned long)left > ((unsigned long)LONG_MAX >> (unsigned int)right)) {
+            parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
+            return integer_value(0);
+        }
+        value = integer_value((long)((unsigned long)left << (unsigned int)right));
+    }
+    return value;
+}
+
+static struct Value parse_bitwise_and_expression(struct Parser *parser) {
+    struct Value value = parse_shift_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '&' || parser->cursor[1] == '&') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor++;
+        right_value = parse_shift_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(left & right);
+    }
+    return value;
+}
+
+static struct Value parse_bitwise_xor_expression(struct Parser *parser) {
+    struct Value value = parse_bitwise_and_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '^') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor++;
+        right_value = parse_bitwise_and_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(left ^ right);
+    }
+    return value;
+}
+
+static struct Value parse_bitwise_or_expression(struct Parser *parser) {
+    struct Value value = parse_bitwise_xor_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '|' || parser->cursor[1] == '|') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor++;
+        right_value = parse_bitwise_xor_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(left | right);
+    }
+    return value;
+}
+
 static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
     int saw_comparison = 0;
-    struct Value value = parse_additive_expression(parser);
+    struct Value value = parse_bitwise_or_expression(parser);
     struct Value right_value;
 
     while (parser->status == RUSTIC_OK) {
@@ -5462,7 +5611,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5472,7 +5621,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5482,7 +5631,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5492,7 +5641,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor += 2;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5502,7 +5651,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor++;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5512,7 +5661,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 return integer_value(0);
             }
             parser->cursor++;
-            right_value = parse_additive_expression(parser);
+            right_value = parse_bitwise_or_expression(parser);
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
                 return integer_value(0);
             }
@@ -5642,9 +5791,19 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         return skip_index_postfix(parser);
     }
     if (isdigit((unsigned char)*parser->cursor)) {
-        while (isdigit((unsigned char)*parser->cursor)) {
-            parser->cursor++;
+        const char *cursor = parser->cursor;
+        unsigned long base = integer_token_base(cursor);
+        if (base != 10UL) {
+            cursor += 2;
+            if (integer_digit(*cursor, base) < 0) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                return 0;
+            }
         }
+        while (integer_token_digit(cursor, base)) {
+            cursor++;
+        }
+        parser->cursor = cursor;
         return skip_index_postfix(parser);
     }
     if (is_identifier_start(*parser->cursor)) {
@@ -5713,9 +5872,77 @@ static int skip_additive_expression(struct Parser *parser) {
     return 1;
 }
 
+static int skip_shift_expression(struct Parser *parser) {
+    if (!skip_additive_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+            return 1;
+        }
+        parser->cursor += 2;
+        if (!skip_additive_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_bitwise_and_expression(struct Parser *parser) {
+    if (!skip_shift_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '&' || parser->cursor[1] == '&') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_shift_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_bitwise_xor_expression(struct Parser *parser) {
+    if (!skip_bitwise_and_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '^') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_bitwise_and_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_bitwise_or_expression(struct Parser *parser) {
+    if (!skip_bitwise_xor_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '|' || parser->cursor[1] == '|') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_bitwise_xor_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int skip_comparison_expression(struct Parser *parser) {
     int saw_comparison = 0;
-    if (!skip_additive_expression(parser)) {
+    if (!skip_bitwise_or_expression(parser)) {
         return 0;
     }
     while (parser->status == RUSTIC_OK) {
@@ -5737,7 +5964,7 @@ static int skip_comparison_expression(struct Parser *parser) {
         } else {
             return 1;
         }
-        if (!skip_additive_expression(parser)) {
+        if (!skip_bitwise_or_expression(parser)) {
             return 0;
         }
         saw_comparison = 1;
@@ -6172,6 +6399,7 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
 static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
     struct Value value = integer_value(0);
     int saw_statement = 0;
+    int saw_value = 0;
 
     while (parser->status == RUSTIC_OK) {
         if (!consume_step(parser)) {
@@ -6189,7 +6417,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
                 return integer_value(0);
             }
-            if (!saw_statement) {
+            if (!saw_statement || !saw_value) {
                 parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
             }
             return value;
@@ -6213,6 +6441,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 return integer_value(0);
             }
             saw_statement = 1;
+            saw_value = 1;
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
@@ -6248,6 +6477,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 return integer_value(0);
             }
             saw_statement = 1;
+            saw_value = 1;
 
             skip_spaces(parser);
             if (*parser->cursor != ';') {
@@ -6265,6 +6495,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             return integer_value(0);
         }
         saw_statement = 1;
+        saw_value = 1;
         if (parser->loop_control != LOOP_CONTROL_NONE) {
             if (!skip_to_sequence_terminator(parser, terminator)) {
                 return integer_value(0);
@@ -6296,7 +6527,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     size_t source_length = 0;
 
     if (source == NULL || out_value == NULL) {
-        return RUSTIC_ERR_EXPECTED_INTEGER;
+        return RUSTIC_ERR_INVALID_ARGUMENT;
     }
     while (source[source_length] != '\0') {
         if (source_length == RUSTIC_MAX_SOURCE_LENGTH) {
@@ -6395,6 +6626,8 @@ const char *rustic_status_message(RusticStatus status) {
         return "duplicate function";
     case RUSTIC_ERR_EXPECTED_FUNCTION:
         return "expected function";
+    case RUSTIC_ERR_INVALID_ARGUMENT:
+        return "invalid argument";
     default:
         return "unknown rustic interpreter error";
     }
