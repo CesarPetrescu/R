@@ -1021,7 +1021,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         }
         return parse_index_postfix(parser, integer_value(integer));
     }
-    if (*parser->cursor == '!' || *parser->cursor == '-') {
+    if (*parser->cursor == '!' || *parser->cursor == '-' || *parser->cursor == '~') {
         char operator = *parser->cursor++;
         value = parse_factor(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, value, &integer)) {
@@ -1029,6 +1029,9 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         }
         if (operator == '!') {
             return integer_value(integer == 0 ? 1 : 0);
+        }
+        if (operator == '~') {
+            return integer_value(~integer);
         }
         if (integer == LONG_MIN) {
             parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
@@ -5681,7 +5684,7 @@ static int skip_factor_expression_impl(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
 
     skip_spaces(parser);
-    if (*parser->cursor == '!' || *parser->cursor == '-') {
+    if (*parser->cursor == '!' || *parser->cursor == '-' || *parser->cursor == '~') {
         parser->cursor++;
         return skip_factor_expression(parser);
     }

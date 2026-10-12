@@ -18,7 +18,7 @@
 - 2026-07-31: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-secure` rejected local commit `cc39aea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`); the branch already has the verified implementation pushed, but the external-gate evidence commit remains local until authentication recovers.
 
 ## Resolved blockers
-
+- 2026-10-12: PR #614's isolated-review status was restored by the authenticated reviewer publisher and the checked left-shift implementation landed on main at `e6fe645`; the earlier missing-status note is resolved.
 - 2026-09-16: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-assure` initially rejected the branch push with GitHub HTTP 403 during `send-pack`; a bounded retry successfully pushed the branch, so the transient authentication blocker is resolved.
 - 2026-07-06: `/usr/local/bin/r-bot-git-push ai/r/rustic-balance-crag` initially failed after local commit `97de2ea` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch after blocker recording, so this is no longer an active blocker.
 - 2026-06-22: `/usr/local/bin/r-bot-git-push ai/r/rustic-band-span-gap-ratio` previously failed after local commit `d200d54` with GitHub 403 (`Permission to CesarPetrescu/R.git denied to r-hermes-bot[bot]`). A later retry successfully pushed the branch, so this is no longer an active blocker.
