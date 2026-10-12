@@ -37,7 +37,10 @@ typedef enum RusticStatus {
     RUSTIC_ERR_INVALID_ARGUMENT = 28,
 } RusticStatus;
 
-/* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
+/* Nonnegative left shift (<<) checks the count and result against host long's
+ * value bits before shifting; negative operands, sign-bit counts and results
+ * outside LONG_MAX report INTEGER_OVERFLOW without signed-shift UB.
+ * Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
  * result is outside host long; / and % report it for LONG_MIN with divisor -1.
  * sum(array), prefix_sum(array), window_sum(array, n),
  * moving_average_sum(array, n), and chunk_sum(array, n) check each
