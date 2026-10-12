@@ -5474,8 +5474,32 @@ static struct Value parse_bitwise_and_expression(struct Parser *parser) {
     return value;
 }
 
-static struct Value parse_bitwise_or_expression(struct Parser *parser) {
+static struct Value parse_bitwise_xor_expression(struct Parser *parser) {
     struct Value value = parse_bitwise_and_expression(parser);
+    struct Value right_value;
+    long left;
+    long right;
+
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '^') {
+            return value;
+        }
+        if (!value_as_integer(parser, value, &left)) {
+            return integer_value(0);
+        }
+        parser->cursor++;
+        right_value = parse_bitwise_and_expression(parser);
+        if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            return integer_value(0);
+        }
+        value = integer_value(left ^ right);
+    }
+    return value;
+}
+
+static struct Value parse_bitwise_or_expression(struct Parser *parser) {
+    struct Value value = parse_bitwise_xor_expression(parser);
     struct Value right_value;
     long left;
     long right;
@@ -5489,7 +5513,7 @@ static struct Value parse_bitwise_or_expression(struct Parser *parser) {
             return integer_value(0);
         }
         parser->cursor++;
-        right_value = parse_bitwise_and_expression(parser);
+        right_value = parse_bitwise_xor_expression(parser);
         if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
             return integer_value(0);
         }
@@ -5797,8 +5821,25 @@ static int skip_bitwise_and_expression(struct Parser *parser) {
     return 1;
 }
 
-static int skip_bitwise_or_expression(struct Parser *parser) {
+static int skip_bitwise_xor_expression(struct Parser *parser) {
     if (!skip_bitwise_and_expression(parser)) {
+        return 0;
+    }
+    while (parser->status == RUSTIC_OK) {
+        skip_spaces(parser);
+        if (*parser->cursor != '^') {
+            return 1;
+        }
+        parser->cursor++;
+        if (!skip_bitwise_and_expression(parser)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int skip_bitwise_or_expression(struct Parser *parser) {
+    if (!skip_bitwise_xor_expression(parser)) {
         return 0;
     }
     while (parser->status == RUSTIC_OK) {
@@ -5807,7 +5848,7 @@ static int skip_bitwise_or_expression(struct Parser *parser) {
             return 1;
         }
         parser->cursor++;
-        if (!skip_bitwise_and_expression(parser)) {
+        if (!skip_bitwise_xor_expression(parser)) {
             return 0;
         }
     }
