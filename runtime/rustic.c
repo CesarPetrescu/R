@@ -5458,10 +5458,13 @@ static struct Value parse_shift_expression(struct Parser *parser) {
     long right;
 
     while (parser->status == RUSTIC_OK) {
+        int shift_left;
         skip_spaces(parser);
-        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+        if (!((parser->cursor[0] == '<' && parser->cursor[1] == '<') ||
+              (parser->cursor[0] == '>' && parser->cursor[1] == '>'))) {
             return value;
         }
+        shift_left = parser->cursor[0] == '<';
         if (!value_as_integer(parser, value, &left)) {
             return integer_value(0);
         }
@@ -5471,11 +5474,13 @@ static struct Value parse_shift_expression(struct Parser *parser) {
             return integer_value(0);
         }
         if (left < 0 || right < 0 || right >= (long)(sizeof(long) * CHAR_BIT - 1) ||
-            (unsigned long)left > ((unsigned long)LONG_MAX >> (unsigned int)right)) {
+            (shift_left && (unsigned long)left > ((unsigned long)LONG_MAX >> (unsigned int)right))) {
             parser->status = RUSTIC_ERR_INTEGER_OVERFLOW;
             return integer_value(0);
         }
-        value = integer_value((long)((unsigned long)left << (unsigned int)right));
+        value = integer_value((long)(shift_left ?
+            ((unsigned long)left << (unsigned int)right) :
+            ((unsigned long)left >> (unsigned int)right)));
     }
     return value;
 }
@@ -5840,7 +5845,8 @@ static int skip_shift_expression(struct Parser *parser) {
     }
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
-        if (parser->cursor[0] != '<' || parser->cursor[1] != '<') {
+        if (!((parser->cursor[0] == '<' && parser->cursor[1] == '<') ||
+              (parser->cursor[0] == '>' && parser->cursor[1] == '>'))) {
             return 1;
         }
         parser->cursor += 2;
