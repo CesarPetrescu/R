@@ -1,0 +1,20 @@
+# Unary bitwise NOT clears flags with a bounded mask; no new integer width is implied.
+let flags = 0b1111; flags & ~0b0010 => 13
+let flags = 0b1011; flags & ~0b0010 => 9
+0b1111 & ~0b0100 & ~0b0001 => 10
+fn clear(flags, mask) { flags & ~mask }; clear(0b1111, 0b0010) => 13
+let xs = [0b1111]; xs[0] & ~0b0100 => 11
+if 1 { 0b1111 & ~0b0100 } else { 1 / 0 } => 11
+match 1 { 1 => 0b1111 & ~0b0010, _ => 0 } => 13
+0b1111 & ~(0b0010 | 0b0100) => 9
+0b1111 & ~~0b0010 => 2
+~0b1010 & 0b1111 => 5
+0b1111 & ~0b0010 + 1 => 14
+0 && ~[1] => 0
+1 || ~[1] => 1
+0 && ~1 / 0 => 0
+~ => error:expected integer
+0 && ~ => error:expected integer
+~[1] => error:expected integer
+~unknown => error:undefined identifier
+~(1 / 0) => error:division by zero
