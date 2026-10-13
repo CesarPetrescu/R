@@ -1,0 +1,10 @@
+# Selected expression blocks need a value; declarations alone cannot fabricate zero.
+{ let x = 3; } => error:expected integer
+if 1 { let x = 3; } else { 8 } => error:expected integer
+if 0 { 8 } else { fn f() { 3 }; } => error:expected integer
+fn f() { { let x = 3; } }; f() => error:expected integer
+{ let x = 3; x } => 3
+{ 5; let x = 3; } => 5
+if 0 { let x = 3; } else { 8 } => 8
+while 0 { let x = 3; } => 0
+while 1 { break; } => 0

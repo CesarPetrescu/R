@@ -19,5 +19,19 @@ int main(void) {
     if (rustic_eval_expression("1; let x = 3;", &out) != RUSTIC_OK || out != 1) {
         return 5;
     }
+    out = 93;
+    if (rustic_eval_expression("{ let x = 3; }", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 93) {
+        return 6;
+    }
+    if (rustic_eval_expression("if 0 { 8 } else { fn f() { 3 }; }", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 93) {
+        return 7;
+    }
+    if (rustic_eval_expression("while 0 { let x = 3; }", &out) != RUSTIC_OK || out != 0) {
+        return 8;
+    }
+    if (rustic_eval_expression("{ let x = 3; x }", &out) != RUSTIC_OK || out != 3) {
+        return 9;
+    }
     return 0;
 }

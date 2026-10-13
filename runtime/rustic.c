@@ -414,7 +414,7 @@ static void pop_scope_preserving_value(struct Parser *parser, struct Value *valu
 }
 
 static struct Value parse_expression(struct Parser *parser);
-static struct Value parse_statement_sequence(struct Parser *parser, char terminator);
+static struct Value parse_statement_sequence(struct Parser *parser, char terminator, int require_value);
 static int skip_expression_operand(struct Parser *parser);
 
 static int skip_block(struct Parser *parser) {
@@ -449,7 +449,7 @@ static int skip_block(struct Parser *parser) {
     return 0;
 }
 
-static struct Value parse_block_expression(struct Parser *parser) {
+static struct Value parse_block_expression(struct Parser *parser, int require_value) {
     struct Value value = integer_value(0);
 
     skip_spaces(parser);
@@ -460,7 +460,7 @@ static struct Value parse_block_expression(struct Parser *parser) {
 
     parser->cursor++;
     push_scope(parser);
-    value = parse_statement_sequence(parser, '}');
+    value = parse_statement_sequence(parser, '}', require_value);
     if (parser->status != RUSTIC_OK) {
         pop_scope(parser);
         return integer_value(0);
@@ -488,7 +488,7 @@ static struct Value parse_if_expression(struct Parser *parser) {
     }
 
     if (condition != 0) {
-        value = parse_block_expression(parser);
+        value = parse_block_expression(parser, 1);
         if (parser->status != RUSTIC_OK) {
             return integer_value(0);
         }
@@ -506,7 +506,7 @@ static struct Value parse_if_expression(struct Parser *parser) {
     parser->cursor += 4;
 
     if (condition == 0) {
-        value = parse_block_expression(parser);
+        value = parse_block_expression(parser, 1);
         if (parser->status != RUSTIC_OK) {
             return integer_value(0);
         }
@@ -737,7 +737,7 @@ static struct Value parse_while_statement(struct Parser *parser) {
         }
 
         parser->loop_depth++;
-        value = parse_block_expression(parser);
+        value = parse_block_expression(parser, 0);
         parser->loop_depth--;
         if (parser->status != RUSTIC_OK) {
             return integer_value(0);
@@ -911,7 +911,7 @@ static struct Value call_unary_function(struct Parser *parser, struct Function *
         return integer_value(0);
     }
 
-    value = parse_statement_sequence(parser, '}');
+    value = parse_statement_sequence(parser, '}', 0);
     if (parser->status != RUSTIC_OK) {
         pop_scope(parser);
         parser->cursor = call_return;
@@ -963,7 +963,7 @@ static struct Value call_binary_function(struct Parser *parser, struct Function 
         return integer_value(0);
     }
 
-    value = parse_statement_sequence(parser, '}');
+    value = parse_statement_sequence(parser, '}', 0);
     if (parser->status != RUSTIC_OK) {
         pop_scope(parser);
         parser->cursor = call_return;
@@ -1038,7 +1038,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     }
 
     if (*parser->cursor == '{') {
-        return parse_index_postfix(parser, parse_block_expression(parser));
+        return parse_index_postfix(parser, parse_block_expression(parser, 1));
     }
 
     if (cursor_starts_keyword(parser, "if")) {
@@ -5297,7 +5297,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     return integer_value(0);
                 }
             }
-            value = parse_statement_sequence(parser, '}');
+            value = parse_statement_sequence(parser, '}', 0);
             if (parser->status != RUSTIC_OK) {
                 pop_scope(parser);
                 parser->cursor = call_return;
@@ -6349,7 +6349,7 @@ static int skip_to_sequence_terminator(struct Parser *parser, char terminator) {
     return 0;
 }
 
-static struct Value parse_statement_sequence(struct Parser *parser, char terminator) {
+static struct Value parse_statement_sequence(struct Parser *parser, char terminator, int require_value) {
     struct Value value = integer_value(0);
     int saw_statement = 0;
     int saw_value = 0;
@@ -6360,7 +6360,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
         }
         skip_spaces(parser);
         if (terminator != '\0' && *parser->cursor == terminator) {
-            if (!saw_statement) {
+            if (!saw_statement || (require_value && !saw_value)) {
                 parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
             }
             return value;
@@ -6471,7 +6471,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
 }
 
 static struct Value parse_program(struct Parser *parser) {
-    return parse_statement_sequence(parser, '\0');
+    return parse_statement_sequence(parser, '\0', 1);
 }
 RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     struct Parser parser;
