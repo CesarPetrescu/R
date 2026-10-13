@@ -32,6 +32,44 @@ def compile_rustic_driver(tmp_path: Path) -> Path:
     return binary
 
 
+def test_c_hosted_rustic_interpreter_user_function_shadows_builtin(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn sum(x) { x + 1 }; sum(2)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_builtin_name_shadow_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_builtin_shadow_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 13
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_builtin_name_shadow_c_api(tmp_path):
+    binary = tmp_path / "rustic-builtin-name-shadow-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_builtin_shadow_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_builds_permission_mask_with_left_shift(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let read = 1 << 0; let write = 1 << 2; (read | write) & write"
