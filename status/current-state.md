@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-10-12
+Last updated: 2026-10-13
 
 ## Repository
 
@@ -16,6 +16,7 @@ Last updated: 2026-10-12
 
 ## Implemented behavior
 - Selected expression blocks require a value-producing statement: `{ let x=3; }` and a selected declaration-only `if` arm return `RUSTIC_ERR_EXPECTED_INTEGER` rather than fabricating zero; an earlier value before later declarations remains the result. Unselected branches retain brace-only scanning, while `while` bodies remain statement contexts and `break;` retains its loop-control result. A nine-row executable host contract and strict-C99 C API driver check composition, output preservation and recovery. Declaration-only function bodies retain their previous implicit zero result.
+- Calls resolve active bindings (including noncallable bindings) and named functions before the built-in helper dispatch. A user-declared `sum(x)` can therefore be called as `sum(2)` while the built-in `sum([1, 2])` is restored after a local declaration leaves scope; argument expressions still parse first, skipped operands do not resolve names, and invalid calls preserve C API output. A 13-row host contract plus a strict-C99 direct C API fixture check callable aliases, shadowing, diagnostics and recovery.
 - Integer `<<` constructs nonnegative permission masks (`let read=1 << 0; let write=1 << 2; (read | write) & write` returns `4`). It is eager, left-associative between additive arithmetic and bitwise `&`; skipped logical operands check grammar but not value or effects. Negative operands, counts outside the host `long` value bits, or a result above `LONG_MAX` return `RUSTIC_ERR_INTEGER_OVERFLOW` before shifting; missing/non-integer operands return `expected integer`. A 21-row host contract plus portable strict-C99 direct C API fixture cover composition, host boundaries, unchanged output on error, and fresh-call recovery. Right shift and unary bitwise NOT remain excluded.
 - Integer bitwise `^` toggles binary flag masks (`0b0111 ^ 0b0010` yields `5`) and is eager, left-associative, below additive/`&` but above `|`/comparisons. Skipped logical operands check XOR grammar without evaluating it; malformed and non-integer operands retain `expected integer` with unchanged C API output and fresh-call recovery. A 20-row host contract and strict-C99 direct C API fixture cover composed flags, functions, match/if, error precedence and short-circuiting. Right shift and unary bitwise NOT are not implemented.
 - Integer bitwise `|` combines host-`long` permission masks (`let read=1; let write=2; (read | write) & write` yields `2`). Left-associative precedence is below additive and `&`, above comparisons; unlike `||`, it evaluates both integer operands. Grammar-only skipped logical operands check syntax but do not execute it. Missing/array operands report `expected integer` without modifying C API output; the next call succeeds. An 18-row host contract and direct strict-C99 C API driver cover composition, precedence, diagnostics, laziness, output preservation and recovery. Right shift and unary bitwise NOT remain unsupported.
@@ -189,6 +190,7 @@ Last updated: 2026-10-12
 
 ## Verified commands
 The selected value-bearing block package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'selected_expression_block or top_level_result_c_api'`; the full host/report/lint/fresh Docker matrix below remains required before push.
+The built-in shadowing package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'builtin_name_shadow or user_function_shadows_builtin'` for focused host and direct C API coverage; full host/report/lint/fresh Docker verification remains mandatory before push.
 The checked left-shift mask package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k left_shift` to the focused strict-C99 host and direct C API matrix. Full host, report, lint and fresh Docker commands below remain required before push.
 The bitwise-XOR package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'bitwise_xor or bitwise_and or bitwise_or'` for strict-C99 host/C API, precedence, diagnostic and lazy grammar checks; the baseline host/report/lint/fresh Docker commands below remain required before push.
 The bitwise-OR work package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'bitwise_or or bitwise_and'` for strict-C99 host/C API, precedence, diagnostic, and lazy grammar checks; the baseline host/report/lint/fresh Docker commands below remain required before push.

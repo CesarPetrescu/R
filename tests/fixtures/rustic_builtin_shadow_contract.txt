@@ -1,0 +1,14 @@
+# Local function/binding names precede built-ins; scope exit restores the built-in.
+fn sum(x) { x + 1 }; sum(2) => 3
+fn len(x) { x + 1 }; len(2) => 3
+fn map(x) { x + 2 }; map(3) => 5
+fn sum(x) { x + 1 }; let alias = sum; alias(2) => 3
+{ fn sum(x) { x + 5 }; sum(2) }; sum([1, 2]) => 3
+fn sum(x) { x + 1 }; let sum = 7; sum(2) => error:expected function
+let sum = [7]; sum(2) => error:expected function
+let sum = 7; sum(1 / 0) => error:division by zero
+fn sum(x) { x + 1 }; sum(2, 3) => error:wrong argument count
+fn len(x) { x + 1 }; len([1]) => error:expected integer
+fn sum(x) { x + 1 }; 0 && sum(1 / 0) => 0
+sum([1, 2]) => 3
+let xs = [7]; len(xs) => 1
