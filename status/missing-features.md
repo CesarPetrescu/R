@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Reject selected expression blocks containing only `let`/`fn` declarations instead of returning a fabricated zero; keep the prior integer result after later declarations, leave loop statement bodies and unselected brace scans unchanged, and verify nested composition, output preservation and recovery with strict-C99 host fixtures.
 - [x] Resolve user-declared function and binding names before same-named built-ins at call sites, preserving argument-error precedence, scoped restoration, typed noncallable failures, skipped operands and C API output preservation; exercise `fn sum(x) { x + 1 }; sum(2)` in strict-C99 host fixtures.
 - [x] Construct permission masks with checked nonnegative host-`long` `<<`, defining additive/bitwise precedence, accepted count/value bounds, overflow and type diagnostics, grammar-only skipped operands and unchanged C API output; demonstrate composed flags and host-portable boundaries in strict-C99 fixtures.
 - [x] Toggle binary permission masks with eager integer bitwise `^`, between `&` and `|` precedence, while preserving short-circuited operand grammar, deterministic integer diagnostics and C API output on failure; verify with a 20-row strict-C99 host contract and direct C API recovery fixture.
