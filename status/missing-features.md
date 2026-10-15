@@ -11,6 +11,7 @@ Prioritized backlog for autonomous implementation.
 
 ## P1 — implementation depth
 - [x] Extract bits from composed nonnegative flag masks with `>>` at shift precedence; reject negative operands and invalid counts with a stable C API overflow status, preserve skipped syntax and output on errors, and test host-long boundaries and recovery in strict C99.
+- [x] Resolve user-declared function and binding names before same-named built-ins at call sites, preserving argument-error precedence, scoped restoration, typed noncallable failures, skipped operands and C API output preservation; exercise `fn sum(x) { x + 1 }; sum(2)` in strict-C99 host fixtures.
 - [x] Construct permission masks with checked nonnegative host-`long` `<<`, defining additive/bitwise precedence, accepted count/value bounds, overflow and type diagnostics, grammar-only skipped operands and unchanged C API output; demonstrate composed flags and host-portable boundaries in strict-C99 fixtures.
 - [x] Toggle binary permission masks with eager integer bitwise `^`, between `&` and `|` precedence, while preserving short-circuited operand grammar, deterministic integer diagnostics and C API output on failure; verify with a 20-row strict-C99 host contract and direct C API recovery fixture.
 - [x] Combine binary permission flags with integer bitwise `|` below `&` and above comparisons; distinguish eager integer `|` from short-circuit boolean `||`, grammar-check skipped operands, preserve C API output on failure and recovery, and exercise strict-C99 host examples.

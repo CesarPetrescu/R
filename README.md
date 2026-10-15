@@ -32,8 +32,9 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
-`>>` extracts bits from nonnegative permission masks: `let flags = (1 << 4) | (1 << 2); (flags >> 2) & 1` returns `1`. It is eager, left-associative with `<<`, between addition and bitwise `&`; `8 >> 1 >> 1` returns `2`. The count is from zero through `sizeof(long) * CHAR_BIT - 2`; a negative operand/count or larger count returns `integer overflow`, avoiding implementation-defined signed right shift. Short-circuited operands check syntax without executing shifts, and failed C API calls leave output unchanged. See the [22-row host contract](tests/fixtures/rustic_right_shift_contract.txt) and [portable strict-C99 direct API driver](tests/fixtures/rustic_right_shift_driver.c). Unary bitwise NOT remains unsupported.
+`>>` extracts bits from nonnegative permission masks: `let flags=(1 << 4)|(1 << 2); (flags >> 2) & 1` returns `1`. It is left-associative with `<<` between addition and bitwise `&`. Negative operands, negative counts and counts above the host-`long` value-bit range return `integer overflow`; short-circuited operands check syntax without executing the shift. The [22-row host contract](tests/fixtures/rustic_right_shift_contract.txt) and [direct C API driver](tests/fixtures/rustic_right_shift_driver.c) cover composition, host-width boundaries, output preservation and recovery.
 
+User-declared names take priority over built-ins at call sites: `fn sum(x) { x + 1 }; sum(2)` returns `3`, while a bound non-function `let sum = 7; sum(2)` reports `expected function`. After an inner declaration leaves scope, the built-in `sum([1, 2])` works again. Call arguments retain their error precedence; short-circuited calls do not execute. See the [executable host contract](tests/fixtures/rustic_builtin_shadow_contract.txt) and [direct C API check](tests/fixtures/rustic_builtin_shadow_driver.c) for diagnostics and output-preservation behavior. Built-ins are not first-class function values.
 `<<` constructs permission flags from bit positions: `let read=1 << 0; let write=1 << 2; (read | write) & write` returns `4`. It binds between addition and bitwise AND, accepts only nonnegative host-`long` operands and a count below the sign bit, and checks the result against `LONG_MAX` before shifting. Out-of-range operands or counts return `integer overflow` without modifying C API output; skipped logical operands parse the same shift syntax without evaluating it. See the [21-row host contract](tests/fixtures/rustic_left_shift_contract.txt) and [portable strict-C99 direct API driver](tests/fixtures/rustic_left_shift_driver.c). Unary bitwise NOT is not implemented.
 
 Integer bitwise `^` toggles flag masks: `let permissions = 0b0111; permissions ^ 0b0010` returns `5`. It evaluates both host-`long` integer operands, binds below `&` and above `|` and comparisons, and is distinct from short-circuit boolean `&&`/`||`. A skipped logical operand still checks `^` grammar without executing it. Missing or non-integer operands return `expected integer` and leave the C API output unchanged. See the [20-row executable contract](tests/fixtures/rustic_bitwise_xor_contract.txt) and [direct strict-C99 C API fixture](tests/fixtures/rustic_bitwise_xor_driver.c). Unary bitwise NOT remains unsupported; negative values follow host signed-`long` representation.
@@ -119,7 +120,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 600, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 299, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 601, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 300, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -131,7 +132,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 600 |
+| Completed backlog items | 601 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -140,7 +141,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 299 | 0 | None |
+| P1 | 300 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
