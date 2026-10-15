@@ -1177,6 +1177,11 @@ static struct Value parse_factor_impl(struct Parser *parser) {
             }
             parser->cursor++;
 
+            /* Local bindings and functions take precedence over built-ins. */
+            if (lookup_binding(parser, name, &value) || lookup_function(parser, name) != NULL) {
+                goto resolve_named_call;
+            }
+
             if (strcmp(name, "len") == 0) {
                 struct ArrayValue *array;
 
@@ -5296,6 +5301,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
+resolve_named_call:
             if (lookup_binding(parser, name, &value)) {
                 if (value.kind != VALUE_FUNCTION) {
                     parser->status = RUSTIC_ERR_EXPECTED_FUNCTION;
