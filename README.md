@@ -32,6 +32,8 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+Deferred function declarations and other brace-scanned blocks charge non-whitespace bytes to the shared 512-step budget. An unused function with an excessive body fails with `step limit exceeded` without changing the C API output; short functions remain callable. Malformed body syntax is still deferred until a call. The separate source-size ceiling does not replace this scan bound; see the [strict-C99 host/API contract](tests/fixtures/rustic_api_contract_driver.c).
+
 User-declared names take priority over built-ins at call sites: `fn sum(x) { x + 1 }; sum(2)` returns `3`, while a bound non-function `let sum = 7; sum(2)` reports `expected function`. After an inner declaration leaves scope, the built-in `sum([1, 2])` works again. Call arguments retain their error precedence; short-circuited calls do not execute. See the [executable host contract](tests/fixtures/rustic_builtin_shadow_contract.txt) and [direct C API check](tests/fixtures/rustic_builtin_shadow_driver.c) for diagnostics and output-preservation behavior. Built-ins are not first-class function values.
 `<<` constructs permission flags from bit positions: `let read=1 << 0; let write=1 << 2; (read | write) & write` returns `4`. It binds between addition and bitwise AND, accepts only nonnegative host-`long` operands and a count below the sign bit, and checks the result against `LONG_MAX` before shifting. Out-of-range operands or counts return `integer overflow` without modifying C API output; skipped logical operands parse the same shift syntax without evaluating it. See the [21-row host contract](tests/fixtures/rustic_left_shift_contract.txt) and [portable strict-C99 direct API driver](tests/fixtures/rustic_left_shift_driver.c). Right shift and unary bitwise NOT are not implemented.
 
@@ -118,7 +120,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 600, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 299, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 601, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 300, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -130,7 +132,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 600 |
+| Completed backlog items | 601 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -139,7 +141,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 299 | 0 | None |
+| P1 | 300 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
