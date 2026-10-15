@@ -347,11 +347,34 @@ int main(void) {
         return 75;
     }
     out = 20;
-    if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 20) {
-        return 4;
+    if (rustic_eval_expression("let n = 3; n()", &out) != RUSTIC_ERR_EXPECTED_FUNCTION || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_FUNCTION), "expected function") != 0) {
+        return 76;
     }
-    if (rustic_eval_expression("1", NULL) != RUSTIC_ERR_EXPECTED_INTEGER) {
-        return 5;
+    if (rustic_eval_expression("let xs = [1]; xs(0)", &out) != RUSTIC_ERR_EXPECTED_FUNCTION || out != 20) {
+        return 77;
+    }
+    if (rustic_eval_expression("missing()", &out) != RUSTIC_ERR_UNDEFINED_IDENTIFIER || out != 20) {
+        return 78;
+    }
+    if (rustic_eval_expression("fn f() { 7 }; let g = f; g()", &out) != RUSTIC_OK || out != 7) {
+        return 79;
+    }
+    out = 20;
+    if (rustic_eval_expression(NULL, &out) != RUSTIC_ERR_INVALID_ARGUMENT || out != 20) {
+        return 80;
+    }
+    if (rustic_eval_expression("1", NULL) != RUSTIC_ERR_INVALID_ARGUMENT) {
+        return 81;
+    }
+    if (rustic_eval_expression(NULL, NULL) != RUSTIC_ERR_INVALID_ARGUMENT) {
+        return 82;
+    }
+    if (strcmp(rustic_status_message(RUSTIC_ERR_INVALID_ARGUMENT), "invalid argument") != 0) {
+        return 83;
+    }
+    if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
+        return 84;
     }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
