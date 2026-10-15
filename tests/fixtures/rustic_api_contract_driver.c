@@ -360,6 +360,15 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    if (rustic_eval_expression("if 0 { // } ignored\n 1 / 0 } else { 7 }", &out) != RUSTIC_OK || out != 7) {
+        return 85;
+    }
+    if (rustic_eval_expression("1 // comment\n + *", &out) != RUSTIC_ERR_EXPECTED_INTEGER || out != 7) {
+        return 86;
+    }
+    if (rustic_eval_expression("3 // comment\n + 4", &out) != RUSTIC_OK || out != 7) {
+        return 87;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }
