@@ -1,0 +1,17 @@
+# source => integer result or error:diagnostic
+let permissions = 0o755; permissions & 0o111 => 73
+fn mask(x) { x | 0o020 }; mask(0o5) => 21
+let xs = [0o7, 0o10]; xs[1] => 8
+-0o12 => -10
+0o7_5 => 61
+match 8 { 0o10 => 7, _ => 0 } => 7
+match -8 { -0o10 => 9, _ => 0 } => 9
+match 8 { 0o10 => 1, 8 => 2 } => error:duplicate match pattern
+0 && 0o777777777777777777777777777777777777 => 0
+1 || -0o777777777777777777777777777777777777 => 1
+match 0 { 0 => 3, 0o777777777777777777777777777777777777 => 4 } => error:integer overflow
+0o => error:expected integer
+0o_1 => error:expected integer
+0o8 => error:expected integer
+0o7_ => error:expected semicolon
+0o7__1 => error:expected semicolon
