@@ -33,6 +33,7 @@ The image is a development/test environment, not a packaged interpreter CLI. Cha
 
 ## What works today
 `>>` extracts bits from nonnegative permission masks: `let flags=(1 << 4)|(1 << 2); (flags >> 2) & 1` returns `1`. It is left-associative with `<<` between addition and bitwise `&`. Negative operands, negative counts and counts above the host-`long` value-bit range return `integer overflow`; short-circuited operands check syntax without executing the shift. The [22-row host contract](tests/fixtures/rustic_right_shift_contract.txt) and [direct C API driver](tests/fixtures/rustic_right_shift_driver.c) cover composition, host-width boundaries, output preservation and recovery.
+Integer arrays support ordered, structural `==`/`!=`: `let xs=[1,2]; xs == push([1],2)` returns `1`. A snapshot of the left side survives right-side allocation or binding mutation; unrelated integer equality, short-circuit syntax checking, and integer-only ordering are unchanged. Mixed array/scalar comparisons report `expected array` or `expected integer` according to the left operand, and failed C API calls retain their output value. See the [18-row host contract](tests/fixtures/rustic_array_equality_contract.txt) and [direct C API fixture](tests/fixtures/rustic_array_equality_driver.c). Array values still cannot be returned directly by the public `long`-only API.
 
 User-declared names take priority over built-ins at call sites: `fn sum(x) { x + 1 }; sum(2)` returns `3`, while a bound non-function `let sum = 7; sum(2)` reports `expected function`. After an inner declaration leaves scope, the built-in `sum([1, 2])` works again. Call arguments retain their error precedence; short-circuited calls do not execute. See the [executable host contract](tests/fixtures/rustic_builtin_shadow_contract.txt) and [direct C API check](tests/fixtures/rustic_builtin_shadow_driver.c) for diagnostics and output-preservation behavior. Built-ins are not first-class function values.
 `<<` constructs permission flags from bit positions: `let read=1 << 0; let write=1 << 2; (read | write) & write` returns `4`. It binds between addition and bitwise AND, accepts only nonnegative host-`long` operands and a count below the sign bit, and checks the result against `LONG_MAX` before shifting. Out-of-range operands or counts return `integer overflow` without modifying C API output; skipped logical operands parse the same shift syntax without evaluating it. See the [21-row host contract](tests/fixtures/rustic_left_shift_contract.txt) and [portable strict-C99 direct API driver](tests/fixtures/rustic_left_shift_driver.c). Unary bitwise NOT is not implemented.
@@ -120,7 +121,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 601, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 300, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 602, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 301, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -132,7 +133,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 601 |
+| Completed backlog items | 602 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -141,7 +142,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 300 | 0 | None |
+| P1 | 301 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
