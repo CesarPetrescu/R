@@ -5574,26 +5574,47 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
             parser->status = RUSTIC_ERR_EXPECTED_OPERATOR;
             return integer_value(0);
         }
-        if (parser->cursor[0] == '=' && parser->cursor[1] == '=') {
-            if (!value_as_integer(parser, value, &left)) {
+        if ((parser->cursor[0] == '=' && parser->cursor[1] == '=') ||
+            (parser->cursor[0] == '!' && parser->cursor[1] == '=')) {
+            int unequal = parser->cursor[0] == '!';
+            struct ArrayValue left_array;
+            struct ArrayValue *array;
+            int equal;
+            size_t index;
+
+            if (value.kind == VALUE_ARRAY) {
+                array = array_from_value(parser, value);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                /* Snapshot before parsing the right side, which can compact array slots. */
+                left_array = *array;
+            } else if (!value_as_integer(parser, value, &left)) {
                 return integer_value(0);
             }
             parser->cursor += 2;
             right_value = parse_bitwise_or_expression(parser);
-            if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
+            if (parser->status != RUSTIC_OK) {
                 return integer_value(0);
             }
-            value = integer_value((left == right) ? 1 : 0);
-        } else if (parser->cursor[0] == '!' && parser->cursor[1] == '=') {
-            if (!value_as_integer(parser, value, &left)) {
-                return integer_value(0);
+            if (value.kind == VALUE_ARRAY) {
+                array = array_from_value(parser, right_value);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
+                    return integer_value(0);
+                }
+                equal = left_array.element_count == array->element_count;
+                for (index = 0; equal && index < left_array.element_count; index++) {
+                    equal = left_array.elements[index] == array->elements[index];
+                }
+            } else {
+                if (!value_as_integer(parser, right_value, &right)) {
+                    return integer_value(0);
+                }
+                equal = left == right;
             }
-            parser->cursor += 2;
-            right_value = parse_bitwise_or_expression(parser);
-            if (parser->status != RUSTIC_OK || !value_as_integer(parser, right_value, &right)) {
-                return integer_value(0);
-            }
-            value = integer_value((left != right) ? 1 : 0);
+            value = integer_value(unequal ? !equal : equal);
         } else if (parser->cursor[0] == '<' && parser->cursor[1] == '=') {
             if (!value_as_integer(parser, value, &left)) {
                 return integer_value(0);

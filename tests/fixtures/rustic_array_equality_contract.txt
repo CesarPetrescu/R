@@ -1,0 +1,19 @@
+# Source => C host result or error diagnostic
+[1, 2] == [1, 2] => 1
+[1, 2] == [2, 1] => 0
+[1, 2] == [1] => 0
+[] == [] => 1
+[] != [1] => 1
+[1] != [1] => 0
+let xs = [1, 2]; let ys = xs; xs == ys => 1
+let xs = [1, 2]; let ys = xs; xs = set(xs, 0, 3); xs != ys => 1
+push([1], 2) == reverse([2, 1]) => 1
+let xs = [1]; xs == { xs = push(xs, 2); [1] } => 1
+let xs = [1]; xs == { xs = push(xs, 2); xs } => 0
+let a = [7]; push([0], 1) == [0, 1] => 1
+0 && ([1] == [2]) => 0
+1 || ([1] != [2]) => 1
+[1] == 1 => error:expected array
+1 != [1] => error:expected integer
+[1] < [2] => error:expected integer
+0 && ([1] == ) => error:expected integer
