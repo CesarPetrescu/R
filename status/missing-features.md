@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Compare first-class named function values with `==`/`!=` by stable declaration identity (not function body or recycled slot); reject expired aliases and mixed operand types with deterministic status, retain lazy skipped comparisons and integer-only ordering, and verify direct C API output preservation/recovery with executable C99 host examples.
 - [x] Compare integer arrays by ordered contents with `==`/`!=`, including independent literals, aliases, mutated bindings and temporaries compacted while evaluating the right operand; retain integer comparisons, reject mixed operand types and ordering on arrays, preserve C API output on failure, and verify cleanup in strict-C99 host fixtures.
 - [x] Resolve user-declared function and binding names before same-named built-ins at call sites, preserving argument-error precedence, scoped restoration, typed noncallable failures, skipped operands and C API output preservation; exercise `fn sum(x) { x + 1 }; sum(2)` in strict-C99 host fixtures.
 - [x] Construct permission masks with checked nonnegative host-`long` `<<`, defining additive/bitwise precedence, accepted count/value bounds, overflow and type diagnostics, grammar-only skipped operands and unchanged C API output; demonstrate composed flags and host-portable boundaries in strict-C99 fixtures.

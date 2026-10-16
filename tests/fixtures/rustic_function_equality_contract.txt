@@ -1,0 +1,19 @@
+# Source => C host result or error diagnostic
+fn f(){1}; let alias=f; f == alias => 1
+fn f(){1}; fn g(){1}; f == g => 0
+fn f(){1}; fn g(){1}; f != g => 1
+fn f(){1}; f != f => 0
+fn f(){1}; let alias=f; { fn f(){2}; alias == f } => 0
+fn f(){1}; let alias=f; f == { alias = f; alias } => 1
+fn f(){1}; let alias=f; f == { alias = 3; alias } => error:expected function
+fn f(){1}; f == 1 => error:expected function
+fn f(){1}; f != [1] => error:expected function
+fn f(){1}; 1 == f => error:expected integer
+fn f(){1}; [1] == f => error:expected array
+let saved=0; { fn temp(){1}; saved=temp; 0 }; fn new(){2}; saved == new => error:undefined identifier
+fn f(){1}; let saved=0; { fn temp(){1}; saved=temp; 0 }; f == saved => error:undefined identifier
+fn f(){1}; f == { 1 / 0 } => error:division by zero
+fn f(){1}; 0 && (f == 1) => 0
+fn f(){1}; 1 || (f != [1]) => 1
+fn f(){1}; 0 && (f == ) => error:expected integer
+fn f(){1}; let i=0; let n=0; while i<65 { n=n+(f==f); i=i+1; }; n => 65
