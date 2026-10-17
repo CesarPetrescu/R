@@ -30,9 +30,17 @@ typedef enum RusticStatus {
     RUSTIC_ERR_INTEGER_OVERFLOW = 21,
     RUSTIC_ERR_IDENTIFIER_TOO_LONG = 22,
     RUSTIC_ERR_DUPLICATE_PARAMETER = 23,
+    RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT = 24,
+    RUSTIC_ERR_DUPLICATE_MATCH_PATTERN = 25,
+    RUSTIC_ERR_DUPLICATE_FUNCTION = 26,
+    RUSTIC_ERR_EXPECTED_FUNCTION = 27,
+    RUSTIC_ERR_INVALID_ARGUMENT = 28,
 } RusticStatus;
 
-/* Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
+/* Nonnegative left shift (<<) checks the count and result against host long's
+ * value bits before shifting; negative operands, sign-bit counts and results
+ * outside LONG_MAX report INTEGER_OVERFLOW without signed-shift UB.
+ * Evaluated expression +, binary -, and * report INTEGER_OVERFLOW when the
  * result is outside host long; / and % report it for LONG_MIN with divisor -1.
  * sum(array), prefix_sum(array), window_sum(array, n),
  * moving_average_sum(array, n), and chunk_sum(array, n) check each
@@ -60,13 +68,25 @@ typedef enum RusticStatus {
  * than aliasing their first 63 characters, including skipped expressions.
  * Repeated names in one function parameter list report DUPLICATE_PARAMETER;
  * different functions and outer bindings may reuse a name.
+ * Repeated function declarations in one scope report DUPLICATE_FUNCTION;
+ * a nested scope may shadow an outer function without replacing it.
+ * Calling a bound integer or array reports EXPECTED_FUNCTION; unknown names
+ * and expired function handles still report UNDEFINED_IDENTIFIER.
+ * Function-value == and != compare stable declaration identity. Expired
+ * handles report UNDEFINED_IDENTIFIER; other right types report
+ * EXPECTED_FUNCTION when the left operand is a live function.
+ * A second wildcard arm in a visited match reports DUPLICATE_MATCH_DEFAULT.
+ * Repeated numeric arms in a visited match report DUPLICATE_MATCH_PATTERN;
+ * signed zero and zero denote the same pattern. Whole skipped matches remain
+ * brace-scanned and do not validate pattern uniqueness.
  * Evaluated and skipped expression-factor nesting is capped at 64 active
  * factors; exceeding it reports STEP_LIMIT_EXCEEDED (also used for the
  * independent 512-step execution budget).
  * Scanning the unreachable remainder of a loop body after break/continue
  * charges one budget step per source byte (including selected match/if paths
  * and their intervening whitespace).
- * On any error, *out_value is left unchanged. */
+ * A NULL source or output pointer reports INVALID_ARGUMENT before parsing.
+ * On any error, a non-NULL *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
 const char *rustic_status_message(RusticStatus status);
 

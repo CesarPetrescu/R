@@ -1,0 +1,11 @@
+# Index expressions may allocate and compact arrays without losing their temporary base.
+[9][len(push([0], 1))-2] => 9
+push([8], 9)[len(push([0], 1))-2] => 8
+{ [42] }[len(concat([0], [1]))-2] => 42
+fn make() { [7] }; make()[len(push([0], 1))-2] => 7
+let a = [9]; a[len(push([0], 1))-2] => 9
+1 && [9][len(push([0], 1))-2] => 1
+0 && [9][len(push([0], 1))-2] => 0
+[9][len(push([0], 1))-1] => error:array index out of bounds
+[9][len(push([0], 1))- => error:expected integer
+[9][len(push([0], 1))-2 => error:expected closing bracket

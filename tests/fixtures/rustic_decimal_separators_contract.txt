@@ -1,0 +1,15 @@
+# Accepted decimal digit separators; invalid placements are not swallowed as digits.
+let limit = 1_000; limit + 2 => 1002
+let xs = [1_0, -2_0]; xs[0] + xs[1] => -10
+fn add(a,b) {a+b}; add(1_0, 2_0) => 30
+match -1_2 { -12 => 1, -1_2 => 2 } => error:duplicate match pattern
+match -1_2 { -1_2 => 7, _ => 0 } => 7
+match 12 { 1_1 => 0, 1_2 => 9 } => 9
+0 && (1_0 / 0) => 0
+1 || [1_0][999] => 1
+1_0_0 + 2 => 102
+1__2 => error:expected semicolon
+1_ => error:expected semicolon
+1_ 2 => error:expected semicolon
+-1__2 => error:expected semicolon
+match 0 { 1__2 => 1, _ => 2 } => error:expected equals

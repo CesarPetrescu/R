@@ -1,0 +1,12 @@
+# Source => integer result or C status message
+fn choose() { 3 }; choose() => 3
+fn choose() { 1 }; fn other() { 2 }; choose() + other() => 3
+fn choose() { 1 }; fn choose() { 2 }; choose() => duplicate function
+fn choose(x) { x }; fn choose(y) { y }; choose(2) => duplicate function
+{ fn choose() { 1 }; fn choose() { 2 }; 4 } => duplicate function
+fn choose() { 1 }; let first = choose; fn choose() { 2 }; first() => duplicate function
+fn choose() { 1 }; { fn choose() { 2 }; choose() } + choose() => 3
+fn choose() { 1 }; { fn choose() { 2 }; choose() }; choose() => 1
+fn choose() { 1 }; fn other() { fn choose() { 2 }; choose() }; other() + choose() => 3
+if 0 { fn choose() { 1 }; fn choose() { 2 }; 3 } else { 7 } => 7
+fn choose() { 1 }; fn choose( { 2 }; 0 => expected identifier

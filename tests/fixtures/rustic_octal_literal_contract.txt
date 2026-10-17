@@ -1,0 +1,20 @@
+# source => integer result or error:diagnostic
+let mode=0o755; (mode & 0o700) == 0o700 => 1
+let mode=0o755; mode & 0o077 => 45
+0o7_55 => 493
+-0o10 => -8
+0o7 + 0b10 + 0xA => 19
+fn permission(mode) { mode & 0o111 }; permission(0o755) => 73
+let modes=[0o755, 0o644]; modes[1] => 420
+match 0o10 { 8 => 1, _ => 0 } => 1
+match -0o10 { -8 => 5, _ => 0 } => 5
+match 8 { 0o10 => 1, 8 => 2 } => error:duplicate match pattern
+0 && 0o7777777777777777777777777777777777777777777 => 0
+1 || -0o7777777777777777777777777777777777777777 => 1
+match 0 { 0 => 3, 0o7777777777777777777777777777777777777777777 => 4 } => error:integer overflow
+0o => error:expected integer
+0o8 => error:expected integer
+0o_7 => error:expected integer
+0o7_ => error:expected semicolon
+0o7__1 => error:expected semicolon
+0O7 => error:expected semicolon

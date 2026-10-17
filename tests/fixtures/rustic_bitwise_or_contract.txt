@@ -1,0 +1,19 @@
+# source => integer result, or error:diagnostic
+let read = 0b0001; let write = 0b0010; let permissions = read | write; permissions & write => 2
+0xA | 0b0101 => 15
+1 | 2 | 4 => 7
+1 | 2 & 2 => 3
+1 + 2 | 4 => 7
+1 | 2 == 3 => 1
+fn permissions(x) { x | 0b0010 }; permissions(0b0001) & 2 => 2
+match 1 { 1 => 1 | 4, _ => 0 } => 5
+let flags = 1; if flags | 2 == 3 { 7 } else { 0 } => 7
+0 && 1 / 0 | 2 => 0
+1 || 1 | (1 / 0) => 1
+0 && 1 | => error:expected integer
+1 | => error:expected integer
+[1] | 1 => error:expected integer
+1 | [1] => error:expected integer
+1 | 2 / 0 => error:division by zero
+1 || 2 => 1
+0 || 2 => 1
