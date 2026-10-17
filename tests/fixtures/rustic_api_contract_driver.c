@@ -360,6 +360,20 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    if (rustic_eval_expression("fn add(a, b,) { a + b }; add(2, 3)", &out) != RUSTIC_OK || out != 5) {
+        return 85;
+    }
+    out = 20;
+    if (rustic_eval_expression("fn bad(x,,) { x }; 1", &out) != RUSTIC_ERR_EXPECTED_IDENTIFIER || out != 20) {
+        return 86;
+    }
+    if (rustic_eval_expression("fn id(x,) { x }; id(7)", &out) != RUSTIC_OK || out != 7) {
+        return 87;
+    }
+    out = 20;
+    if (rustic_eval_expression("fn bad(x, x,) { x }; 1", &out) != RUSTIC_ERR_DUPLICATE_PARAMETER || out != 20) {
+        return 88;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }

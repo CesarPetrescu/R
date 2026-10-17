@@ -10,6 +10,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Add build/lint/test commands and record them in `status/current-state.md`.
 
 ## P1 — implementation depth
+- [x] Accept one optional trailing comma after a nonempty named-function parameter list without adding a parameter or weakening duplicate-name/arity diagnostics; cover nested declarations, recursion, callbacks, invalid comma placement, the eight-parameter cap and unchanged C API output with strict-C99 host examples.
 - [x] Interpret lowercase `0o` octal literals for composed permission-mask programs, signed expressions and evaluated match patterns; accept single between-digit underscores, reject malformed prefixes/host-long overflow, preserve lazy skipped-operand grammar and C API output/recovery, with portable strict-C99 host examples.
 - [x] Compare first-class named function values with `==`/`!=` by stable declaration identity (not function body or recycled slot); reject expired aliases and mixed operand types with deterministic status, retain lazy skipped comparisons and integer-only ordering, and verify direct C API output preservation/recovery with executable C99 host examples.
 - [x] Compare integer arrays by ordered contents with `==`/`!=`, including independent literals, aliases, mutated bindings and temporaries compacted while evaluating the right operand; retain integer comparisons, reject mixed operand types and ordering on arrays, preserve C API output on failure, and verify cleanup in strict-C99 host fixtures.

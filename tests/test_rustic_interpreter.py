@@ -13878,6 +13878,14 @@ def test_c_hosted_rustic_interpreter_evaluates_named_function_call(tmp_path):
     assert result.stdout == f"{source} => 5\n"
 
 
+def test_c_hosted_rustic_interpreter_accepts_trailing_comma_in_function_parameters(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn add(a, b,) { a + b }; add(2, 3)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 5\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_duplicate_function_declarations(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn choose() { 1 }; fn choose() { 2 }; choose()"
@@ -13950,7 +13958,7 @@ def test_c_hosted_rustic_interpreter_function_parameter_contract(tmp_path):
         for line in fixture.read_text(encoding="utf-8").splitlines()
         if line and not line.startswith("#")
     ]
-    assert len(cases) == 11
+    assert len(cases) == 22
     for source, expected in cases:
         result = subprocess.run(
             [str(binary), source], text=True, capture_output=True, timeout=2
