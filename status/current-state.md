@@ -1,6 +1,6 @@
 # R Current State
 
-Last updated: 2026-10-16
+Last updated: 2026-10-17
 
 ## Repository
 
@@ -15,6 +15,7 @@ Last updated: 2026-10-16
 - Example fixture: `tests/fixtures/readiness-repo/` documents expected report behavior and backs CLI tests.
 
 ## Implemented behavior
+- Lowercase `0o` literals express POSIX-style permission masks (`let mode=0o755; (mode & 0o700) == 0o700` returns `1`) in signed expressions, arrays, functions and evaluated match patterns; the shared radix parser accepts single between-digit underscores, checks host-`long` bounds including `LONG_MIN`, and preserves lazy grammar-only skipped expressions. Missing or invalid first digits report `expected integer`; unmatched suffixes retain surrounding syntax errors. The 19-row executable fixture and portable strict-C99 C API driver cover duplicate cross-base match patterns, unchanged output on overflow, and next-call recovery.
 - Function-value `==`/`!=` compare stable declaration identities rather than code text or reusable slots. Aliases remain equal through inner shadowing, distinct declarations are unequal, expired handles return `undefined identifier` even after slot reuse, and a live left function with an integer/array right operand reports `expected function`. Skipped comparisons stay lazy; ordering is integer-only. The 18-row C-host contract and strict-C99 direct C API fixture cover composition, error precedence, output preservation, recovery and 65 repeated comparisons.
 - Integer-array `==`/`!=` compare length and ordered element values, not handles: `[1, 2] == push([1], 2)` returns `1`, and `[1] != [2]` returns `1`. The left array is snapshotted before right-operand evaluation to withstand allocation/compaction and mutable binding updates. Mixed types report `expected array` when the left operand is an array, otherwise `expected integer`; ordering remains integer-only and a second unparenthesized comparison still reports `expected operator`. The 18-row executable fixture, direct strict-C99 C API driver and 65-iteration cleanup test cover value semantics, laziness, diagnostics, unchanged output on failure and recovery.
 - Calls resolve active bindings (including noncallable bindings) and named functions before the built-in helper dispatch. A user-declared `sum(x)` can therefore be called as `sum(2)` while the built-in `sum([1, 2])` is restored after a local declaration leaves scope; argument expressions still parse first, skipped operands do not resolve names, and invalid calls preserve C API output. A 13-row host contract plus a strict-C99 direct C API fixture check callable aliases, shadowing, diagnostics and recovery.
@@ -190,6 +191,7 @@ Last updated: 2026-10-16
 - `LICENSE` declares GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`) terms so distributed and network-served modified versions remain open-source.
 
 ## Verified commands
+The octal permission-mask package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'octal_literal or octal_permission'` for focused strict-C99 host/API, malformed literal and boundary coverage; full host/report/lint/fresh Docker commands below remain required before push.
 The function identity package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'function_equality or compares_function_alias_by_identity or array_equality'` to the focused C99/API matrix; the full host, report, lint and fresh Docker commands below remain required before push.
 The array-equality package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'array_equality or temporary_array_comparisons'` to focused strict-C99 host, direct C API and temporary-cleanup coverage; the full host/report/lint/fresh Docker commands below remain mandatory before push.
 The built-in shadowing package adds `PATH=/usr/bin:$PATH python3 -m pytest -q tests/test_rustic_interpreter.py -k 'builtin_name_shadow or user_function_shadows_builtin'` for focused host and direct C API coverage; full host/report/lint/fresh Docker verification remains mandatory before push.

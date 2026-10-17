@@ -14,10 +14,11 @@ cc -std=c99 -Wall -Wextra -Werror -Iruntime/include runtime/rustic.c tests/fixtu
 /tmp/rustic-expression-demo 'fn add(a, b) { a + b }; add(2, 3)'
 /tmp/rustic-expression-demo 'let offset = -2; let xs = [4, -5, 7]; xs[1] * offset'
 /tmp/rustic-expression-demo 'let n = -2; match n { -2 => 8, _ => 0 }'
+/tmp/rustic-expression-demo 'let mode=0o755; (mode & 0o700) == 0o700'
 /tmp/rustic-expression-demo 'let low = -9223372036854775808; low / 2' # on 64-bit-long hosts
 ```
 
-The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth matches a negative integer arm and prints `8`; the fifth demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
+The first command prints `let x = 2 + 3; x * 4 => 20`; the second exercises a named function; the third prints `10` and demonstrates unary minus in bindings and array elements; the fourth matches a negative integer arm and prints `8`; the fifth prints `1` for a POSIX-style permission mask; the sixth demonstrates direct host `LONG_MIN` parsing and division on a 64-bit-long host. This is a **test host fixture**, not an installed interpreter CLI. It accepts one quoted source argument and prints a status diagnostic to stderr with exit code 2 for an invalid program. See [the driver](tests/fixtures/rustic_expression_driver.c), [the accepted language/API contract](docs/rustic-language-contract.md) and [the C API](runtime/include/rustic.h) to embed it elsewhere: `rustic_eval_expression(const char *source, long *out_value)` returns a `RusticStatus`, and `rustic_status_message(status)` describes failures. The C API returns an integer result, not a general serialized object.
 
 ## Run with Docker
 
@@ -45,7 +46,9 @@ Integer bitwise `|` combines binary permission flags: `let read = 0b0001; let wr
 
 Integer bitwise `&` now composes with readable binary flag masks: `let flags = 0b1010; flags & 0b1100` returns `8`. It binds tighter than comparisons and looser than `+`/`-`; unlike `&&`, it evaluates both integer operands. `&&`/`||` still short-circuit and grammar-check skipped `&` expressions without evaluating them. Missing/non-integer operands return `expected integer`, and failed C API calls preserve the output. See the [17-row host contract](tests/fixtures/rustic_bitwise_and_contract.txt) and [strict-C99 C API fixture](tests/fixtures/rustic_bitwise_and_driver.c). Right shift and unary bitwise NOT remain unsupported; negative operands use the host C `long` representation.
 
-Binary `0b` literals make small flag masks readable: `let flags = 0b1010; flags + 0b0011` returns `13`, while `match -0b10 { -0b10 => 9, _ => 0 }` returns `9`. The prefix must be lowercase and followed by `0` or `1`; single underscores may separate digits. Evaluated values outside host `long` return `integer overflow`, but short-circuited expression operands only check spelling. Octal prefixes remain unsupported. See the [17-row host contract](tests/fixtures/rustic_binary_literal_contract.txt) and [portable direct C API driver](tests/fixtures/rustic_binary_literal_driver.c).
+Binary `0b` literals make small flag masks readable: `let flags = 0b1010; flags + 0b0011` returns `13`, while `match -0b10 { -0b10 => 9, _ => 0 }` returns `9`. The prefix must be lowercase and followed by `0` or `1`; single underscores may separate digits. Evaluated values outside host `long` return `integer overflow`, but short-circuited expression operands only check spelling. Octal `0o` has a separate permission-mask contract below. See the [17-row host contract](tests/fixtures/rustic_binary_literal_contract.txt) and [portable direct C API driver](tests/fixtures/rustic_binary_literal_driver.c).
+Octal permission-mode literals use lowercase `0o` and digits 0–7: `let mode=0o755; (mode & 0o700) == 0o700` returns `1`. They work in signed expressions, arrays, functions and evaluated `match` patterns; single between-digit underscores are allowed (`0o7_55`). Malformed prefixes return `expected integer`, host-`long` overflow returns `integer overflow` without changing C API output, and short-circuited operands only check spelling. See the [19-row host contract](tests/fixtures/rustic_octal_literal_contract.txt) and [portable direct C API driver](tests/fixtures/rustic_octal_literal_driver.c). Uppercase `0O` remains unsupported.
+
 Hexadecimal integer literals are accepted in ordinary expressions and evaluated `match` patterns: `let flags = 0x10; flags + 2` returns `18`, while `match -0xA { -0xA => 9, _ => 0 }` returns `9`. Use lowercase `0x` and at least one hexadecimal digit; A–F may be uppercase or lowercase, with single underscores between digits (`0xF_F`). Signed literals reach host `LONG_MIN` without an intermediate positive overflow. Out-of-range evaluated tokens return `integer overflow`; skipped logical operands check spelling without evaluating magnitude. See the [16-row host contract](tests/fixtures/rustic_hex_literal_contract.txt) and [portable C API driver](tests/fixtures/rustic_hex_literal_driver.c).
 Decimal literals and evaluated `match` patterns now accept underscores between decimal digits, e.g. `let n = 1_000; n + 2` returns `1002`, and `match -1_2 { -1_2 => 7, _ => 0 }` returns `7`. Leading, trailing or doubled underscores are not part of the literal. Host-`long` overflow still returns `integer overflow`, while short-circuited operands do not range-check skipped digits. The [language/API contract](docs/rustic-language-contract.md#embedding-and-failures), [host cases](tests/fixtures/rustic_decimal_separators_contract.txt) and [direct C API test](tests/fixtures/rustic_decimal_separators_driver.c) specify boundaries and error preservation.
 
@@ -122,7 +125,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 602, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 301, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 603, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 302, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -134,7 +137,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 602 |
+| Completed backlog items | 603 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -143,7 +146,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 301 | 0 | None |
+| P1 | 302 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item

@@ -534,6 +534,7 @@ static int integer_digit(char character, unsigned long base) {
 static unsigned long integer_token_base(const char *cursor) {
     if (cursor[0] == '0' && cursor[1] == 'x') return 16UL;
     if (cursor[0] == '0' && cursor[1] == 'b') return 2UL;
+    if (cursor[0] == '0' && cursor[1] == 'o') return 8UL;
     return 10UL;
 }
 
