@@ -5590,6 +5590,11 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 }
                 /* Snapshot before parsing the right side, which can compact array slots. */
                 left_array = *array;
+            } else if (value.kind == VALUE_FUNCTION) {
+                if (function_from_value(parser, value) == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
             } else if (!value_as_integer(parser, value, &left)) {
                 return integer_value(0);
             }
@@ -5608,6 +5613,13 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 for (index = 0; equal && index < left_array.element_count; index++) {
                     equal = left_array.elements[index] == array->elements[index];
                 }
+            } else if (value.kind == VALUE_FUNCTION) {
+                if (function_from_value(parser, right_value) == NULL) {
+                    parser->status = right_value.kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
+                    return integer_value(0);
+                }
+                equal = value.function_id == right_value.function_id;
             } else {
                 if (!value_as_integer(parser, right_value, &right)) {
                     return integer_value(0);

@@ -72,6 +72,9 @@ typedef enum RusticStatus {
  * a nested scope may shadow an outer function without replacing it.
  * Calling a bound integer or array reports EXPECTED_FUNCTION; unknown names
  * and expired function handles still report UNDEFINED_IDENTIFIER.
+ * Function-value == and != compare stable declaration identity. Expired
+ * handles report UNDEFINED_IDENTIFIER; other right types report
+ * EXPECTED_FUNCTION when the left operand is a live function.
  * A second wildcard arm in a visited match reports DUPLICATE_MATCH_DEFAULT.
  * Repeated numeric arms in a visited match report DUPLICATE_MATCH_PATTERN;
  * signed zero and zero denote the same pattern. Whole skipped matches remain
