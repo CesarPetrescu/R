@@ -32,6 +32,52 @@ def compile_rustic_driver(tmp_path: Path) -> Path:
     return binary
 
 
+def test_c_hosted_rustic_interpreter_calls_parenthesized_function_value(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn increment(x) { x + 1 }; (increment)(2)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_skips_unevaluated_function_value_call_arity(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "fn f(){1}; 0 && (f)(1,2,3,4,5,6,7,8,9)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert result.stdout == f"{source} => 0\n"
+
+
+def test_c_hosted_rustic_interpreter_function_expression_call_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_function_expression_call_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 17
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_function_expression_call_c_api(tmp_path):
+    binary = tmp_path / "rustic-function-expression-call-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_function_expression_call_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_compares_function_alias_by_identity(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn f(){1}; let alias=f; f == alias"

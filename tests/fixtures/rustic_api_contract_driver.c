@@ -193,8 +193,8 @@ int main(void) {
     if (rustic_eval_expression("while 0 { 1 } [2][0]", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20) {
         return 45;
     }
-    if (rustic_eval_expression("1 (2)", &out) != RUSTIC_ERR_EXPECTED_SEMICOLON || out != 20 ||
-            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_SEMICOLON), "expected semicolon") != 0) {
+    if (rustic_eval_expression("1 (2)", &out) != RUSTIC_ERR_EXPECTED_FUNCTION || out != 20 ||
+            strcmp(rustic_status_message(RUSTIC_ERR_EXPECTED_FUNCTION), "expected function") != 0) {
         return 42;
     }
     if (rustic_eval_expression("match 0 { 0 => 7, _ => 8 }", &out) != RUSTIC_OK || out != 7) {

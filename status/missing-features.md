@@ -314,6 +314,7 @@ Prioritized backlog for autonomous implementation.
 - [x] Reject identifiers longer than 63 characters with a distinct C API status instead of silently truncating/aliasing bindings or functions; cover declarations, references, assignments, calls, parameters, skipped expressions, valid boundary and output preservation.
 - [x] Diagnose repeated numeric patterns in evaluated `match` arms, even after an earlier match, with `RUSTIC_ERR_DUPLICATE_MATCH_PATTERN`; cover signed-zero aliases, nesting, lazy whole matches, unchanged C API output and a separate step-budget fixture of distinct arms.
 - [x] Allow `name[index] = integer` for bound arrays as copy-on-write element assignment; preserve aliases, evaluate the index only once, check type/bounds, keep the base live through nested allocations, and preserve C API output on failure with a host fixture.
+- [x] Call expression-produced function values such as `(f)(2)` and `choose()(2)` with the named-call argument/arity rules; preserve array arguments across nested allocation, short-circuit grammar without evaluation, stale-handle diagnostics and unchanged C API output on failure.
 
 ## P2 — project quality
 

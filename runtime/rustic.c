@@ -755,6 +755,52 @@ static struct Value parse_while_statement(struct Parser *parser) {
     return value;
 }
 
+static struct Value invoke_user_function(struct Parser *parser, struct Function *function,
+                                         struct Value *arguments, size_t argument_count) {
+    const char *call_return;
+    size_t saved_loop_depth;
+    enum LoopControl saved_loop_control;
+    size_t index;
+    struct Value value;
+
+    if (argument_count != function->parameter_count) {
+        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+        return integer_value(0);
+    }
+    call_return = parser->cursor;
+    parser->cursor = function->body_start;
+    saved_loop_depth = parser->loop_depth;
+    saved_loop_control = parser->loop_control;
+    parser->loop_depth = 0;
+    parser->loop_control = LOOP_CONTROL_NONE;
+    push_scope(parser);
+    for (index = 0; index < argument_count; index++) {
+        add_binding(parser, function->parameters[index], arguments[index]);
+        if (parser->status != RUSTIC_OK) {
+            break;
+        }
+    }
+    if (parser->status == RUSTIC_OK) {
+        value = parse_statement_sequence(parser, '}');
+        if (parser->status == RUSTIC_OK) {
+            skip_spaces(parser);
+            if (parser->cursor != function->body_end) {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
+            }
+        }
+    }
+    if (parser->status == RUSTIC_OK) {
+        pop_scope_preserving_value(parser, &value);
+    } else {
+        pop_scope(parser);
+        value = integer_value(0);
+    }
+    parser->cursor = call_return;
+    parser->loop_depth = saved_loop_depth;
+    parser->loop_control = saved_loop_control;
+    return value;
+}
+
 static struct Value parse_index_postfix(struct Parser *parser, struct Value value) {
     struct ArrayValue *array;
     struct Value index_value;
@@ -763,6 +809,77 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
     while (parser->status == RUSTIC_OK) {
         if (!skip_spaces_after_loop_control(parser)) {
             return integer_value(0);
+        }
+        if (*parser->cursor == '(') {
+            struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
+            size_t argument_count = 0;
+            struct Function *function;
+
+            parser->cursor++;
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                while (parser->status == RUSTIC_OK) {
+                    struct Value *saved_roots = parser->array_roots;
+                    size_t saved_count = parser->array_root_count;
+                    struct Value roots[RUSTIC_MAX_ARRAY_ROOTS];
+                    size_t root_index;
+                    if (argument_count >= RUSTIC_MAX_PARAMETERS) {
+                        parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
+                        return integer_value(0);
+                    }
+                    if (saved_count + argument_count > RUSTIC_MAX_ARRAY_ROOTS) {
+                        parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                        return integer_value(0);
+                    }
+                    for (root_index = 0; root_index < saved_count; root_index++) {
+                        roots[root_index] = saved_roots[root_index];
+                    }
+                    for (root_index = 0; root_index < argument_count; root_index++) {
+                        roots[saved_count + root_index] = arguments[root_index];
+                    }
+                    parser->array_roots = roots;
+                    parser->array_root_count = saved_count + argument_count;
+                    arguments[argument_count] = parse_expression(parser);
+                    for (root_index = 0; root_index < saved_count; root_index++) {
+                        saved_roots[root_index] = roots[root_index];
+                    }
+                    for (root_index = 0; root_index < argument_count; root_index++) {
+                        arguments[root_index] = roots[saved_count + root_index];
+                    }
+                    parser->array_roots = saved_roots;
+                    parser->array_root_count = saved_count;
+                    argument_count++;
+                    if (parser->status != RUSTIC_OK) {
+                        return integer_value(0);
+                    }
+                    skip_spaces(parser);
+                    if (*parser->cursor != ',') {
+                        break;
+                    }
+                    parser->cursor++;
+                    skip_spaces(parser);
+                    if (*parser->cursor == ')') {
+                        break;
+                    }
+                }
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != ')') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return integer_value(0);
+            }
+            parser->cursor++;
+            if (value.kind != VALUE_FUNCTION) {
+                parser->status = RUSTIC_ERR_EXPECTED_FUNCTION;
+                return integer_value(0);
+            }
+            function = function_from_value(parser, value);
+            if (function == NULL) {
+                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                return integer_value(0);
+            }
+            value = invoke_user_function(parser, function, arguments, argument_count);
+            continue;
         }
         if (*parser->cursor != '[') {
             return value;
@@ -1006,14 +1123,10 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
     size_t argument_count;
-    size_t index;
     struct Value value = integer_value(0);
     long integer;
 
     struct Function *function;
-    const char *call_return;
-    size_t saved_loop_depth;
-    enum LoopControl saved_loop_control;
 
     skip_spaces(parser);
     if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
@@ -5282,49 +5395,7 @@ resolve_named_call:
                     return integer_value(0);
                 }
             }
-            if (argument_count != function->parameter_count) {
-                parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
-                return integer_value(0);
-            }
-
-            call_return = parser->cursor;
-            parser->cursor = function->body_start;
-            saved_loop_depth = parser->loop_depth;
-            saved_loop_control = parser->loop_control;
-            parser->loop_depth = 0;
-            parser->loop_control = LOOP_CONTROL_NONE;
-            push_scope(parser);
-            for (index = 0; index < argument_count; index++) {
-                add_binding(parser, function->parameters[index], arguments[index]);
-                if (parser->status != RUSTIC_OK) {
-                    pop_scope(parser);
-                    parser->cursor = call_return;
-                    parser->loop_depth = saved_loop_depth;
-                    parser->loop_control = saved_loop_control;
-                    return integer_value(0);
-                }
-            }
-            value = parse_statement_sequence(parser, '}');
-            if (parser->status != RUSTIC_OK) {
-                pop_scope(parser);
-                parser->cursor = call_return;
-                parser->loop_depth = saved_loop_depth;
-                parser->loop_control = saved_loop_control;
-                return integer_value(0);
-            }
-            skip_spaces(parser);
-            if (parser->cursor != function->body_end) {
-                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACE;
-                pop_scope(parser);
-                parser->cursor = call_return;
-                parser->loop_depth = saved_loop_depth;
-                parser->loop_control = saved_loop_control;
-                return integer_value(0);
-            }
-            pop_scope_preserving_value(parser, &value);
-            parser->cursor = call_return;
-            parser->loop_depth = saved_loop_depth;
-            parser->loop_control = saved_loop_control;
+            value = invoke_user_function(parser, function, arguments, argument_count);
             return parse_index_postfix(parser, value);
         }
         if (!lookup_binding(parser, name, &value)) {
@@ -5686,6 +5757,27 @@ static int skip_expression_operand(struct Parser *parser);
 static int skip_index_postfix(struct Parser *parser) {
     while (parser->status == RUSTIC_OK) {
         skip_spaces(parser);
+        if (*parser->cursor == '(') {
+            parser->cursor++;
+            skip_spaces(parser);
+            while (*parser->cursor != ')') {
+                if (!skip_expression_operand(parser)) {
+                    return 0;
+                }
+                skip_spaces(parser);
+                if (*parser->cursor != ',') {
+                    break;
+                }
+                parser->cursor++;
+                skip_spaces(parser);
+            }
+            if (*parser->cursor != ')') {
+                parser->status = RUSTIC_ERR_EXPECTED_CLOSING_PAREN;
+                return 0;
+            }
+            parser->cursor++;
+            continue;
+        }
         if (*parser->cursor != '[') {
             return 1;
         }

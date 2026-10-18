@@ -13,6 +13,6 @@ while 0 { 1 } -2 => error:expected semicolon
 while 0 { 1 }; [2][0] => 2
 while 0 { 1 } [2][0] => error:expected semicolon
 while 0 { 1 } @ => error:trailing input
-1 (2) => error:expected semicolon
+1 (2) => error:expected function
 1 { 2 } => error:expected semicolon
 1 @ 2 => error:trailing input
