@@ -32,6 +32,45 @@ def compile_rustic_driver(tmp_path: Path) -> Path:
     return binary
 
 
+def test_c_hosted_rustic_interpreter_reports_noncallable_map_callback(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "map([1, 2], 7)"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 2
+    assert result.stdout == ""
+    assert result.stderr == f"expected function: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_callback_type_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_callback_type_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 24
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_callback_type_c_api(tmp_path):
+    binary = tmp_path / "rustic-callback-type-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_callback_type_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_compares_function_alias_by_identity(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn f(){1}; let alias=f; f == alias"
@@ -8869,7 +8908,7 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_reverse_take_arguments(tmp_
         "histogram_distance_score([1], [1, 2], [])": "array length mismatch",
         "histogram_distance_score([1], [1])": "wrong argument count",
         "weighted_score(1, 1)": "expected array",
-        "weighted_score([1], 1)": "undefined identifier",
+        "weighted_score([1], 1)": "expected function",
         "fn add(x, y) { x + y }; weighted_score([1], add)": "wrong argument count",
         "fn returns_array(x) { [x] }; weighted_score([1], returns_array)": "expected integer",
         "weighted_score([1])": "wrong argument count",
@@ -12882,11 +12921,11 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_map_filter_arguments(tmp_pa
         "fn id(x) { x }; partition_count(1, id)": "expected array",
         "fn both(i, x) { x }; map_indexed(1, both)": "expected array",
         "fn both(i, x) { x }; filter_indexed(1, both)": "expected array",
-        "map([1], 1)": "undefined identifier",
-        "filter([1], 1)": "undefined identifier",
-        "partition_count([1], 1)": "undefined identifier",
-        "map_indexed([1], 1)": "undefined identifier",
-        "filter_indexed([1], 1)": "undefined identifier",
+        "map([1], 1)": "expected function",
+        "filter([1], 1)": "expected function",
+        "partition_count([1], 1)": "expected function",
+        "map_indexed([1], 1)": "expected function",
+        "filter_indexed([1], 1)": "expected function",
         "fn bad(x, y) { x }; map([1], bad)": "wrong argument count",
         "fn bad(x, y) { x }; filter([1], bad)": "wrong argument count",
         "fn bad(x, y) { x }; partition_count([1], bad)": "wrong argument count",
@@ -13077,7 +13116,7 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_zip_with_arguments(tmp_path
     cases = {
         "fn add(x, y) { x + y }; zip_with(1, [2], add)": "expected array",
         "fn add(x, y) { x + y }; zip_with([1], 2, add)": "expected array",
-        "zip_with([1], [2], 1)": "undefined identifier",
+        "zip_with([1], [2], 1)": "expected function",
         "fn bad(x) { x }; zip_with([1], [2], bad)": "wrong argument count",
         "fn bad(x, y) { [x] }; zip_with([1], [2], bad)": "expected integer",
         "fn add(x, y) { x + y }; zip_with([1], [2])": "wrong argument count",
@@ -13426,7 +13465,7 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_fold_arguments(tmp_path):
     cases = {
         "fn add(acc, x) { acc + x }; fold(1, 0, add)": "expected array",
         "fn add(acc, x) { acc + x }; fold([1], [0], add)": "expected integer",
-        "fold([1], 0, 1)": "undefined identifier",
+        "fold([1], 0, 1)": "expected function",
         "fn bad(x) { x }; fold([1], 0, bad)": "wrong argument count",
         "fn bad(acc, x) { [x] }; fold([1], 0, bad)": "expected integer",
         "fn add(acc, x) { acc + x }; fold([1], 0)": "wrong argument count",

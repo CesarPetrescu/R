@@ -1540,7 +1540,8 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 }
                 predicate = function_from_value(parser, arguments[1]);
                 if (predicate == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    parser->status = arguments[1].kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
                     return integer_value(0);
                 }
                 if (predicate->parameter_count != 1) {
@@ -1589,7 +1590,8 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 }
                 transform = function_from_value(parser, arguments[1]);
                 if (transform == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    parser->status = arguments[1].kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
                     return integer_value(0);
                 }
                 if (transform->parameter_count != (indexed ? 2u : 1u)) {
@@ -1672,7 +1674,8 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 }
                 zipper = function_from_value(parser, arguments[2]);
                 if (zipper == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    parser->status = arguments[2].kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
                     return integer_value(0);
                 }
                 if (zipper->parameter_count != 2) {
@@ -1739,7 +1742,8 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 }
                 reducer = function_from_value(parser, arguments[2]);
                 if (reducer == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    parser->status = arguments[2].kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
                     return integer_value(0);
                 }
                 if (reducer->parameter_count != 2) {
@@ -4805,7 +4809,8 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 }
                 weighter = function_from_value(parser, arguments[1]);
                 if (weighter == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    parser->status = arguments[1].kind == VALUE_FUNCTION ?
+                        RUSTIC_ERR_UNDEFINED_IDENTIFIER : RUSTIC_ERR_EXPECTED_FUNCTION;
                     return integer_value(0);
                 }
                 if (weighter->parameter_count != 1) {
