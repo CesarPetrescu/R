@@ -23,5 +23,12 @@ int main(void) {
     if (rustic_eval_expression("let xs = [4]; len(xs)", &result) != RUSTIC_OK || result != 1) {
         return 6;
     }
+    if (rustic_eval_expression("let sum=0; { fn sum(x){x+1}; sum() }", &result) !=
+            RUSTIC_ERR_WRONG_ARGUMENT_COUNT || result != 1) {
+        return 7;
+    }
+    if (rustic_eval_expression("let sum=0; { fn sum(x){x+1}; sum(2) }", &result) != RUSTIC_OK || result != 3) {
+        return 8;
+    }
     return 0;
 }

@@ -195,31 +195,16 @@ static int cursor_starts_keyword(const struct Parser *parser, const char *keywor
            !is_identifier_continue(parser->cursor[length]);
 }
 
-static int lookup_binding(const struct Parser *parser, const char *name, struct Value *out_value) {
-    size_t index;
-
-    for (index = parser->binding_count; index > 0; index--) {
-        const struct Binding *binding = &parser->bindings[index - 1];
-        if (strcmp(binding->name, name) == 0) {
-            *out_value = binding->value;
-            return 1;
-        }
-    }
-    return 0;
-}
-
-static int update_binding(struct Parser *parser, const char *name, struct Value value) {
+static struct Binding *lookup_binding(struct Parser *parser, const char *name) {
     size_t index;
 
     for (index = parser->binding_count; index > 0; index--) {
         struct Binding *binding = &parser->bindings[index - 1];
         if (strcmp(binding->name, name) == 0) {
-            binding->value = value;
-            return 1;
+            return binding;
         }
     }
-    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-    return 0;
+    return NULL;
 }
 
 static void add_binding(struct Parser *parser, const char *name, struct Value value) {
@@ -245,6 +230,27 @@ static struct Function *lookup_function(struct Parser *parser, const char *name)
         }
     }
     return NULL;
+}
+
+struct NameLookup {
+    struct Binding *binding;
+    struct Function *function;
+};
+
+static struct NameLookup lookup_name(struct Parser *parser, const char *name) {
+    struct NameLookup target;
+
+    target.binding = lookup_binding(parser, name);
+    target.function = lookup_function(parser, name);
+    if (target.binding != NULL && target.function != NULL) {
+        /* Nearer scopes win, with the existing binding preference at equal depth. */
+        if (target.binding->scope_depth >= target.function->scope_depth) {
+            target.function = NULL;
+        } else {
+            target.binding = NULL;
+        }
+    }
+    return target;
 }
 
 static struct Function *function_from_value(struct Parser *parser, struct Value value) {
@@ -1008,6 +1014,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     size_t argument_count;
     size_t index;
     struct Value value = integer_value(0);
+    struct NameLookup target;
     long integer;
 
     struct Function *function;
@@ -1140,8 +1147,22 @@ static struct Value parse_factor_impl(struct Parser *parser) {
             }
             parser->cursor++;
 
-            /* Local bindings and functions take precedence over built-ins. */
-            if (lookup_binding(parser, name, &value) || lookup_function(parser, name) != NULL) {
+            /* Resolve after evaluating arguments, before trying built-ins. */
+            target = lookup_name(parser, name);
+            function = target.function;
+            if (target.binding != NULL) {
+                value = target.binding->value;
+                if (value.kind != VALUE_FUNCTION) {
+                    parser->status = RUSTIC_ERR_EXPECTED_FUNCTION;
+                    return integer_value(0);
+                }
+                function = function_from_value(parser, value);
+                if (function == NULL) {
+                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+                    return integer_value(0);
+                }
+            }
+            if (function != NULL) {
                 goto resolve_named_call;
             }
 
@@ -5264,24 +5285,10 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 return parse_index_postfix(parser, value);
             }
 
+            parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+            return integer_value(0);
+
 resolve_named_call:
-            if (lookup_binding(parser, name, &value)) {
-                if (value.kind != VALUE_FUNCTION) {
-                    parser->status = RUSTIC_ERR_EXPECTED_FUNCTION;
-                    return integer_value(0);
-                }
-                function = function_from_value(parser, value);
-                if (function == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-                    return integer_value(0);
-                }
-            } else {
-                function = lookup_function(parser, name);
-                if (function == NULL) {
-                    parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-                    return integer_value(0);
-                }
-            }
             if (argument_count != function->parameter_count) {
                 parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                 return integer_value(0);
@@ -5327,13 +5334,14 @@ resolve_named_call:
             parser->loop_control = saved_loop_control;
             return parse_index_postfix(parser, value);
         }
-        if (!lookup_binding(parser, name, &value)) {
-            function = lookup_function(parser, name);
-            if (function == NULL) {
-                parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
-                return integer_value(0);
-            }
-            value = function_value((size_t)(function - parser->functions), function->id);
+        target = lookup_name(parser, name);
+        if (target.binding != NULL) {
+            value = target.binding->value;
+        } else if (target.function != NULL) {
+            value = function_value((size_t)(target.function - parser->functions), target.function->id);
+        } else {
+            parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
+            return integer_value(0);
         }
         return parse_index_postfix(parser, value);
     }
@@ -6206,6 +6214,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
     struct Value value;
     struct Value existing_value;
+    struct Binding *binding;
 
     if (!is_identifier_start(*parser->cursor)) {
         return 0;
@@ -6246,10 +6255,12 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
             long index, element;
             size_t root_index;
 
-            if (!lookup_binding(parser, name, &existing_value)) {
+            binding = lookup_name(parser, name).binding;
+            if (binding == NULL) {
                 parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
                 return 1;
             }
+            existing_value = binding->value;
             if (array_from_value(parser, existing_value) == NULL) {
                 parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
                 return 1;
@@ -6309,7 +6320,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
             rebuilt_array->under_construction = 0;
             rebuilt_array->elements[index] = element;
             existing_value = array_value(parser->array_count++, rebuilt_array->id);
-            update_binding(parser, name, existing_value);
+            binding->value = existing_value;
             compact_unreferenced_arrays(parser, &existing_value);
             *out_value = integer_value(element);
             return 1;
@@ -6323,7 +6334,8 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     }
     parser->cursor++;
 
-    if (!lookup_binding(parser, name, &existing_value)) {
+    binding = lookup_name(parser, name).binding;
+    if (binding == NULL) {
         parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
         return 1;
     }
@@ -6333,7 +6345,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
         return 1;
     }
 
-    update_binding(parser, name, value);
+    binding->value = value;
     compact_unreferenced_arrays(parser, &value);
     *out_value = value;
     return 1;
