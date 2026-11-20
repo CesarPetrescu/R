@@ -70,6 +70,33 @@ def test_c_hosted_rustic_interpreter_function_equality_c_api(tmp_path):
     assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
 
 
+def test_c_hosted_rustic_interpreter_array_statement_result_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_statement_result_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 13
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_releases_superseded_array_statement_results(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    # Fill all but one array slot, then replace an unbound statement result.
+    bindings = "".join(f"let xs{index} = []; " for index in range(63))
+    source = bindings + "[5]; [7][0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
 def test_c_hosted_rustic_interpreter_compares_array_contents_with_equality(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let a = [1, 2]; let b = [1, 2]; a == b"
