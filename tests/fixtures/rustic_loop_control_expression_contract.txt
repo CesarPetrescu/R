@@ -1,0 +1,19 @@
+# Selected loop transfers discard in-progress expressions, not completed effects.
+let x=3; while 1 { x=({ break; } + (1 / 0)); }; x => 3
+let x=3; while 1 { x=-{ x=4; break; } + (1 / 0); }; x => 4
+let x=3; while 1 { x=len([0], { break; }, 1 / 0); }; x => 3
+let x=3; fn f(n){ x=n; 1 / 0 }; while 1 { x=f({ break; }); }; x => 3
+let x=3; while 1 { x=[{ break; }, 1 / 0][0]; }; x => 3
+let x=3; while 1 { x=[1][{ break; }][1 / 0]; }; x => 3
+let x=3; while 1 { x={ break; }[1 / 0]; }; x => 3
+let xs=[3]; while 1 { xs[{ break; }]=1 / 0; }; xs[0] => 3
+let xs=[3]; while 1 { xs[0]={ break; }; }; xs[0] => 3
+let x=3; while 1 { if { break; } { x=9; } else { x=8; }; }; x => 3
+let x=3; while 1 { match { break; } { _ => { x=9; } }; }; x => 3
+let x=3; while 1 { while { break; } { x=9; }; x=8; }; x => 3
+let x=3; while 1 { x=if 0 && { break; } { 99 } else { 4 }; break; }; x => 4
+let x=3; while 1 { x={ 1 / 0; break; }; }; x => error:division by zero
+let n=0;while n<65{n=n+1;[{continue;}];};n => 65
+while 1 { let x={ break; }; { 7 }; 1 => error:expected closing brace
+let n=0; while n<2 { n=n+1; while 1 { 7; break; }; }; n => 2
+while 1 { 7; 3 + { break; }; } => 7

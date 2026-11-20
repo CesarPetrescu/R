@@ -360,6 +360,17 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    {
+        char skipped[640];
+        int written = snprintf(skipped, sizeof(skipped), "let x=3; while 1 { x=({ break; });%512s9; }; x", "");
+        if (written < 0 || (size_t)written >= sizeof(skipped) ||
+                rustic_eval_expression(skipped, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 42) {
+            return 95;
+        }
+    }
+    if (rustic_eval_expression("let x=3; while 1 { x=({ break; }); 9; }; x", &out) != RUSTIC_OK || out != 3) {
+        return 96;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }

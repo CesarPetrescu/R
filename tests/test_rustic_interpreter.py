@@ -1661,6 +1661,67 @@ def test_c_hosted_rustic_interpreter_loop_control_stops_remaining_loop_body_stat
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_break_abandons_assignment(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let x=3; while 1 { x={ break; }; x=9; }; x"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_continue_abandons_let_initializer(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let n=0; while n<2 { n=n+1; let ignored={ continue; }; 1 / 0; }; n"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 2\n"
+
+
+def test_c_hosted_rustic_interpreter_loop_control_abandons_operators(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    expressions = (
+        "{ break; } + (1 / 0)",
+        "7 / { break; }",
+        "7 % { break; }",
+        "2 * { break; } << (1 / 0)",
+        "1 - { break; } | (1 / 0)",
+        "1 + { break; } ^ (1 / 0)",
+        "1 << { break; } & (1 / 0)",
+        "1 & { break; } == (1 / 0)",
+        "1 ^ { break; } != (1 / 0)",
+        "1 | { break; } > (1 / 0)",
+        "[] == { break; }",
+        "1 < { break; } || (1 / 0)",
+        "1 <= { break; } && (1 / 0)",
+        "1 >= { break; } == 0",
+        "1 > { break; } || (1 / 0)",
+        "1 && { break; } || (1 / 0)",
+        "0 || { break; } || (1 / 0)",
+    )
+    for expr in expressions:
+        source = f"let x=3; while 1 {{ x={expr}; 1 / 0; }}; x"
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=5)
+        assert result.returncode == 0, (expr, result.stderr)
+        assert result.stdout == f"{source} => 3\n"
+
+
+def test_c_hosted_rustic_interpreter_loop_control_abandons_nested_expressions(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_loop_control_expression_contract.txt"
+    cases = [line.rsplit(" => ", 1) for line in fixture.read_text().splitlines()
+             if line and not line.startswith("#")]
+    assert len(cases) == 18
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=5)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result.stderr)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_loop_control_from_called_function(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
