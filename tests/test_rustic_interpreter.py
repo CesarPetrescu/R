@@ -97,6 +97,16 @@ def test_c_hosted_rustic_interpreter_releases_superseded_array_statement_results
     assert result.stdout == f"{source} => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_releases_superseded_array_result_before_while(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    # The while condition needs the only slot not held by a binding.
+    bindings = "".join(f"let xs{index} = []; " for index in range(63))
+    source = bindings + "[5]; while [1][0] { break; }; 7"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 7\n"
+
+
 def test_c_hosted_rustic_interpreter_compares_array_contents_with_equality(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let a = [1, 2]; let b = [1, 2]; a == b"

@@ -6452,25 +6452,6 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             continue;
         }
 
-        if (cursor_starts_keyword(parser, "while")) {
-            value = parse_while_statement(parser);
-            if (parser->status != RUSTIC_OK) {
-                return integer_value(0);
-            }
-            saw_statement = 1;
-            saw_value = 1;
-
-            skip_spaces(parser);
-            if (*parser->cursor != ';') {
-                if (starts_adjacent_statement(parser->cursor)) {
-                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
-                }
-                return value;
-            }
-            parser->cursor++;
-            continue;
-        }
-
         if (cursor_starts_keyword(parser, "break")) {
             parse_loop_control_statement(parser, LOOP_CONTROL_BREAK);
             saw_statement = 1;
