@@ -1,0 +1,17 @@
+# Within active scopes, the nearest name wins; bindings win ties.
+let f=0; { fn f(){2}; f() } => 2
+fn f(){1}; let f=0; let inner={fn f(){2}; f()}; inner * 10 + f => 20
+let inc=0; { fn inc(x){x+1}; sum(map([1,2], inc)) } => 5
+let op=0; { fn op(x){x+1}; let alias=op; alias(4) } => 5
+let f=0; { fn f(){2}; f == f } => 1
+let sum=0; { fn sum(x){x+1}; sum(2) } => 3
+{ let sum=0; {fn sum(x){x+1}; sum(2)} }; sum([2,3]) => 5
+fn f(){2}; {let f=[1]; f[0]} + f() => 3
+let f=0; { fn f(){2}; { let f=9; f() } } => error:expected function
+let f=0; { fn f(){2}; f() }; f() => error:expected function
+let f=0; { fn f(x){x}; f() } => error:wrong argument count
+let f=0; { fn f(x){x}; f(1/0) } => error:division by zero
+let f=0; { fn f(){2}; 0 && f(1/0) } => 0
+fn f(){2}; let f=9; f() => error:expected function
+let f=9; fn f(){2}; f => 9
+let g={let f=0; {fn f(){2}; f}}; fn later(){9}; g() => error:undefined identifier

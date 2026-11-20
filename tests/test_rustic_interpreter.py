@@ -124,6 +124,43 @@ def test_c_hosted_rustic_interpreter_user_function_shadows_builtin(tmp_path):
     assert result.stdout == f"{source} => 3\n"
 
 
+def test_c_hosted_rustic_interpreter_calls_function_in_nearer_scope(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "let f=0; { fn f(){2}; f() }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 2\n"
+
+
+def test_c_hosted_rustic_interpreter_does_not_assign_to_shadowed_binding(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    for source in (
+        "let f=0; { fn f(){2}; f=9 }; f",
+        "let f=[0]; { fn f(){2}; f[0]=9 }; f[0]",
+    ):
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        assert result.returncode == 2, (source, result)
+        assert result.stdout == ""
+        assert result.stderr == f"undefined identifier: {source}\n"
+
+
+def test_c_hosted_rustic_interpreter_nearest_scope_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_nearest_scope_contract.txt"
+    cases = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+             if row and not row.startswith("#")]
+    assert len(cases) == 16
+    for source, expected in cases:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_builtin_name_shadow_contract(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_builtin_shadow_contract.txt"

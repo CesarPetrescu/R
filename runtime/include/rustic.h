@@ -70,6 +70,8 @@ typedef enum RusticStatus {
  * different functions and outer bindings may reuse a name.
  * Repeated function declarations in one scope report DUPLICATE_FUNCTION;
  * a nested scope may shadow an outer function without replacing it.
+ * Name lookup prefers the nearest active scope; bindings win same-scope ties
+ * with functions. A name resolving to a function is not an assignment target.
  * Calling a bound integer or array reports EXPECTED_FUNCTION; unknown names
  * and expired function handles still report UNDEFINED_IDENTIFIER.
  * Function-value == and != compare stable declaration identity. Expired
