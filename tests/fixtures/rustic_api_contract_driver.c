@@ -360,6 +360,14 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    if (rustic_eval_expression("sum({ [5]; let marker = push([0], 1); }) / 0", &out) !=
+            RUSTIC_ERR_DIVISION_BY_ZERO || out != 42) {
+        return 85;
+    }
+    if (rustic_eval_expression("{ [5]; let marker = push([0], 1); }[0]", &out) !=
+            RUSTIC_OK || out != 5) {
+        return 86;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }
