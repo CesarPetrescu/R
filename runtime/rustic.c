@@ -580,20 +580,61 @@ static int parse_integer_token(struct Parser *parser, long *out_integer) {
     return 1;
 }
 
-static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int *out_is_default) {
+struct MatchPatterns {
+    long values[RUSTIC_MAX_STEPS];
+    size_t count;
+    int seen_default;
+};
+
+static int parse_match_arm_patterns(struct Parser *parser, long scrutinee,
+                                    struct MatchPatterns *seen, int *out_matches) {
+    RusticStatus duplicate = RUSTIC_OK;
+
     skip_spaces(parser);
-    *out_is_default = 0;
+    *out_matches = 0;
     if (*parser->cursor == '_') {
         parser->cursor++;
-        *out_is_default = 1;
-    } else if (isdigit((unsigned char)*parser->cursor) ||
-               (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
-        if (!parse_integer_token(parser, out_pattern)) {
-            return 0;
+        *out_matches = 1;
+        if (seen->seen_default) {
+            duplicate = RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT;
         }
+        seen->seen_default = 1;
     } else {
-        parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
-        return 0;
+        for (;;) {
+            long pattern;
+            size_t index;
+
+            if (!isdigit((unsigned char)*parser->cursor) &&
+                !(*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                return 0;
+            }
+            if (!parse_integer_token(parser, &pattern)) {
+                return 0;
+            }
+            for (index = 0; index < seen->count; index++) {
+                if (seen->values[index] == pattern) {
+                    duplicate = RUSTIC_ERR_DUPLICATE_MATCH_PATTERN;
+                    break;
+                }
+            }
+            if (index == seen->count) {
+                /* Every stored literal has already consumed a step. */
+                seen->values[seen->count++] = pattern;
+            }
+            if (pattern == scrutinee) {
+                *out_matches = 1;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor != '|') {
+                break;
+            }
+            if (!consume_step(parser)) {
+                return 0;
+            }
+            parser->cursor++;
+            skip_spaces(parser);
+        }
     }
 
     skip_spaces(parser);
@@ -602,6 +643,11 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
         return 0;
     }
     parser->cursor += 2;
+    /* As for single-literal arms, syntax errors precede duplicate diagnostics. */
+    if (duplicate != RUSTIC_OK) {
+        parser->status = duplicate;
+        return 0;
+    }
     return 1;
 }
 
@@ -609,15 +655,13 @@ static struct Value parse_match_expression(struct Parser *parser) {
     struct Value scrutinee_value;
     struct Value value = integer_value(0);
     size_t skipped_depth;
-    long seen_patterns[RUSTIC_MAX_STEPS];
-    size_t pattern_count = 0;
-    size_t index;
+    struct MatchPatterns seen;
     long scrutinee;
-    long pattern = 0;
-    int is_default = 0;
+    int arm_matches;
     int matched = 0;
-    int seen_default = 0;
 
+    seen.count = 0;
+    seen.seen_default = 0;
     parser->cursor += 5;
     scrutinee_value = parse_expression(parser);
     if (parser->status != RUSTIC_OK || !value_as_integer(parser, scrutinee_value, &scrutinee)) {
@@ -645,26 +689,11 @@ static struct Value parse_match_expression(struct Parser *parser) {
             return integer_value(0);
         }
 
-        if (!parse_match_arm_pattern(parser, &pattern, &is_default)) {
+        if (!parse_match_arm_patterns(parser, scrutinee, &seen, &arm_matches)) {
             return integer_value(0);
         }
-        if (is_default) {
-            if (seen_default) {
-                parser->status = RUSTIC_ERR_DUPLICATE_MATCH_DEFAULT;
-                return integer_value(0);
-            }
-            seen_default = 1;
-        } else {
-            for (index = 0; index < pattern_count; index++) {
-                if (seen_patterns[index] == pattern) {
-                    parser->status = RUSTIC_ERR_DUPLICATE_MATCH_PATTERN;
-                    return integer_value(0);
-                }
-            }
-            seen_patterns[pattern_count++] = pattern;
-        }
 
-        if (!matched && (is_default || pattern == scrutinee)) {
+        if (!matched && arm_matches) {
             value = parse_expression(parser);
             if (parser->status != RUSTIC_OK) {
                 return integer_value(0);

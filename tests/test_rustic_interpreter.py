@@ -523,6 +523,31 @@ def test_c_hosted_rustic_interpreter_rejects_second_match_default(tmp_path):
             assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_selects_match_arm_by_alternative(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    source = "match 3 { 2 | 3 => 9, _ => 0 }"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 9\n"
+
+
+def test_c_hosted_rustic_interpreter_match_alternatives_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_match_alternatives_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=10)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_duplicate_match_literal(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "match 0 { 0 => 1, 0 => 2 }"

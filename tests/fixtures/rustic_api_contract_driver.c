@@ -360,6 +360,50 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    {
+        char patterns[4096];
+        size_t i;
+        size_t used;
+        int written;
+        /* One statement step leaves 511 slots for the arm's literals. */
+        written = snprintf(patterns, sizeof(patterns), "match 510 { 0");
+        if (written < 0 || (size_t)written >= sizeof(patterns)) {
+            return 85;
+        }
+        used = (size_t)written;
+        for (i = 1; i <= 510; i++) {
+            written = snprintf(patterns + used, sizeof(patterns) - used, "|%zu", i);
+            if (written < 0 || (size_t)written >= sizeof(patterns) - used) {
+                return 86;
+            }
+            used += (size_t)written;
+        }
+        written = snprintf(patterns + used, sizeof(patterns) - used, " => 7 }");
+        if (written < 0 || (size_t)written >= sizeof(patterns) - used ||
+                rustic_eval_expression(patterns, &out) != RUSTIC_OK || out != 7) {
+            return 87;
+        }
+        written = snprintf(patterns + used, sizeof(patterns) - used, "|511 => 6 }");
+        if (written < 0 || (size_t)written >= sizeof(patterns) - used ||
+                rustic_eval_expression(patterns, &out) != RUSTIC_ERR_STEP_LIMIT_EXCEEDED || out != 7) {
+            return 88;
+        }
+    }
+    if (rustic_eval_expression("match 2 { 1 | 2 => 9, 0x2 | 3 => 8 }", &out) !=
+            RUSTIC_ERR_DUPLICATE_MATCH_PATTERN || out != 7) {
+        return 89;
+    }
+    if (rustic_eval_expression("match 2 { 1 | 2 => 9, 3 | => 8 }", &out) !=
+            RUSTIC_ERR_EXPECTED_INTEGER || out != 7) {
+        return 90;
+    }
+    if (snprintf(source, sizeof(source), "match 2 { 1 | 2 => 9, 3 | %ld0 => 8 }", LONG_MAX) < 0 ||
+            rustic_eval_expression(source, &out) != RUSTIC_ERR_INTEGER_OVERFLOW || out != 7) {
+        return 91;
+    }
+    if (rustic_eval_expression("match 2 { 1 | 2 => 9 }", &out) != RUSTIC_OK || out != 9) {
+        return 92;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }
