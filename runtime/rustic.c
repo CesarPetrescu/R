@@ -6111,8 +6111,11 @@ static void parse_let_statement(struct Parser *parser) {
         return;
     }
     parser->cursor++;
-    add_binding(parser, name, value);
-    compact_unreferenced_arrays(parser, &value);
+    if (strcmp(name, "_") != 0) {
+        add_binding(parser, name, value);
+    }
+    /* A discard creates no root; named results are rooted by their bindings. */
+    compact_unreferenced_arrays(parser, NULL);
 }
 
 static void parse_function_declaration(struct Parser *parser) {

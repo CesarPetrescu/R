@@ -915,6 +915,33 @@ def test_c_hosted_rustic_interpreter_evaluates_let_binding_statement(tmp_path):
     assert result.stdout == "let x = 2 + 3; x * 4 => 20\n"
 
 
+def test_c_hosted_rustic_interpreter_let_discard_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_let_discard_contract.txt"
+    rows = [row.rsplit(" => ", 1) for row in fixture.read_text().splitlines()
+            if row and not row.startswith("#")]
+    assert len(rows) == 15
+    for source, expected in rows:
+        result = subprocess.run([str(binary), source], text=True, capture_output=True)
+        if expected.startswith("error:"):
+            assert result.returncode == 2, (source, result)
+            assert result.stdout == ""
+            assert result.stderr == f"{expected[6:]}: {source}\n"
+        else:
+            assert result.returncode == 0, (source, result)
+            assert result.stdout == f"{source} => {expected}\n"
+
+
+def test_c_hosted_rustic_interpreter_let_discard_reclaims_array_slots(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    # Leave exactly one free array slot for successive discard initializers.
+    bindings = "".join(f"let a{i} = [{i}]; " for i in range(63))
+    source = bindings + "let _ = [7]; let _ = [8]; a0[0] + a62[0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 62\n"
+
+
 def test_c_hosted_rustic_interpreter_rejects_overlong_binding_name(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = f"let {'a' * 64} = 5; 1"
