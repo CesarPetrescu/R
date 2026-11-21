@@ -1601,6 +1601,9 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                 for (element_index = 0; element_index < source_count; element_index++) {
                     source_elements[element_index] = source_array->elements[element_index];
                 }
+                /* Only the snapshot is needed now. Reclaim a temporary input
+                 * before callbacks can allocate, without dropping live roots. */
+                compact_unreferenced_arrays(parser, NULL);
 
                 for (element_index = 0; element_index < source_count; element_index++) {
                     struct Value transformed_value;
@@ -1623,7 +1626,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     }
                 }
 
-                compact_unreferenced_arrays(parser, &arguments[0]);
+                compact_unreferenced_arrays(parser, NULL);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);

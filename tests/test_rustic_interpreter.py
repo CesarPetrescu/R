@@ -12790,6 +12790,28 @@ def test_c_hosted_rustic_interpreter_runs_array_ordering_showcase_fixture(tmp_pa
         assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_reclaims_map_input_before_callback(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    bindings = "".join(f"let a{i} = [{i}]; " for i in range(63))
+    source = bindings + "fn add(x) { x + len([x]) }; sum(map([4, 8], add)) + a62[0]"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 76\n"
+
+
+def test_c_hosted_rustic_interpreter_transform_array_slots_c_api(tmp_path):
+    binary = tmp_path / "rustic-transform-array-slots-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_transform_array_slots_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, (result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_transforms_arrays_with_map_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {
