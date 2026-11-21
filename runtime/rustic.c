@@ -1752,13 +1752,16 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     source_elements[element_index] = source_array->elements[element_index];
                 }
 
+                /* The snapshot is sufficient; keep only live array roots while
+                 * the reducer runs, so it can reuse an unbound input's slot. */
+                compact_unreferenced_arrays(parser, NULL);
                 for (element_index = 0; element_index < source_count; element_index++) {
                     struct Value folded_value = call_binary_function(parser, reducer, accumulator, source_elements[element_index]);
                     if (parser->status != RUSTIC_OK || !value_as_integer(parser, folded_value, &accumulator)) {
                         return integer_value(0);
                     }
                 }
-                compact_unreferenced_arrays(parser, &arguments[0]);
+                compact_unreferenced_arrays(parser, NULL);
                 return parse_index_postfix(parser, integer_value(accumulator));
             }
 
