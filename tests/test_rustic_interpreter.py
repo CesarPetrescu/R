@@ -13097,6 +13097,19 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_zip_with_arguments(tmp_path
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_zip_with_reclaims_temporary_inputs(tmp_path):
+    binary = tmp_path / "rustic-zip-with-input-lifetime"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_zip_with_input_lifetime_driver.c"),
+         "-o", str(binary)], cwd=ROOT, text=True, capture_output=True,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_releases_zip_with_temporaries(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn add(x, y) { x + y }; let n = 0; let total = 0; while n < 65 { total = total + sum(zip_with([1], [2], add)); n = n + 1; }; total"

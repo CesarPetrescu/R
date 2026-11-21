@@ -1690,6 +1690,11 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     right_elements[element_index] = right_array->elements[element_index];
                 }
 
+                /* The snapshots outlive any unbound input slots. Release those
+                 * slots before callbacks allocate, keeping actual roots live. */
+                if (result_count > 0) {
+                    compact_unreferenced_arrays(parser, NULL);
+                }
                 for (element_index = 0; element_index < result_count; element_index++) {
                     struct Value combined_value = call_binary_function(parser, zipper, left_elements[element_index], right_elements[element_index]);
                     if (parser->status != RUSTIC_OK || !value_as_integer(parser, combined_value, &combined)) {
