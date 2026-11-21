@@ -1,0 +1,26 @@
+# Integer alternatives share one arm; split expected values at the last =>.
+fn direction(code) { match code { -2 | -1 => 10, 1 | 2 => 20, _ => 0 } }; direction(-1) + direction(2) => 30
+match 10 { 0b11 | -0o7 | 0xA | 1_000 => 9, _ => 0 } => 9
+match 3 { 2 | 3 => [4, 9], _ => [0] }[1] => 9
+let n=0; let value=match 2 { 2|3 => { n=n+1; 7 }, 4|5 => 1/0, _ => missing }; n*10+value => 17
+let n=0; match { n=n+1; n } { 0 | 1 => 7, _ => 0 }; n => 1
+match 3 { _ => 7, 2 | 3 => 1 / 0 } => 7
+match (1 | 2) { 3 | 4 => 5 | 2, _ => 0 } => 7
+match 3 { 2 | 3 => match 2 { 2 | 3 => 9 }, _ => 0 } => 9
+match 4 { 1 | 2 => missing, _ => 7 } => 7
+match 4 { 1 | 2 => missing } => error:no matching match arm
+match 0 { 0 | -0 => 9 } => error:duplicate match pattern
+match 2 { 2 | 3 => 9, 4 | 0x3 => 8 } => error:duplicate match pattern
+match 2 { 2 => 9, 0b10 | 3 => 1 / 0 } => error:duplicate match pattern
+match 2 { 2 => 9, 0b10 | 3 8 } => error:expected equals
+match 9 { 1 | => 7, _ => 0 } => error:expected integer
+match 1 { 1 || 2 => 7, _ => 0 } => error:expected integer
+match 1 { | 1 => 7, _ => 0 } => error:expected integer
+match 1 { 1 | _ => 7 } => error:expected integer
+match 1 { _ | 1 => 7 } => error:expected equals
+match 1 { 1 | - 2 => 7 } => error:expected integer
+match 1 { 1 | 0o8 => 7 } => error:expected integer
+match 1 { 1 | 2..=3 => 7 } => error:expected equals
+match 1 { 1 | 2 7 } => error:expected equals
+match 1 { 1 => 7, 2 | 3 => 1 + * } => error:expected integer
+0 && match missing { 2 | 3 => 1 / 0 } => 0
