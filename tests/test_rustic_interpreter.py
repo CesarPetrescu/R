@@ -13446,6 +13446,25 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_fold_arguments(tmp_path):
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_fold_reclaims_temporary_input_before_callback(tmp_path):
+    binary = tmp_path / "rustic-fold-input-lifetime"
+    compiled = subprocess.run(
+        [
+            "cc", "-std=c99", "-Wall", "-Wextra", "-Werror",
+            "-I", str(ROOT / "runtime" / "include"),
+            str(ROOT / "runtime" / "rustic.c"),
+            str(ROOT / "tests" / "fixtures" / "rustic_fold_input_lifetime_driver.c"),
+            "-o", str(binary),
+        ],
+        text=True,
+        capture_output=True,
+        cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_releases_fold_temporaries(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn add(acc, x) { acc + x }; let n = 0; let total = 0; while n < 65 { total = total + fold([1], 0, add); n = n + 1; }; total"
