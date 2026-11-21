@@ -360,6 +360,18 @@ int main(void) {
     if (rustic_eval_expression("6 * 7", &out) != RUSTIC_OK || out != 42) {
         return 84;
     }
+    if (rustic_eval_expression("let _ = [7]; _[0]", &out) !=
+            RUSTIC_ERR_UNDEFINED_IDENTIFIER || out != 42) {
+        return 85;
+    }
+    if (rustic_eval_expression("let _ = 1 / 0; 7", &out) !=
+            RUSTIC_ERR_DIVISION_BY_ZERO || out != 42) {
+        return 86;
+    }
+    if (rustic_eval_expression("let n = 0; let _ = { n = n + 1; [n] }; n", &out) !=
+            RUSTIC_OK || out != 1) {
+        return 87;
+    }
     puts("C API success, overflow, output preservation and NULL diagnostics: ok");
     return 0;
 }

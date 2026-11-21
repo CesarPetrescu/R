@@ -1,0 +1,16 @@
+# source => integer result or error:diagnostic
+let n = 0; fn advance() { n = n + 1; [n] }; let _ = advance(); n => 1
+let _ = [7]; _[0] => error:undefined identifier
+let _ = 1; _ = 2; 3 => error:undefined identifier
+let _ = 3; => error:expected integer
+5; let _ = [2]; => 5
+let xs = [4]; let _ = xs; xs[0] => 4
+let _saved = [7]; let _ = [8]; _saved[0] => 7
+let n = 0; if 0 { let _ = {n = 1; 1 / 0}; 1 } else { n } => 0
+let n = 0; 0 && { let _ = {n = 1; 1 / 0}; 1 }; n => 0
+fn keep(_) { let _ = 9; _ }; keep(4) => 4
+let _ = match 3 { 5 => 2, _ => 0 }; 7 => 7
+let _ = 1 / 0; 7 => error:division by zero
+let _ = ; 7 => error:expected integer
+let _ = 5 => error:expected semicolon
+let (_) = 5; 7 => error:expected identifier
