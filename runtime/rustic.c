@@ -32,6 +32,11 @@ struct Value {
     size_t array_id;
 };
 
+struct StatementResultRoot {
+    struct Value *value;
+    const struct StatementResultRoot *previous;
+};
+
 enum LoopControl {
     LOOP_CONTROL_NONE,
     LOOP_CONTROL_BREAK,
@@ -80,6 +85,7 @@ struct Parser {
     enum LoopControl loop_control;
     struct Value *array_roots;
     size_t array_root_count;
+    const struct StatementResultRoot *statement_result_roots;
 };
 
 static struct Value integer_value(long integer) {
@@ -299,10 +305,16 @@ static int binding_references_array(const struct Parser *parser, size_t array_id
 
 static int parser_roots_reference_array(const struct Parser *parser, size_t array_id) {
     size_t index;
+    const struct StatementResultRoot *statement;
 
     for (index = 0; index < parser->array_root_count; index++) {
         const struct Value *root = &parser->array_roots[index];
         if (root->kind == VALUE_ARRAY && root->array_id == array_id) {
+            return 1;
+        }
+    }
+    for (statement = parser->statement_result_roots; statement != NULL; statement = statement->previous) {
+        if (statement->value->array_id == array_id) {
             return 1;
         }
     }
@@ -311,11 +323,17 @@ static int parser_roots_reference_array(const struct Parser *parser, size_t arra
 
 static void remap_parser_root_array_indices(struct Parser *parser, size_t array_id, size_t array_index) {
     size_t index;
+    const struct StatementResultRoot *statement;
 
     for (index = 0; index < parser->array_root_count; index++) {
         struct Value *root = &parser->array_roots[index];
         if (root->kind == VALUE_ARRAY && root->array_id == array_id) {
             root->array_index = array_index;
+        }
+    }
+    for (statement = parser->statement_result_roots; statement != NULL; statement = statement->previous) {
+        if (statement->value->array_id == array_id) {
+            statement->value->array_index = array_index;
         }
     }
 }
@@ -737,6 +755,10 @@ static struct Value parse_while_statement(struct Parser *parser) {
             return value;
         }
 
+        /* Another body will replace this result; only other live roots matter. */
+        if (value.kind == VALUE_ARRAY) {
+            compact_unreferenced_arrays(parser, NULL);
+        }
         parser->loop_depth++;
         value = parse_block_expression(parser);
         parser->loop_depth--;
@@ -6417,7 +6439,13 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
         }
 
         if (cursor_starts_keyword(parser, "let")) {
+            const struct StatementResultRoot root = { &value, parser->statement_result_roots };
+            /* An initializer can compact arrays without replacing the sequence result. */
+            if (value.kind == VALUE_ARRAY) {
+                parser->statement_result_roots = &root;
+            }
             parse_let_statement(parser);
+            parser->statement_result_roots = root.previous;
             saw_statement = 1;
             continue;
         }
@@ -6425,25 +6453,6 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
         if (cursor_starts_keyword(parser, "fn")) {
             parse_function_declaration(parser);
             saw_statement = 1;
-            continue;
-        }
-
-        if (cursor_starts_keyword(parser, "while")) {
-            value = parse_while_statement(parser);
-            if (parser->status != RUSTIC_OK) {
-                return integer_value(0);
-            }
-            saw_statement = 1;
-            saw_value = 1;
-
-            skip_spaces(parser);
-            if (*parser->cursor != ';') {
-                if (starts_adjacent_statement(parser->cursor)) {
-                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
-                }
-                return value;
-            }
-            parser->cursor++;
             continue;
         }
 
@@ -6463,6 +6472,28 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
                 return integer_value(0);
             }
             return value;
+        }
+
+        /* The next value-bearing statement supersedes the previous result. */
+        if (value.kind == VALUE_ARRAY) {
+            compact_unreferenced_arrays(parser, NULL);
+        }
+        if (cursor_starts_keyword(parser, "while")) {
+            value = parse_while_statement(parser);
+            if (parser->status != RUSTIC_OK) {
+                return integer_value(0);
+            }
+            saw_statement = 1;
+            saw_value = 1;
+            skip_spaces(parser);
+            if (*parser->cursor != ';') {
+                if (starts_adjacent_statement(parser->cursor)) {
+                    parser->status = RUSTIC_ERR_EXPECTED_SEMICOLON;
+                }
+                return value;
+            }
+            parser->cursor++;
+            continue;
         }
 
         if (parse_assignment_statement(parser, &value)) {
@@ -6504,7 +6535,7 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
             return value;
         }
         parser->cursor++;
-        compact_unreferenced_arrays(parser, NULL);
+        compact_unreferenced_arrays(parser, &value);
     }
 
     return value;
@@ -6543,6 +6574,7 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
     parser.loop_control = LOOP_CONTROL_NONE;
     parser.array_roots = NULL;
     parser.array_root_count = 0;
+    parser.statement_result_roots = NULL;
     value = parse_program(&parser);
     if (parser.status != RUSTIC_OK) {
         return parser.status;
