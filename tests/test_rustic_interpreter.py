@@ -1826,6 +1826,19 @@ def test_c_hosted_rustic_interpreter_preserves_temporary_array_during_index_eval
     assert result.stdout == f"{source} => 9\n"
 
 
+def test_c_hosted_rustic_interpreter_reuses_indexed_literal_slots(tmp_path):
+    binary = tmp_path / "rustic-index-slot-reuse-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_index_slot_reuse_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, (result.stdout, result.stderr, result.returncode)
+
+
 def test_c_hosted_rustic_interpreter_runs_index_base_lifetime_contract(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     fixture = ROOT / "tests" / "fixtures" / "rustic_index_base_lifetime_contract.txt"
