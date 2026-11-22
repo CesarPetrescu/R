@@ -107,6 +107,16 @@ def test_c_hosted_rustic_interpreter_releases_superseded_array_result_before_whi
     assert result.stdout == f"{source} => 7\n"
 
 
+def test_c_hosted_rustic_interpreter_reuses_array_result_slot_between_while_bodies(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    # Each body reserves a result slot before the element expression updates i.
+    bindings = "".join(f"let xs{index} = []; " for index in range(63))
+    source = bindings + "sum({ let i = 0; while i < 2 { [{ i = i + 1; i }]; }; })"
+    result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == f"{source} => 2\n"
+
+
 def test_c_hosted_rustic_interpreter_compares_array_contents_with_equality(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "let a = [1, 2]; let b = [1, 2]; a == b"

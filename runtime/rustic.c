@@ -755,6 +755,10 @@ static struct Value parse_while_statement(struct Parser *parser) {
             return value;
         }
 
+        /* Another body will replace this result; only other live roots matter. */
+        if (value.kind == VALUE_ARRAY) {
+            compact_unreferenced_arrays(parser, NULL);
+        }
         parser->loop_depth++;
         value = parse_block_expression(parser);
         parser->loop_depth--;
