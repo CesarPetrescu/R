@@ -755,7 +755,8 @@ static struct Value parse_while_statement(struct Parser *parser) {
     return value;
 }
 
-static struct Value parse_index_postfix(struct Parser *parser, struct Value value) {
+static struct Value parse_index_postfix_impl(struct Parser *parser, struct Value value,
+                                            int fresh_literal) {
     struct ArrayValue *array;
     struct Value index_value;
     long index;
@@ -813,9 +814,18 @@ static struct Value parse_index_postfix(struct Parser *parser, struct Value valu
             return integer_value(0);
         }
         value = integer_value(array->elements[index]);
+        /* The freshly parsed literal is no longer needed once its element is
+         * copied. Only release a tail slot, so no other handles move. */
+        if (fresh_literal && array == &parser->arrays[parser->array_count - 1]) {
+            parser->array_count--;
+        }
     }
 
     return value;
+}
+
+static struct Value parse_index_postfix(struct Parser *parser, struct Value value) {
+    return parse_index_postfix_impl(parser, value, 0);
 }
 
 static struct Value parse_array_literal(struct Parser *parser) {
@@ -1051,7 +1061,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     }
 
     if (*parser->cursor == '[') {
-        return parse_index_postfix(parser, parse_array_literal(parser));
+        return parse_index_postfix_impl(parser, parse_array_literal(parser), 1);
     }
 
     if (*parser->cursor == '(') {
