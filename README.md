@@ -35,7 +35,7 @@ The image is a development/test environment, not a packaged interpreter CLI. Cha
 ## What works today
 Function values can be compared by identity with `==`/`!=`: `fn f(){1}; let alias=f; f == alias` returns `1`, while different declarations compare unequal even when their bodies match. Expired function handles report `undefined identifier`; mixed types report the left operand's expected type, and a failed C API call preserves output. Ordering on functions and comparing built-ins as values are excluded. See the [18-row host contract](tests/fixtures/rustic_function_equality_contract.txt) and [direct C API driver](tests/fixtures/rustic_function_equality_driver.c).
 
-Integer arrays support ordered, structural `==`/`!=`: `let xs=[1,2]; xs == push([1],2)` returns `1`. A snapshot of the left side survives right-side allocation or binding mutation; unrelated integer equality, short-circuit syntax checking, and integer-only ordering are unchanged. Mixed array/scalar comparisons report `expected array` or `expected integer` according to the left operand, and failed C API calls retain their output value. See the [18-row host contract](tests/fixtures/rustic_array_equality_contract.txt) and [direct C API fixture](tests/fixtures/rustic_array_equality_driver.c). Array values still cannot be returned directly by the public `long`-only API.
+Integer arrays support ordered, structural `==`/`!=`: `let xs=[1,2]; xs == push([1],2)` returns `1`. A snapshot of the left side survives right-side allocation or binding mutation. A comparison can reuse the last array slot for both temporary operands, so `[1] == [1] && [2] != [3]` works with 63 arrays still bound; 64 live arrays still leave no room for another allocation. Integer equality, short-circuit syntax checking and integer-only ordering are unchanged. Mixed array/scalar comparisons report `expected array` or `expected integer` according to the left operand, and failed C API calls retain their output value. See the [18-row host contract](tests/fixtures/rustic_array_equality_contract.txt) and [direct C API fixture](tests/fixtures/rustic_array_equality_driver.c). Array values still cannot be returned directly by the public `long`-only API.
 
 User-declared names take priority over built-ins at call sites: `fn sum(x) { x + 1 }; sum(2)` returns `3`, while a bound non-function `let sum = 7; sum(2)` reports `expected function`. After an inner declaration leaves scope, the built-in `sum([1, 2])` works again. Call arguments retain their error precedence; short-circuited calls do not execute. See the [executable host contract](tests/fixtures/rustic_builtin_shadow_contract.txt) and [direct C API check](tests/fixtures/rustic_builtin_shadow_driver.c) for diagnostics and output-preservation behavior. Built-ins are not first-class function values.
 `<<` constructs permission flags from bit positions: `let read=1 << 0; let write=1 << 2; (read | write) & write` returns `4`. It binds between addition and bitwise AND, accepts only nonnegative host-`long` operands and a count below the sign bit, and checks the result against `LONG_MAX` before shifting. Out-of-range operands or counts return `integer overflow` without modifying C API output; skipped logical operands parse the same shift syntax without evaluating it. See the [21-row host contract](tests/fixtures/rustic_left_shift_contract.txt) and [portable strict-C99 direct API driver](tests/fixtures/rustic_left_shift_driver.c). Right shift and unary bitwise NOT are not implemented.
@@ -125,7 +125,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 603, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 302, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 604, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 303, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -137,7 +137,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 603 |
+| Completed backlog items | 604 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -146,7 +146,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 302 | 0 | None |
+| P1 | 303 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
