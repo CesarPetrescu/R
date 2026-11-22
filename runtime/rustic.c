@@ -309,6 +309,16 @@ static int parser_roots_reference_array(const struct Parser *parser, size_t arra
     return 0;
 }
 
+static void release_operand_array_tail(struct Parser *parser, const struct ArrayValue *array,
+                                       size_t first_operand_array_id) {
+    /* An enclosing evaluator may hold older handles outside the parser roots. */
+    if (array->id >= first_operand_array_id && array == &parser->arrays[parser->array_count - 1] &&
+        !array->under_construction &&
+        !binding_references_array(parser, array->id) && !parser_roots_reference_array(parser, array->id)) {
+        parser->array_count--;
+    }
+}
+
 static void remap_parser_root_array_indices(struct Parser *parser, size_t array_id, size_t array_index) {
     size_t index;
 
@@ -5563,6 +5573,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
     long left;
     long right;
     int saw_comparison = 0;
+    size_t left_array_start_id = parser->next_array_id;
     struct Value value = parse_bitwise_or_expression(parser);
     struct Value right_value;
 
@@ -5580,6 +5591,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
             int unequal = parser->cursor[0] == '!';
             struct ArrayValue left_array;
             struct ArrayValue *array;
+            size_t right_array_start_id = parser->next_array_id;
             int equal;
             size_t index;
 
@@ -5589,8 +5601,9 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
                     return integer_value(0);
                 }
-                /* Snapshot before parsing the right side, which can compact array slots. */
+                /* The snapshot is enough to compare; the right side can reuse a dead tail slot. */
                 left_array = *array;
+                release_operand_array_tail(parser, array, left_array_start_id);
             } else if (value.kind == VALUE_FUNCTION) {
                 if (function_from_value(parser, value) == NULL) {
                     parser->status = RUSTIC_ERR_UNDEFINED_IDENTIFIER;
@@ -5614,6 +5627,7 @@ static struct Value parse_comparison_expression(struct Parser *parser) {
                 for (index = 0; equal && index < left_array.element_count; index++) {
                     equal = left_array.elements[index] == array->elements[index];
                 }
+                release_operand_array_tail(parser, array, right_array_start_id);
             } else if (value.kind == VALUE_FUNCTION) {
                 if (function_from_value(parser, right_value) == NULL) {
                     parser->status = right_value.kind == VALUE_FUNCTION ?
