@@ -2064,6 +2064,20 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_set_helper_arguments(tmp_pa
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_reuses_temporary_rebuild_input_slots(tmp_path):
+    binary = tmp_path / "rustic-array-rebuild-slots"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_array_rebuild_slots_driver.c"),
+         "-o", str(binary)],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=5)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_appends_arrays_with_push_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {

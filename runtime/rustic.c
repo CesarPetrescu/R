@@ -5176,6 +5176,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
             if (strcmp(name, "set") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *rebuilt_array;
+                struct ArrayValue snapshot;
                 long set_index;
                 long set_value;
 
@@ -5197,18 +5198,15 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     return integer_value(0);
                 }
 
-                compact_unreferenced_arrays(parser, &arguments[0]);
+                /* Preserve the contents, not an otherwise dead input slot. */
+                snapshot = *source_array;
+                compact_unreferenced_arrays(parser, NULL);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);
                 }
-                source_array = array_from_value(parser, arguments[0]);
-                if (source_array == NULL) {
-                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
-                    return integer_value(0);
-                }
                 rebuilt_array = &parser->arrays[parser->array_count];
-                *rebuilt_array = *source_array;
+                *rebuilt_array = snapshot;
                 rebuilt_array->scope_depth = parser->scope_depth;
                 rebuilt_array->id = parser->next_array_id;
                 rebuilt_array->under_construction = 0;
@@ -5222,6 +5220,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
             if (strcmp(name, "push") == 0) {
                 struct ArrayValue *source_array;
                 struct ArrayValue *rebuilt_array;
+                struct ArrayValue snapshot;
                 long pushed_value;
 
                 if (argument_count != 2) {
@@ -5241,18 +5240,14 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     return integer_value(0);
                 }
 
-                compact_unreferenced_arrays(parser, &arguments[0]);
+                snapshot = *source_array;
+                compact_unreferenced_arrays(parser, NULL);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);
                 }
-                source_array = array_from_value(parser, arguments[0]);
-                if (source_array == NULL) {
-                    parser->status = RUSTIC_ERR_EXPECTED_ARRAY;
-                    return integer_value(0);
-                }
                 rebuilt_array = &parser->arrays[parser->array_count];
-                *rebuilt_array = *source_array;
+                *rebuilt_array = snapshot;
                 rebuilt_array->scope_depth = parser->scope_depth;
                 rebuilt_array->id = parser->next_array_id;
                 rebuilt_array->under_construction = 0;
