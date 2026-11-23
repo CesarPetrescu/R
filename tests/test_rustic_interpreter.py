@@ -1008,6 +1008,19 @@ def test_c_hosted_rustic_interpreter_array_element_assignment_contract(tmp_path)
             assert result.stdout == f"{source} => {expected}\n"
 
 
+def test_c_hosted_rustic_interpreter_indexed_assignment_slots_c_api(tmp_path):
+    binary = tmp_path / "rustic-indexed-assignment-slots"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_indexed_assignment_slots_driver.c"),
+         "-o", str(binary)], cwd=ROOT, text=True, capture_output=True,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_rejects_assignment_to_undefined_name(tmp_path):
     binary = compile_rustic_driver(tmp_path)
 
