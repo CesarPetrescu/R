@@ -544,6 +544,11 @@ static int integer_token_digit(const char *cursor, unsigned long base) {
            (*cursor == '_' && integer_digit(cursor[1], base) >= 0);
 }
 
+static int starts_integer_token(const char *cursor) {
+    return isdigit((unsigned char)*cursor) ||
+           (*cursor == '-' && isdigit((unsigned char)cursor[1]));
+}
+
 static int parse_integer_token(struct Parser *parser, long *out_integer) {
     const char *cursor = parser->cursor;
     int negative = *cursor == '-';
@@ -586,8 +591,7 @@ static int parse_match_arm_pattern(struct Parser *parser, long *out_pattern, int
     if (*parser->cursor == '_') {
         parser->cursor++;
         *out_is_default = 1;
-    } else if (isdigit((unsigned char)*parser->cursor) ||
-               (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1]))) {
+    } else if (starts_integer_token(parser->cursor)) {
         if (!parse_integer_token(parser, out_pattern)) {
             return 0;
         }
@@ -1016,7 +1020,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     enum LoopControl saved_loop_control;
 
     skip_spaces(parser);
-    if (*parser->cursor == '-' && isdigit((unsigned char)parser->cursor[1])) {
+    if (starts_integer_token(parser->cursor)) {
         if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
@@ -1067,13 +1071,6 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         }
         parser->cursor++;
         return parse_index_postfix(parser, value);
-    }
-
-    if (isdigit((unsigned char)*parser->cursor)) {
-        if (!parse_integer_token(parser, &integer)) {
-            return integer_value(0);
-        }
-        return parse_index_postfix(parser, integer_value(integer));
     }
 
     if (is_identifier_start(*parser->cursor)) {
@@ -5721,6 +5718,27 @@ static int skip_factor_expression_impl(struct Parser *parser) {
     char name[RUSTIC_MAX_IDENTIFIER_LENGTH + 1];
 
     skip_spaces(parser);
+    if (starts_integer_token(parser->cursor)) {
+        const char *cursor = parser->cursor;
+        unsigned long base;
+        /* An adjacent minus is part of the token, not another factor frame. */
+        if (*cursor == '-') {
+            cursor++;
+        }
+        base = integer_token_base(cursor);
+        if (base != 10UL) {
+            cursor += 2;
+            if (integer_digit(*cursor, base) < 0) {
+                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                return 0;
+            }
+        }
+        while (integer_token_digit(cursor, base)) {
+            cursor++;
+        }
+        parser->cursor = cursor;
+        return skip_index_postfix(parser);
+    }
     if (*parser->cursor == '!' || *parser->cursor == '-') {
         parser->cursor++;
         return skip_factor_expression(parser);
@@ -5790,22 +5808,6 @@ static int skip_factor_expression_impl(struct Parser *parser) {
             return 0;
         }
         parser->cursor++;
-        return skip_index_postfix(parser);
-    }
-    if (isdigit((unsigned char)*parser->cursor)) {
-        const char *cursor = parser->cursor;
-        unsigned long base = integer_token_base(cursor);
-        if (base != 10UL) {
-            cursor += 2;
-            if (integer_digit(*cursor, base) < 0) {
-                parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
-                return 0;
-            }
-        }
-        while (integer_token_digit(cursor, base)) {
-            cursor++;
-        }
-        parser->cursor = cursor;
         return skip_index_postfix(parser);
     }
     if (is_identifier_start(*parser->cursor)) {

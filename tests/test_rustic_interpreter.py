@@ -639,6 +639,20 @@ def test_c_hosted_rustic_interpreter_bounds_skipped_unary_expressions(tmp_path):
     assert result.stderr == f"step limit exceeded: {source}\n"
 
 
+def test_c_hosted_rustic_interpreter_signed_literal_skip_depth(tmp_path):
+    binary = tmp_path / "rustic-signed-literal-depth"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "runtime" / "include"),
+         str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_signed_literal_depth_driver.c"),
+         "-o", str(binary)],
+        cwd=ROOT, text=True, capture_output=True, timeout=30,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_reports_unary_minus_overflow(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     long_max = (1 << (ctypes.sizeof(ctypes.c_long) * 8 - 1)) - 1
