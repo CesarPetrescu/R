@@ -1,6 +1,8 @@
 #ifndef RUSTIC_H
 #define RUSTIC_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,9 +87,18 @@ typedef enum RusticStatus {
  * Scanning the unreachable remainder of a loop body after break/continue
  * charges one budget step per source byte (including selected match/if paths
  * and their intervening whitespace).
+ * The string entry point requires a NUL-terminated source. Both entry points
+ * report STEP_LIMIT_EXCEEDED for source lengths above 65,536 bytes.
  * A NULL source or output pointer reports INVALID_ARGUMENT before parsing.
  * On any error, a non-NULL *out_value is left unchanged. */
 RusticStatus rustic_eval_expression(const char *source, long *out_value);
+
+/* For a length within the limit, source must point to source_length readable
+ * bytes (not including any terminator). Bytes outside the span are ignored.
+ * A NUL inside the span reports INVALID_ARGUMENT, even in unevaluated text;
+ * an empty span with valid pointers reports EXPECTED_INTEGER.
+ * Uses a temporary stack copy of source_length + 1 bytes during evaluation. */
+RusticStatus rustic_eval_expression_n(const char *source, size_t source_length, long *out_value);
 const char *rustic_status_message(RusticStatus status);
 
 #ifdef __cplusplus

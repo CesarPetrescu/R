@@ -6513,21 +6513,11 @@ static struct Value parse_statement_sequence(struct Parser *parser, char termina
 static struct Value parse_program(struct Parser *parser) {
     return parse_statement_sequence(parser, '\0');
 }
-RusticStatus rustic_eval_expression(const char *source, long *out_value) {
+
+static RusticStatus eval_terminated_source(const char *source, long *out_value) {
     struct Parser parser;
     struct Value value;
     long integer;
-    size_t source_length = 0;
-
-    if (source == NULL || out_value == NULL) {
-        return RUSTIC_ERR_INVALID_ARGUMENT;
-    }
-    while (source[source_length] != '\0') {
-        if (source_length == RUSTIC_MAX_SOURCE_LENGTH) {
-            return RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
-        }
-        source_length++;
-    }
 
     parser.cursor = source;
     parser.status = RUSTIC_OK;
@@ -6559,6 +6549,39 @@ RusticStatus rustic_eval_expression(const char *source, long *out_value) {
 
     *out_value = integer;
     return RUSTIC_OK;
+}
+
+RusticStatus rustic_eval_expression(const char *source, long *out_value) {
+    size_t source_length = 0;
+
+    if (source == NULL || out_value == NULL) {
+        return RUSTIC_ERR_INVALID_ARGUMENT;
+    }
+    while (source[source_length] != '\0') {
+        if (source_length == RUSTIC_MAX_SOURCE_LENGTH) {
+            return RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+        }
+        source_length++;
+    }
+    return eval_terminated_source(source, out_value);
+}
+
+RusticStatus rustic_eval_expression_n(const char *source, size_t source_length, long *out_value) {
+    if (source == NULL || out_value == NULL) {
+        return RUSTIC_ERR_INVALID_ARGUMENT;
+    }
+    if (source_length > RUSTIC_MAX_SOURCE_LENGTH) {
+        return RUSTIC_ERR_STEP_LIMIT_EXCEEDED;
+    }
+    if (memchr(source, '\0', source_length) != NULL) {
+        return RUSTIC_ERR_INVALID_ARGUMENT;
+    }
+
+    /* The evaluator and deferred function bodies use NUL-terminated source. */
+    char terminated[source_length + 1];
+    memcpy(terminated, source, source_length);
+    terminated[source_length] = '\0';
+    return eval_terminated_source(terminated, out_value);
 }
 
 const char *rustic_status_message(RusticStatus status) {
