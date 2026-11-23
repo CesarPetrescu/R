@@ -762,6 +762,20 @@ def test_c_hosted_rustic_interpreter_bounds_source_bytes_before_parsing(tmp_path
     assert result.stdout == "C API bounded source and recovery: ok\n"
 
 
+def test_c_hosted_rustic_interpreter_evaluates_source_span(tmp_path):
+    binary = tmp_path / "rustic-source-span-contract"
+    build = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "runtime" / "include"),
+         str(ROOT / "runtime" / "rustic.c"), "-o", str(binary),
+         str(ROOT / "tests" / "fixtures" / "rustic_source_span_driver.c")],
+        text=True, capture_output=True, cwd=ROOT,
+    )
+    assert build.returncode == 0, build.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, (result.returncode, result.stderr)
+    assert result.stdout == "C API source span: ok\n"
+
+
 def test_c_hosted_rustic_interpreter_c_api_contract(tmp_path):
     binary = tmp_path / "rustic-api-contract"
     build = subprocess.run(

@@ -63,6 +63,18 @@ Decimal expression digits beyond `LONG_MAX` and nonnegative match patterns beyon
 
 `outlier_score(array, min, max)` sums the distances of elements below `min` or above `max`, checking each subtraction and nonnegative left-to-right sum before host-long overflow. When bounds are reversed, the existing below-`min` branch takes precedence; the bounds are not silently reordered. Overflow returns `RUSTIC_ERR_INTEGER_OVERFLOW` and leaves the C API output unchanged. Empty arrays score zero, unselected branches do not evaluate the helper, and existing type/arity diagnostics remain. See the [portable host contract](../tests/fixtures/rustic_outlier_score_overflow_contract.txt); other unlisted helper arithmetic remains unchecked.
 
+### Evaluating a source span
+
+Use `rustic_eval_expression_n(const char *source, size_t source_length, long *out_value)` for source already held in a length-delimited buffer. The length counts exactly the source bytes, not a terminator; the source need not be NUL-terminated and bytes after the span are ignored. For example, this returns `RUSTIC_OK` and writes `42` to `result`:
+
+```c
+const char source[] = {'6', ' ', '*', ' ', '7'};
+long result = 0;
+RusticStatus status = rustic_eval_expression_n(source, sizeof(source), &result);
+```
+
+NULL pointers are rejected first (`RUSTIC_ERR_INVALID_ARGUMENT`), then lengths above 65,536 bytes are rejected without reading the source (`RUSTIC_ERR_STEP_LIMIT_EXCEEDED`). For a length within the limit, the caller must provide that many readable bytes. Any NUL **within** the span, including a supplied string terminator or a NUL in skipped text, returns `RUSTIC_ERR_INVALID_ARGUMENT`. An empty span with valid pointers returns `RUSTIC_ERR_EXPECTED_INTEGER`. The evaluator uses a temporary stack copy of `source_length + 1` bytes; the existing string entry point needs no extra source copy and still stops at the first NUL. Both use the same grammar and evaluation limits, leave the output unchanged on failure, and start each call with fresh state. See the [executable strict-C99 host contract](../tests/fixtures/rustic_source_span_driver.c).
+
 ## Runnable host examples
 
 From the repository root (choose any writable output path):
