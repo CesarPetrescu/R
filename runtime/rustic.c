@@ -6243,6 +6243,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
             struct Value index_value;
             struct ArrayValue *source_array;
             struct ArrayValue *rebuilt_array;
+            struct ArrayValue snapshot;
             long index, element;
             size_t root_index;
 
@@ -6296,21 +6297,25 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
                 parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
                 return 1;
             }
-            compact_unreferenced_arrays(parser, &existing_value);
+            snapshot = *source_array;
+            /* The destination is being replaced. Drop only its reference;
+             * aliases, enclosing roots and unfinished literals stay live. */
+            if (!update_binding(parser, name, integer_value(0))) {
+                return 1;
+            }
+            compact_unreferenced_arrays(parser, NULL);
             if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                 parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                 return 1;
             }
-            source_array = array_from_value(parser, existing_value);
             rebuilt_array = &parser->arrays[parser->array_count];
-            *rebuilt_array = *source_array;
+            *rebuilt_array = snapshot;
             rebuilt_array->scope_depth = parser->scope_depth;
             rebuilt_array->id = parser->next_array_id++;
             rebuilt_array->under_construction = 0;
             rebuilt_array->elements[index] = element;
             existing_value = array_value(parser->array_count++, rebuilt_array->id);
             update_binding(parser, name, existing_value);
-            compact_unreferenced_arrays(parser, &existing_value);
             *out_value = integer_value(element);
             return 1;
         }
