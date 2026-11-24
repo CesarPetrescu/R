@@ -64,6 +64,8 @@ typedef enum RusticStatus {
  * outlier_score(array, min, max) checks each distance subtraction and
  * left-to-right nonnegative score addition before host-long overflow.
  * Other array/statistics arithmetic remains unchecked for overflow.
+ * true and false are integer-valued expression literals (1 and 0), not
+ * declaration names or match patterns. They do not add a C API value type.
  * Identifiers longer than 63 characters report IDENTIFIER_TOO_LONG rather
  * than aliasing their first 63 characters, including skipped expressions.
  * Repeated names in one function parameter list report DUPLICATE_PARAMETER;

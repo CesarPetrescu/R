@@ -195,6 +195,32 @@ static int cursor_starts_keyword(const struct Parser *parser, const char *keywor
            !is_identifier_continue(parser->cursor[length]);
 }
 
+/* Inspect one literal token without advancing the cursor. */
+static size_t boolean_literal_length(const struct Parser *parser, long *out_integer) {
+    if (cursor_starts_keyword(parser, "true")) {
+        if (out_integer != NULL) {
+            *out_integer = 1;
+        }
+        return 4;
+    }
+    if (cursor_starts_keyword(parser, "false")) {
+        if (out_integer != NULL) {
+            *out_integer = 0;
+        }
+        return 5;
+    }
+    return 0;
+}
+
+static int parse_declaration_name(struct Parser *parser, char *out_name, size_t out_size) {
+    skip_spaces(parser);
+    if (boolean_literal_length(parser, NULL) != 0) {
+        parser->status = RUSTIC_ERR_EXPECTED_IDENTIFIER;
+        return 0;
+    }
+    return parse_identifier(parser, out_name, out_size);
+}
+
 static int lookup_binding(const struct Parser *parser, const char *name, struct Value *out_value) {
     size_t index;
 
@@ -1007,6 +1033,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
     struct Value arguments[RUSTIC_MAX_PARAMETERS + 1];
     size_t argument_count;
     size_t index;
+    size_t literal_length;
     struct Value value = integer_value(0);
     long integer;
 
@@ -1073,6 +1100,12 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         if (!parse_integer_token(parser, &integer)) {
             return integer_value(0);
         }
+        return parse_index_postfix(parser, integer_value(integer));
+    }
+
+    literal_length = boolean_literal_length(parser, &integer);
+    if (literal_length != 0) {
+        parser->cursor += literal_length;
         return parse_index_postfix(parser, integer_value(integer));
     }
 
@@ -5808,6 +5841,13 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         parser->cursor = cursor;
         return skip_index_postfix(parser);
     }
+    {
+        size_t literal_length = boolean_literal_length(parser, NULL);
+        if (literal_length != 0) {
+            parser->cursor += literal_length;
+            return skip_index_postfix(parser);
+        }
+    }
     if (is_identifier_start(*parser->cursor)) {
         if (!parse_identifier(parser, name, sizeof(name))) {
             return 0;
@@ -6089,7 +6129,7 @@ static void parse_let_statement(struct Parser *parser) {
     struct Value value;
 
     parser->cursor += 3;
-    if (!parse_identifier(parser, name, sizeof(name))) {
+    if (!parse_declaration_name(parser, name, sizeof(name))) {
         return;
     }
 
@@ -6123,7 +6163,7 @@ static void parse_function_declaration(struct Parser *parser) {
     size_t previous;
 
     parser->cursor += 2;
-    if (!parse_identifier(parser, function->name, sizeof(function->name))) {
+    if (!parse_declaration_name(parser, function->name, sizeof(function->name))) {
         return;
     }
 
@@ -6141,7 +6181,7 @@ static void parse_function_declaration(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_WRONG_ARGUMENT_COUNT;
                 return;
             }
-            if (!parse_identifier(
+            if (!parse_declaration_name(
                     parser,
                     function->parameters[function->parameter_count],
                     sizeof(function->parameters[function->parameter_count]))) {
@@ -6207,7 +6247,7 @@ static int parse_assignment_statement(struct Parser *parser, struct Value *out_v
     struct Value value;
     struct Value existing_value;
 
-    if (!is_identifier_start(*parser->cursor)) {
+    if (!is_identifier_start(*parser->cursor) || boolean_literal_length(parser, NULL) != 0) {
         return 0;
     }
 
