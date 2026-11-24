@@ -1,0 +1,18 @@
+# source => integer result or error:diagnostic
+if true { 42 } else { 0 } => 42
+if false { 0 } else { 42 } => 42
+true => 1
+false => 0
+let enabled = true; let n = 0; while enabled { n = n + 1; enabled = false; }; n => 1
+while true { break; }; 42 => 42
+while false { 1 / 0 }; 7 => 7
+fn allowed(n) { n > 0 && true }; if allowed(3) { sum([true, !false, false]) } else { 0 } => 2
+let n = 0; false && { n = 10; 1 }; true || (1 / 0); n => 0
+0 && if true { 1 / 0 } else { missing } => 0
+match true { 1 => 9, 0 => 5 } => 9
+let true2 = 3; fn false_flag(x) { x + true2 }; false_flag(4) => 7
+True => error:undefined identifier
+match 1 { true => 9 } => error:expected integer
+true[0] => error:expected array
+0 && false[1 / 0] => 0
+0 && false[ => error:expected integer
