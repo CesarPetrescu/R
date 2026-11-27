@@ -32,6 +32,37 @@ def compile_rustic_driver(tmp_path: Path) -> Path:
     return binary
 
 
+def test_c_hosted_rustic_interpreter_array_repeat_contract(tmp_path):
+    binary = compile_rustic_driver(tmp_path)
+    fixture = ROOT / "tests" / "fixtures" / "rustic_array_repeat_contract.txt"
+    for row in fixture.read_text().splitlines():
+        if not row or row.startswith("#"):
+            continue
+        source, expected = row.rsplit(" => ", 1)
+        result = subprocess.run([str(binary), source], text=True, capture_output=True, timeout=2)
+        if expected.startswith("error:"):
+            assert (result.returncode, result.stdout, result.stderr) == (
+                2, "", f"{expected.removeprefix('error:')}: {source}\n"
+            ), source
+        else:
+            assert (result.returncode, result.stdout, result.stderr) == (
+                0, f"{source} => {expected}\n", ""
+            ), source
+
+
+def test_c_hosted_rustic_interpreter_array_repeat_c_api(tmp_path):
+    binary = tmp_path / "rustic-array-repeat-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_array_repeat_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result
+
+
 def test_c_hosted_rustic_interpreter_compares_function_alias_by_identity(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn f(){1}; let alias=f; f == alias"

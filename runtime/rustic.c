@@ -854,12 +854,54 @@ static struct Value parse_array_literal(struct Parser *parser) {
                 parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
                 return integer_value(0);
             }
+            if (parser->loop_control != LOOP_CONTROL_NONE) {
+                /* Permit scope exit to reclaim the abandoned literal. */
+                array->under_construction = 0;
+                return integer_value(0);
+            }
             if (parser->status != RUSTIC_OK || !value_as_integer(parser, element_value, &element)) {
                 return integer_value(0);
             }
+            skip_spaces(parser);
+            if (array->element_count == 0 && *parser->cursor == ';') {
+                struct Value count_value;
+                long count;
+
+                parser->cursor++;
+                count_value = parse_expression(parser);
+                /* The count can allocate and compact arrays too. */
+                array = array_by_id(parser, array_id, &array_index);
+                if (array == NULL) {
+                    parser->status = RUSTIC_ERR_ARRAY_INDEX_OUT_OF_BOUNDS;
+                    return integer_value(0);
+                }
+                if (parser->loop_control != LOOP_CONTROL_NONE) {
+                    array->under_construction = 0;
+                    return integer_value(0);
+                }
+                if (parser->status != RUSTIC_OK || !value_as_integer(parser, count_value, &count)) {
+                    return integer_value(0);
+                }
+                skip_spaces(parser);
+                if (*parser->cursor != ']') {
+                    parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACKET;
+                    return integer_value(0);
+                }
+                if (count < 0) {
+                    parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
+                    return integer_value(0);
+                }
+                if (count > RUSTIC_MAX_ARRAY_ELEMENTS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                while (array->element_count < (size_t)count) {
+                    array->elements[array->element_count++] = element;
+                }
+                break;
+            }
             array->elements[array->element_count] = element;
             array->element_count++;
-            skip_spaces(parser);
             if (*parser->cursor != ',') {
                 break;
             }
@@ -5757,20 +5799,29 @@ static int skip_factor_expression_impl(struct Parser *parser) {
         parser->cursor++;
         skip_spaces(parser);
         if (*parser->cursor != ']') {
-            while (parser->status == RUSTIC_OK) {
+            if (!skip_expression_operand(parser)) {
+                return 0;
+            }
+            skip_spaces(parser);
+            if (*parser->cursor == ';') {
+                parser->cursor++;
                 if (!skip_expression_operand(parser)) {
                     return 0;
                 }
-                skip_spaces(parser);
-                if (*parser->cursor != ',') {
-                    break;
-                }
-                parser->cursor++;
-                skip_spaces(parser);
-                if (*parser->cursor == ']') {
-                    break;
+            } else {
+                while (*parser->cursor == ',') {
+                    parser->cursor++;
+                    skip_spaces(parser);
+                    if (*parser->cursor == ']') {
+                        break;
+                    }
+                    if (!skip_expression_operand(parser)) {
+                        return 0;
+                    }
+                    skip_spaces(parser);
                 }
             }
+            skip_spaces(parser);
         }
         if (*parser->cursor != ']') {
             parser->status = RUSTIC_ERR_EXPECTED_CLOSING_BRACKET;
