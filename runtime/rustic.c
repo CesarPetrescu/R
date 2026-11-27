@@ -1082,6 +1082,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         }
         skip_spaces(parser);
         if (*parser->cursor == '(') {
+            size_t first_argument_array_id = parser->next_array_id;
             parser->cursor++;
             argument_count = 0;
             skip_spaces(parser);
@@ -1398,7 +1399,11 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     }
                 }
 
-                compact_unreferenced_arrays(parser, &arguments[0]);
+                /* Only the snapshot is needed now. Release a new temporary
+                 * input, but keep older inputs that may also be a while
+                 * body's previous result while its condition is rechecked. */
+                compact_unreferenced_arrays(parser,
+                    arguments[0].array_id < first_argument_array_id ? &arguments[0] : NULL);
                 if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);

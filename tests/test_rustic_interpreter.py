@@ -116,6 +116,19 @@ def test_c_hosted_rustic_interpreter_reclaims_temporary_array_comparisons(tmp_pa
     assert result.stdout == f"{source} => 65\n"
 
 
+def test_c_hosted_rustic_interpreter_array_snapshot_slot_reuse(tmp_path):
+    binary = tmp_path / "rustic-array-snapshot-slot"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_array_snapshot_slot_driver.c"),
+         "-o", str(binary)], cwd=ROOT, text=True, capture_output=True,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+
+
 def test_c_hosted_rustic_interpreter_user_function_shadows_builtin(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     source = "fn sum(x) { x + 1 }; sum(2)"
