@@ -1096,24 +1096,31 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                         size_t saved_array_root_count = parser->array_root_count;
                         struct Value combined_roots[RUSTIC_MAX_ARRAY_ROOTS];
                         size_t root_index;
-                        if (saved_array_root_count + argument_count > RUSTIC_MAX_ARRAY_ROOTS) {
-                            parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
-                            return integer_value(0);
-                        }
+                        size_t combined_root_count = saved_array_root_count;
                         for (root_index = 0; root_index < saved_array_root_count; root_index++) {
                             combined_roots[root_index] = saved_array_roots[root_index];
                         }
+                        /* Only array arguments need to survive slot compaction. */
                         for (root_index = 0; root_index < argument_count; root_index++) {
-                            combined_roots[saved_array_root_count + root_index] = arguments[root_index];
+                            if (arguments[root_index].kind == VALUE_ARRAY) {
+                                if (combined_root_count >= RUSTIC_MAX_ARRAY_ROOTS) {
+                                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                                    return integer_value(0);
+                                }
+                                combined_roots[combined_root_count++] = arguments[root_index];
+                            }
                         }
                         parser->array_roots = combined_roots;
-                        parser->array_root_count = saved_array_root_count + argument_count;
+                        parser->array_root_count = combined_root_count;
                         arguments[argument_count] = parse_expression(parser);
                         for (root_index = 0; root_index < saved_array_root_count; root_index++) {
                             saved_array_roots[root_index] = combined_roots[root_index];
                         }
+                        combined_root_count = saved_array_root_count;
                         for (root_index = 0; root_index < argument_count; root_index++) {
-                            arguments[root_index] = combined_roots[saved_array_root_count + root_index];
+                            if (arguments[root_index].kind == VALUE_ARRAY) {
+                                arguments[root_index] = combined_roots[combined_root_count++];
+                            }
                         }
                         parser->array_roots = saved_array_roots;
                         parser->array_root_count = saved_array_root_count;
