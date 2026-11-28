@@ -2527,6 +2527,19 @@ def test_c_hosted_rustic_interpreter_rejects_invalid_range_helper_arguments(tmp_
         assert expected_error in result.stderr
 
 
+def test_c_hosted_rustic_interpreter_range_reuses_consumed_length_temporaries(tmp_path):
+    binary = tmp_path / "rustic-range-length-slot-api"
+    compiled = subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-I",
+         str(ROOT / "runtime" / "include"), str(ROOT / "runtime" / "rustic.c"),
+         str(ROOT / "tests" / "fixtures" / "rustic_range_length_slot_driver.c"),
+         "-o", str(binary)], text=True, capture_output=True, cwd=ROOT,
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=2)
+    assert result.returncode == 0, result.stderr
+
+
 def test_c_hosted_rustic_interpreter_reverses_arrays_with_reverse_helper(tmp_path):
     binary = compile_rustic_driver(tmp_path)
     expectations = {

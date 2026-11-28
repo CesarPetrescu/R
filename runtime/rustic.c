@@ -331,7 +331,8 @@ static void remap_binding_array_indices(struct Parser *parser, size_t array_id, 
     }
 }
 
-static void compact_unreferenced_arrays(struct Parser *parser, struct Value *value) {
+static void compact_unreferenced_arrays_since(struct Parser *parser, struct Value *value,
+                                               size_t first_reclaimable_id) {
     size_t read_index;
     size_t write_index = 0;
 
@@ -342,7 +343,8 @@ static void compact_unreferenced_arrays(struct Parser *parser, struct Value *val
         int preserve_root = parser_roots_reference_array(parser, array.id);
         int preserve_under_construction = array.under_construction;
 
-        if (preserve_returned || preserve_binding || preserve_root || preserve_under_construction) {
+        if (array.id < first_reclaimable_id || preserve_returned || preserve_binding ||
+            preserve_root || preserve_under_construction) {
             if (preserve_returned) {
                 value->array_index = write_index;
             }
@@ -353,6 +355,10 @@ static void compact_unreferenced_arrays(struct Parser *parser, struct Value *val
         }
     }
     parser->array_count = write_index;
+}
+
+static void compact_unreferenced_arrays(struct Parser *parser, struct Value *value) {
+    compact_unreferenced_arrays_since(parser, value, 0);
 }
 
 static void compact_arrays_after_scope_pop(struct Parser *parser, struct Value *value) {
@@ -1082,6 +1088,7 @@ static struct Value parse_factor_impl(struct Parser *parser) {
         }
         skip_spaces(parser);
         if (*parser->cursor == '(') {
+            size_t first_argument_array_id = parser->next_array_id;
             parser->cursor++;
             argument_count = 0;
             skip_spaces(parser);
@@ -1176,7 +1183,17 @@ static struct Value parse_factor_impl(struct Parser *parser) {
                     parser->status = RUSTIC_ERR_EXPECTED_INTEGER;
                     return integer_value(0);
                 }
-                if ((size_t)length > RUSTIC_MAX_ARRAY_ELEMENTS || parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                if (length > RUSTIC_MAX_ARRAY_ELEMENTS) {
+                    parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
+                    return integer_value(0);
+                }
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
+                    /* The length is an integer now. Reclaim only dead arrays
+                     * created in its evaluation; older slots may include
+                     * the previous while-body result, which is not rooted. */
+                    compact_unreferenced_arrays_since(parser, NULL, first_argument_array_id);
+                }
+                if (parser->array_count >= RUSTIC_MAX_ARRAYS) {
                     parser->status = RUSTIC_ERR_TOO_MANY_BINDINGS;
                     return integer_value(0);
                 }
