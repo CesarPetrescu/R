@@ -33,6 +33,9 @@ docker run --rm --network none rustic-local sh -c 'cc -std=c99 -Wall -Wextra -We
 The image is a development/test environment, not a packaged interpreter CLI. Change the quoted expression to try another supported input; the driver and source are already inside the image, so no host volume is needed. For the full container verification use `docker compose run --build --rm test` as shown below.
 
 ## What works today
+
+Nested calls with integer or function arguments no longer consume the temporary array-reference budget for those arguments. Arrays passed earlier in a call stay live if a later argument compacts storage. The eight-argument, expression-depth, and array limits still apply. See the [C API regression](tests/fixtures/rustic_argument_array_roots_driver.c).
+
 Function values can be compared by identity with `==`/`!=`: `fn f(){1}; let alias=f; f == alias` returns `1`, while different declarations compare unequal even when their bodies match. Expired function handles report `undefined identifier`; mixed types report the left operand's expected type, and a failed C API call preserves output. Ordering on functions and comparing built-ins as values are excluded. See the [18-row host contract](tests/fixtures/rustic_function_equality_contract.txt) and [direct C API driver](tests/fixtures/rustic_function_equality_driver.c).
 
 Integer arrays support ordered, structural `==`/`!=`: `let xs=[1,2]; xs == push([1],2)` returns `1`. A snapshot of the left side survives right-side allocation or binding mutation; unrelated integer equality, short-circuit syntax checking, and integer-only ordering are unchanged. Mixed array/scalar comparisons report `expected array` or `expected integer` according to the left operand, and failed C API calls retain their output value. See the [18-row host contract](tests/fixtures/rustic_array_equality_contract.txt) and [direct C API fixture](tests/fixtures/rustic_array_equality_driver.c). Array values still cannot be returned directly by the public `long`-only API.
@@ -125,7 +128,7 @@ The Python `r_project` CLI reports repository/backlog state, **not** an interpre
 Checked `--json` snapshot for this revision (not a live result):
 
 ```json
-{"active_blockers": [], "completed_backlog_items": 603, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 302, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
+{"active_blockers": [], "completed_backlog_items": 604, "has_active_blockers": false, "next_backlog_item": null, "open_backlog_items": 0, "priority_backlog_groups": {"P0": {"completed": 4, "next_item": null, "open": 0}, "P1": {"completed": 303, "next_item": null, "open": 0}, "P2": {"completed": 297, "next_item": null, "open": 0}}, "project_name": "R"}
 ```
 
 The `--fail-on-blockers` flag still emits the requested report, then exits with status `2` when `status/stuck.md` contains active blockers. This lets cron jobs and CI gates fail fast while preserving machine-readable diagnostics on stdout.
@@ -137,7 +140,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 
 | Metric | Value |
 | --- | ---: |
-| Completed backlog items | 603 |
+| Completed backlog items | 604 |
 | Open backlog items | 0 |
 | Active blockers | 0 |
 
@@ -146,7 +149,7 @@ Checked `--markdown` snapshot for the same revision (suitable for PR comments or
 | Priority | Completed | Open | Next item |
 | --- | ---: | ---: | --- |
 | P0 | 4 | 0 | None |
-| P1 | 302 | 0 | None |
+| P1 | 303 | 0 | None |
 | P2 | 297 | 0 | None |
 
 ## Next backlog item
